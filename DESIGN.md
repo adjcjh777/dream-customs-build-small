@@ -80,6 +80,8 @@ Dream Customs should feel like a working customs desk that appears inside a drea
 
 This is product UI first. The user needs to type, upload, record, answer, and decide what happens next. The dream atmosphere belongs in the background wash, pact inspector, stamps, and evidence chips, while controls stay clear and predictable.
 
+**V3 First-Screen Trust Rule.** A user must be able to understand and start the ritual without scrolling. The dream text field, primary submit action, image/voice/mood evidence controls, and live pact summary belong in the first visible screen. Timeline and examples are supporting context, not the entry point.
+
 **Key Characteristics:**
 
 - Bottom composer as the primary input, modeled after Codex app behavior.
@@ -195,6 +197,7 @@ The pact inspector is a live customs file, not just a final HTML card. It shows 
 ### Do:
 
 - **Do** make the bottom composer the most obvious control on mobile and desktop.
+- **Do** keep the first declaration controls above the timeline so a tired user can start immediately.
 - **Do** keep every phase actionable with one clear next step.
 - **Do** use generated raster imagery for the dream atmosphere, header state, or empty state.
 - **Do** verify dark-mode contrast for body text, labels, placeholders, chips, and disabled controls.
@@ -206,5 +209,7 @@ The pact inspector is a live customs file, not just a final HTML card. It shows 
 - **Don't** use beige parchment, tarot, faux therapy, or generic purple AI visuals.
 - **Don't** use one-shot generation as the whole flow.
 - **Don't** hide `Add material`, `Continue negotiation`, or `Seal pact` below the fold.
+- **Don't** render navigation-looking text that cannot be clicked.
+- **Don't** reserve tall empty panels for future content on the first screen.
 - **Don't** pair a 1px border with a large soft shadow on every card.
 - **Don't** use side-stripe borders, gradient text, or decorative glass panels.

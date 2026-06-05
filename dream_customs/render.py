@@ -34,17 +34,11 @@ def render_status_bar(session: CustomsSession, text_backend: str = "demo", visio
     <span class="dc-brand-mark">DC</span>
     <div>
       <h1>Dream Customs / 梦境海关</h1>
-      <p>Night desk for filing dream fragments into today's pact.</p>
+      <p>A small, gentle desk for turning last night's fragments into one clear pact for today.</p>
     </div>
   </div>
-  <nav class="dc-phase-rail" aria-label="Dream Customs phase">
-    <span class="{'is-active' if session.phase in ['empty', 'declaring'] else ''}">Declare</span>
-    <span class="{'is-active' if session.phase == 'negotiating' else ''}">Inspect</span>
-    <span class="{'is-active' if session.phase == 'drafting' else ''}">Draft</span>
-    <span class="{'is-active' if session.phase == 'sealed' else ''}">Seal</span>
-  </nav>
   <div class="dc-system-status">
-    <span>{escape(_phase_label(session.phase))}</span>
+    <span>Current: {escape(_phase_label(session.phase))}</span>
     <span>Text: {escape(text_backend or "demo")}</span>
     <span>Vision: {escape(vision_backend or "demo")}</span>
     <span>{escape(safety)}</span>

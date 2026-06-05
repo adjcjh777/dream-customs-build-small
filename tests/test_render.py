@@ -1,5 +1,5 @@
 from dream_customs.pipeline import add_evidence, create_session
-from dream_customs.render import render_pact_card, render_pact_inspector, render_timeline
+from dream_customs.render import render_pact_card, render_pact_inspector, render_status_bar, render_timeline
 from dream_customs.schema import PactCard
 
 
@@ -65,3 +65,10 @@ def test_render_timeline_and_inspector_show_session_state():
     assert "Dream note" in timeline
     assert "No pact drafted yet" in inspector
     assert "2 filed" in inspector
+
+
+def test_status_bar_is_status_not_fake_navigation():
+    html = render_status_bar(create_session())
+    assert "Current: Empty desk" in html
+    assert "dc-phase-rail" not in html
+    assert "<nav" not in html

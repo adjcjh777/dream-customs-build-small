@@ -49,7 +49,12 @@ Goal for this pass: verify the current UI/UX V2 workbench locally, sync it to th
 - The local temporary deployment commit was created as `3b18ee5 Deploy Dream Customs workbench UI`, but it was not accepted by Hugging Face.
 - `git push origin main` in the temporary Space clone was rejected by HF:
   - `You are not authorized to push to this repo.`
-- `huggingface-cli` was not installed locally, so no alternate authenticated HF CLI path was available in this environment.
+- Global `huggingface-cli` was not installed, but `.venv/bin/huggingface-cli` and `.venv/bin/hf` were present.
+- `.venv/bin/hf auth whoami` authenticated as `ADJCJH` and showed membership in `build-small-hackathon`.
+- The cached HF token is fine-grained and scoped to the user entity, not the `build-small-hackathon` org Space.
+- A `huggingface_hub.upload_folder(...)` deploy attempt used the cached token, preserved the current Space parent commit, and avoided printing any token value.
+- The API deploy attempt failed with 403 on the Space LFS batch endpoint:
+  - `Make sure your token has the correct permissions.`
 
 Result: V2 workbench is not deployed to the public Space in this pass.
 
@@ -77,7 +82,7 @@ Remote queue check:
 - Queue output returned 4 fields and a pact snippet containing `Dream visitor`, `Permit: DC-DEMO-014`, `Today's suggestion`, `Weird task`, and `Bedtime release`.
 - `gradio_client.Client(...)` could not be used because the installed client failed while parsing the remote schema with `TypeError: argument of type 'bool' is not iterable`; raw queue protocol worked.
 
-Result: current old public Space queue works, but the required V2 workbench public Space smoke remains blocked until HF push permission is available.
+Result: current old public Space queue works, but the required V2 workbench public Space smoke remains blocked until a token with write permission for `build-small-hackathon/dream-customs` is available.
 
 ## Hosted MiniCPM Route
 
@@ -91,4 +96,4 @@ Result: hosted MiniCPM text and vision route smoke was not run. No token or endp
 
 ## Next Step
 
-Authenticate or grant push access for `https://huggingface.co/spaces/build-small-hackathon/dream-customs`, then push the current workbench files to Space `main` and rerun the V2 public Space browser and queue smoke.
+Create or provide an HF token with write access to the `build-small-hackathon/dream-customs` Space, or grant the cached token/org role that permission. Then push the current workbench files to Space `main` and rerun the V2 public Space browser and queue smoke.

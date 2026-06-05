@@ -131,6 +131,7 @@ Checks:
 - [x] Local diagnostics panel opened and showed `status: sealed`, `text_backend: demo`, `vision_backend: demo`, empty `safety_flags`, and empty ordinary-case `safety_note`; the header safety copy stayed visible as playful reflection, not medical advice.
 - [x] Existing public Space opened and the currently deployed old one-shot app completed a text-only demo queue prediction through `run_customs_once`.
 - [ ] Current V2 workbench was not deployed to public Space because `git push` to `https://huggingface.co/spaces/build-small-hackathon/dream-customs` was rejected by HF authorization (`You are not authorized to push to this repo`).
+- [ ] Follow-up HF API deploy attempt also failed: the cached token belongs to `ADJCJH` and sees the `build-small-hackathon` org, but the token is fine-grained and scoped only to the user entity; `huggingface_hub.upload_folder(...)` failed with 403 on the Space LFS batch endpoint.
 - [ ] Hosted MiniCPM route smoke was not run because `DREAM_CUSTOMS_TEXT_ENDPOINT`, `DREAM_CUSTOMS_VISION_ENDPOINT`, and `DREAM_CUSTOMS_HOSTED_TOKEN` were missing from the runtime environment.
 
 Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.

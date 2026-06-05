@@ -4,7 +4,17 @@ Last updated: 2026-06-05
 
 ## Current State
 
-The project is in concept/spec stage. A visual HTML concept note already exists at:
+The project has shipped a working Gradio MVP and a V4 local UI pass. The current interface centers a warm Codex-like multimodal composer: text, image upload, voice upload, mood, add-material, and send live inside one rounded input surface. Model routes, workflow shortcuts, diagnostics, and examples are collapsed by default.
+
+Current V4 UX decisions:
+
+- The first screen prioritizes the dream declaration composer and pact inspector.
+- Image and voice use compact upload buttons to avoid large Gradio media drop zones in the main composer.
+- `Draft pact` and `Seal today's pact` sit beside the live pact inspector.
+- The timeline is a supporting "Story so far" section below the first-screen workflow.
+- Technical model route controls are available but not first-level visual chrome.
+
+The original visual HTML concept note remains useful background:
 
 - `docs/dream-customs-concept/index.html`
 
@@ -14,12 +24,14 @@ Supporting images:
 - `docs/dream-customs-concept/assets/multimodal-intake.svg`
 - `docs/dream-customs-concept/assets/alliance-card.svg`
 
-This handoff adds project context documents for implementation:
+Project context documents:
 
 - `docs/spec.md`
 - `docs/prd.md`
 - `docs/handoff.md`
 - `docs/superpowers/plans/2026-06-05-dream-customs-mvp.md`
+- `docs/superpowers/plans/2026-06-05-dream-customs-uiux-v2.md`
+- `docs/superpowers/plans/2026-06-05-dream-customs-uiux-v3.md`
 - `AGENTS.md`
 
 ## Product Decision
@@ -79,7 +91,7 @@ The product must never present itself as therapy, medical advice, or diagnosis. 
 
 ## Recommended First Implementation
 
-Create a minimal Python package:
+The minimal Python package already exists:
 
 ```text
 app.py
@@ -100,26 +112,26 @@ tests/
   test_pipeline.py
 ```
 
-Start with mocked model clients and deterministic examples. Add real model loading only after schema, safety, rendering, and pipeline tests pass.
+The current implementation keeps deterministic demo clients as the default and exposes optional model routes. For V3, do not rebuild the pipeline from scratch. Fix the app shell, control hierarchy, phase actions, and visual polish while preserving the existing `CustomsSession` state flow.
 
 ## Implementation Priorities
 
-1. Text-only flow.
-2. Card rendering.
-3. Safety layer.
-4. Image clue extraction.
-5. Voice transcription adapter.
-6. Demo examples.
-7. Space packaging.
+1. First-screen trust and immediate declaration controls.
+2. Clickable phase actions.
+3. Mobile-readable composer and inspector.
+4. Removal of long blank page regions.
+5. Tests and local browser verification.
+6. Branch commit/push and Space update when credentials allow.
 
-## Known Repository Issue
+## Repository Status
 
-The current directory is under git root `/Users/junhaocheng`, whose remote is `adjcjh777/vlarepo.git`. This is likely not the intended Build Small repository. Also, `.git/info/exclude` currently ignores paths beneath this workspace root.
+This directory is now a dedicated Dream Customs repository:
 
-Do not push these files to the VLA remote by accident. Before implementation, either:
+- Local path: `/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon`
+- GitHub remote: `https://github.com/adjcjh777/dream-customs-build-small.git`
+- Hugging Face Space remote: `https://huggingface.co/spaces/build-small-hackathon/dream-customs`
 
-1. initialize a dedicated repo in `/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon`, or
-2. move this context into the intended Build Small repository/Space repo.
+Continue to confirm `git remote -v` before pushing, but the earlier VLA remote warning is no longer the active state.
 
 ## Open Questions For User
 

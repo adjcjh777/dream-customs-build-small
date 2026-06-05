@@ -2,17 +2,18 @@
 name: Dream Customs
 description: A nocturnal dream customs workbench for turning dream evidence into a next-day pact.
 colors:
-  bg-night: "oklch(0.145 0.030 238)"
-  bg-void: "oklch(0.080 0.010 250)"
-  surface-ink: "oklch(0.205 0.035 238)"
-  surface-raised: "oklch(0.275 0.045 236)"
-  primary-cobalt: "oklch(0.690 0.105 232)"
-  primary-cobalt-deep: "oklch(0.510 0.115 234)"
-  accent-coral-stamp: "oklch(0.705 0.160 28)"
-  accent-aurora: "oklch(0.820 0.110 185)"
-  ink-main: "oklch(0.965 0.010 235)"
-  ink-muted: "oklch(0.760 0.030 232)"
-  border-dream: "oklch(0.430 0.055 235)"
+  bg-night: "oklch(0.185 0.018 55)"
+  bg-void: "oklch(0.130 0.012 55)"
+  surface-ink: "oklch(0.235 0.018 58)"
+  surface-raised: "oklch(0.295 0.020 62)"
+  primary-sage: "oklch(0.690 0.105 150)"
+  primary-sage-deep: "oklch(0.455 0.090 155)"
+  accent-coral-stamp: "oklch(0.700 0.140 32)"
+  accent-amber-lamp: "oklch(0.830 0.120 76)"
+  accent-aurora: "oklch(0.745 0.080 185)"
+  ink-main: "oklch(0.960 0.010 78)"
+  ink-muted: "oklch(0.760 0.018 78)"
+  border-dream: "oklch(0.465 0.024 70)"
   warning: "oklch(0.760 0.150 75)"
 typography:
   display:
@@ -20,7 +21,7 @@ typography:
     fontSize: "2.25rem"
     fontWeight: 760
     lineHeight: 1.05
-    letterSpacing: "-0.02em"
+    letterSpacing: "0"
   headline:
     fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
     fontSize: "1.5rem"
@@ -54,7 +55,7 @@ spacing:
   xl: "32px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary-cobalt-deep}"
+    backgroundColor: "{colors.primary-sage-deep}"
     textColor: "{colors.ink-main}"
     rounded: "{rounded.md}"
     padding: "12px 16px"
@@ -74,15 +75,17 @@ components:
 
 ## 1. Overview
 
-**Creative North Star: "The Night Desk"**
+**Creative North Star: "The Morning Customs Desk"**
 
-Dream Customs should feel like a working customs desk that appears inside a dream at 4:17 a.m. The surface is dark because the user often arrives from bed or after waking, but it is not a generic terminal. Cobalt, aurora cyan, and coral stamp ink carry the strange color. Familiar controls carry trust.
+Dream Customs should feel like a small warm customs desk that appears after waking: quiet, slightly strange, and easy enough to use before the day fully starts. The surface can stay dark like Codex, but it should read as warm charcoal and lamplight rather than a cold technical dashboard. Sage action color, amber light, muted coral seal ink, and a little aurora evidence color carry the identity.
 
-This is product UI first. The user needs to type, upload, record, answer, and decide what happens next. The dream atmosphere belongs in the background wash, pact inspector, stamps, and evidence chips, while controls stay clear and predictable.
+This is product UI first. The user needs to type, attach, optionally add voice, answer, and decide what happens next. The dream atmosphere belongs in the background wash, pact inspector, stamps, and evidence chips, while controls stay clear and predictable.
+
+**V4 Unified Composer Rule.** The dream input should behave like a Codex-style multimodal composer, not like a Gradio form. Text, image upload, voice upload, mood, add-material, and send belong visually inside one rounded input surface. Technical model routes and advanced workflow shortcuts should be collapsed by default.
 
 **Key Characteristics:**
 
-- Bottom composer as the primary input, modeled after Codex app behavior.
+- Unified composer as the primary input, modeled after Codex app behavior.
 - Conversation timeline for declarations, questions, and pact drafts.
 - Evidence tray for text, image, audio, mood, and model status.
 - Pact inspector that can be drafted, revised, or sealed.
@@ -94,22 +97,23 @@ The palette is nocturnal and atmospheric: neutral dark surfaces, cobalt primary 
 
 ### Primary
 
-- **Cobalt Gate** (`oklch(0.690 0.105 232)`): primary selection, active step, focus accents, and subtle interactive outlines.
-- **Deep Cobalt Gate** (`oklch(0.510 0.115 234)`): filled primary buttons and selected composer controls with near-white text.
+- **Sage Gate** (`oklch(0.690 0.105 150)`): primary selection, active step, focus accents, and subtle interactive outlines.
+- **Deep Sage Gate** (`oklch(0.455 0.090 155)`): filled primary buttons and selected composer controls with near-white text.
 
 ### Secondary
 
-- **Coral Stamp Ink** (`oklch(0.705 0.160 28)`): final seal action, permit stamp, alert edge for safety notes, and one memorable highlight per screen.
-- **Aurora Evidence Light** (`oklch(0.820 0.110 185)`): image/audio evidence status, successful extraction, and soft dream-glow details.
+- **Coral Stamp Ink** (`oklch(0.700 0.140 32)`): final seal action, permit stamp, alert edge for safety notes, and one memorable highlight per screen.
+- **Amber Lamp** (`oklch(0.830 0.120 76)`): warmth, trust cue, and section highlights.
+- **Aurora Evidence Light** (`oklch(0.745 0.080 185)`): image/audio evidence status, successful extraction, and soft dream-glow details.
 
 ### Neutral
 
-- **Night Background** (`oklch(0.145 0.030 238)`): app body and mobile shell.
-- **Void Rail** (`oklch(0.080 0.010 250)`): app outer edge, header underlay, and screenshot-safe negative space.
-- **Ink Surface** (`oklch(0.205 0.035 238)`): composer, timeline items, and tool panels.
-- **Raised Surface** (`oklch(0.275 0.045 236)`): active inspector panels and output cards.
-- **Main Ink** (`oklch(0.965 0.010 235)`): body text on dark surfaces.
-- **Muted Ink** (`oklch(0.760 0.030 232)`): secondary labels that still remain readable.
+- **Warm Night Background** (`oklch(0.185 0.018 55)`): app body and mobile shell.
+- **Soft Void Rail** (`oklch(0.130 0.012 55)`): app outer edge, header underlay, and screenshot-safe negative space.
+- **Charcoal Ink Surface** (`oklch(0.235 0.018 58)`): composer, timeline items, and tool panels.
+- **Raised Warm Surface** (`oklch(0.295 0.020 62)`): active inspector panels and output cards.
+- **Main Ink** (`oklch(0.960 0.010 78)`): body text on dark surfaces.
+- **Muted Ink** (`oklch(0.760 0.018 78)`): secondary labels that still remain readable.
 
 ### Named Rules
 
@@ -194,7 +198,8 @@ The pact inspector is a live customs file, not just a final HTML card. It shows 
 
 ### Do:
 
-- **Do** make the bottom composer the most obvious control on mobile and desktop.
+- **Do** make the unified composer the most obvious control on mobile and desktop.
+- **Do** keep the first declaration controls above the timeline so a tired user can start immediately.
 - **Do** keep every phase actionable with one clear next step.
 - **Do** use generated raster imagery for the dream atmosphere, header state, or empty state.
 - **Do** verify dark-mode contrast for body text, labels, placeholders, chips, and disabled controls.
@@ -205,6 +210,8 @@ The pact inspector is a live customs file, not just a final HTML card. It shows 
 - **Don't** ship a plain Gradio two-column form as the primary experience.
 - **Don't** use beige parchment, tarot, faux therapy, or generic purple AI visuals.
 - **Don't** use one-shot generation as the whole flow.
-- **Don't** hide `Add material`, `Continue negotiation`, or `Seal pact` below the fold.
+- **Don't** expose technical model routes as first-level controls unless the user opens model settings.
+- **Don't** render navigation-looking text that cannot be clicked.
+- **Don't** reserve tall empty panels for future content on the first screen.
 - **Don't** pair a 1px border with a large soft shadow on every card.
 - **Don't** use side-stripe borders, gradient text, or decorative glass panels.

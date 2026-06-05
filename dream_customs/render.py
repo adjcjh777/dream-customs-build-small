@@ -27,26 +27,20 @@ def _evidence_chip(item: EvidenceItem) -> str:
 
 
 def render_status_bar(session: CustomsSession, text_backend: str = "demo", vision_backend: str = "demo") -> str:
-    safety = "Support note ready" if session.safety_flags else "Playful reflection, not medical advice"
+    safety = "Support note ready" if session.safety_flags else "Playful reflection, not diagnosis"
     return f"""
 <header class="dc-statusbar">
   <div class="dc-brand-lockup">
     <span class="dc-brand-mark">DC</span>
     <div>
       <h1>Dream Customs / 梦境海关</h1>
-      <p>Night desk for filing dream fragments into today's pact.</p>
+      <p>Turn last night's strange visitor into one gentle pact for the day: a practical suggestion, a small weird task, and a bedtime release.</p>
     </div>
   </div>
-  <nav class="dc-phase-rail" aria-label="Dream Customs phase">
-    <span class="{'is-active' if session.phase in ['empty', 'declaring'] else ''}">Declare</span>
-    <span class="{'is-active' if session.phase == 'negotiating' else ''}">Inspect</span>
-    <span class="{'is-active' if session.phase == 'drafting' else ''}">Draft</span>
-    <span class="{'is-active' if session.phase == 'sealed' else ''}">Seal</span>
-  </nav>
   <div class="dc-system-status">
-    <span>{escape(_phase_label(session.phase))}</span>
-    <span>Text: {escape(text_backend or "demo")}</span>
-    <span>Vision: {escape(vision_backend or "demo")}</span>
+    <span>Current: {escape(_phase_label(session.phase))}</span>
+    <span>Text {escape(text_backend or "demo")}</span>
+    <span>Vision {escape(vision_backend or "demo")}</span>
     <span>{escape(safety)}</span>
   </div>
 </header>
@@ -96,8 +90,9 @@ def render_timeline(session: CustomsSession) -> str:
 <section class="dc-timeline-shell" aria-label="Dream Customs timeline">
   <div class="dc-timeline-head">
     <div>
-      <h2>Customs timeline</h2>
-      <p>Evidence, questions, answers, and pact drafts stay in one file.</p>
+      <span class="dc-section-kicker">Customs timeline</span>
+      <h2>Story so far</h2>
+      <p>Dream fragments, clerk questions, and pact drafts stay together so the ritual feels easy to follow.</p>
     </div>
     <span>{session.evidence_count()} filed</span>
   </div>
@@ -117,7 +112,7 @@ def render_pact_inspector(session: CustomsSession) -> str:
 <aside class="dc-inspector is-waiting" aria-label="Pact inspector">
   <div class="dc-inspector-kicker">Pact inspector</div>
   <h2>No pact drafted yet</h2>
-  <p>Add material, ask a customs question, then draft a pact when the file feels useful enough.</p>
+  <p>Your alliance card will appear here after the clerk has enough dream material. Text-only is enough to begin.</p>
   <dl>
     <div><dt>Evidence</dt><dd>{session.evidence_count()} filed</dd></div>
     <div><dt>Phase</dt><dd>{escape(_phase_label(session.phase))}</dd></div>
@@ -176,14 +171,14 @@ def render_pact_card(card: PactCard) -> str:
     return f"""
 <style>
   .pact-card {{
-    color: oklch(0.965 0.010 235);
+    color: oklch(0.170 0.016 55);
     background:
-      radial-gradient(circle at 78% 0%, oklch(0.705 0.160 28 / 0.18), transparent 28%),
-      linear-gradient(135deg, oklch(0.205 0.035 238), oklch(0.145 0.030 238));
-    border: 2px solid oklch(0.705 0.160 28);
-    border-radius: 14px;
-    box-shadow: 0 8px 0 oklch(0.080 0.010 250 / 0.55);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      radial-gradient(circle at 88% 0%, oklch(0.830 0.120 76 / 0.20), transparent 26%),
+      linear-gradient(135deg, oklch(0.965 0.014 82), oklch(0.900 0.028 72));
+    border: 1px solid oklch(0.700 0.140 32 / 0.42);
+    border-radius: 18px;
+    box-shadow: 0 18px 38px oklch(0.130 0.012 55 / 0.34);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     line-height: 1.55;
     margin: 8px 0;
     max-width: 860px;
@@ -191,7 +186,7 @@ def render_pact_card(card: PactCard) -> str:
   }}
   .pact-header {{
     align-items: center;
-    border-bottom: 1px solid oklch(0.430 0.055 235);
+    border-bottom: 1px solid oklch(0.700 0.140 32 / 0.22);
     display: flex;
     font-weight: 720;
     justify-content: space-between;
@@ -199,14 +194,14 @@ def render_pact_card(card: PactCard) -> str:
     padding-bottom: 10px;
   }}
   .pact-card h2 {{
-    color: oklch(0.965 0.010 235) !important;
+    color: oklch(0.170 0.016 55) !important;
     font-size: 2rem;
     line-height: 1.1;
     margin: 0 0 4px;
     text-wrap: balance;
   }}
   .pact-card h3 {{
-    color: oklch(0.820 0.110 185) !important;
+    color: oklch(0.455 0.090 155) !important;
     font-size: 1.35rem;
     margin: 0 0 18px;
   }}
@@ -215,18 +210,19 @@ def render_pact_card(card: PactCard) -> str:
   .pact-card div,
   .pact-card span {{
     color: oklch(0.900 0.018 235) !important;
+    color: oklch(0.230 0.018 55) !important;
   }}
   .pact-header span {{
-    color: oklch(0.965 0.010 235) !important;
+    color: oklch(0.280 0.020 55) !important;
   }}
   .dc-label {{
-    color: oklch(0.820 0.110 185) !important;
+    color: oklch(0.455 0.090 155) !important;
     font-weight: 720;
   }}
   .dc-seal {{
-    border: 2px solid oklch(0.705 0.160 28);
+    border: 2px solid oklch(0.700 0.140 32);
     border-radius: 999px;
-    color: oklch(0.705 0.160 28) !important;
+    color: oklch(0.700 0.140 32) !important;
     display: inline-block;
     font-weight: 820;
     margin-top: 12px;
@@ -234,8 +230,8 @@ def render_pact_card(card: PactCard) -> str:
     transform: rotate(-4deg);
   }}
   .dc-sealed-safety {{
-    background: oklch(0.705 0.160 28 / 0.13);
-    border: 1px solid oklch(0.705 0.160 28 / 0.72);
+    background: oklch(0.700 0.140 32 / 0.10);
+    border: 1px solid oklch(0.700 0.140 32 / 0.34);
     border-radius: 10px;
     padding: 12px 14px;
   }}

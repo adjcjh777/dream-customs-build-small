@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>梦境海关 / Dream Customs Concept</title>
+  <style>
+    :root {
+      --ink: #102c3a;
+      --ink-soft: #36545c;
+      --paper: #fff8ea;
+      --mist: #d8edf0;
+      --mint: #c9dfd2;
+      --coral: #e85d4f;
+      --amber: #f2a65a;
+      --line: rgba(16, 44, 58, 0.18);
+      --shadow: 0 24px 70px rgba(16, 44, 58, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 9% 12%, rgba(232, 93, 79, 0.18), transparent 28%),
+        radial-gradient(circle at 88% 4%, rgba(216, 237, 240, 0.95), transparent 24%),
+        linear-gradient(135deg, #f6ead8 0%, #f8f1e4 46%, #d7ece5 100%);
+      font-family: "Iowan Old Style", "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+      letter-spacing: 0;
+      line-height: 1.62;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .stampbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      color: var(--ink-soft);
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stampbar span {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255, 248, 234, 0.72);
+    }
+
+    .hero {
+      min-height: 74vh;
+      display: grid;
+      grid-template-columns: 1.02fr 0.98fr;
+      gap: 34px;
+      align-items: center;
+      padding: 34px 0 42px;
+    }
+
+    .kicker {
+      color: var(--coral);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-family: "Avenir Next Condensed", "Gill Sans", sans-serif;
+      letter-spacing: 0;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.06;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 760px;
+      font-size: clamp(54px, 8vw, 118px);
+      font-weight: 900;
+    }
+
+    h2 {
+      font-size: clamp(31px, 4vw, 58px);
+      margin-bottom: 22px;
+    }
+
+    h3 {
+      font-size: 23px;
+      margin-bottom: 10px;
+    }
+
+    .lead {
+      max-width: 660px;
+      margin: 24px 0 26px;
+      font-size: 22px;
+      color: var(--ink-soft);
+    }
+
+    .pillrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .pill {
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 248, 234, 0.72);
+      font-size: 14px;
+      font-weight: 800;
+      font-family: "Avenir Next", "Gill Sans", sans-serif;
+    }
+
+    .hero-visual {
+      position: relative;
+    }
+
+    .hero-visual img,
+    .image-card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .section {
+      padding: 70px 0 24px;
+    }
+
+    .band {
+      border-top: 1px solid var(--line);
+      padding-top: 46px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .card {
+      background: rgba(255, 248, 234, 0.78);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 10px 36px rgba(16, 44, 58, 0.08);
+    }
+
+    .card strong,
+    .flow-step strong {
+      color: var(--coral);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .flow-step {
+      min-height: 210px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 8px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .flow-step::after {
+      content: attr(data-no);
+      position: absolute;
+      right: 14px;
+      bottom: -16px;
+      font-size: 104px;
+      line-height: 1;
+      color: rgba(255, 248, 234, 0.12);
+      font-weight: 900;
+      font-family: Georgia, serif;
+    }
+
+    .flow-step:nth-child(2) { background: #2e6870; }
+    .flow-step:nth-child(3) { background: #7c6b45; }
+    .flow-step:nth-child(4) { background: #b64c43; }
+
+    .spec {
+      background: rgba(16, 44, 58, 0.92);
+      color: var(--paper);
+      border-radius: 8px;
+      padding: 24px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .output-sample {
+      background: var(--paper);
+      border: 3px solid var(--ink);
+      border-radius: 8px;
+      padding: 26px;
+      box-shadow: 12px 12px 0 rgba(16, 44, 58, 0.14);
+    }
+
+    .sample-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 2px dashed var(--line);
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      font-weight: 900;
+    }
+
+    .seal {
+      display: inline-block;
+      border: 3px solid var(--coral);
+      color: var(--coral);
+      border-radius: 999px;
+      padding: 8px 14px;
+      transform: rotate(-4deg);
+      font-weight: 900;
+      margin-top: 12px;
+    }
+
+    .note {
+      color: var(--ink-soft);
+      font-size: 15px;
+      margin-top: 14px;
+    }
+
+    .image-card {
+      margin: 26px 0;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      margin-top: 70px;
+      padding-top: 22px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .deerflow {
+      color: var(--ink-soft);
+      opacity: 0.72;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(16, 44, 58, 0.24);
+    }
+
+    @media (max-width: 860px) {
+      .page { width: min(100% - 26px, 1180px); }
+      .hero,
+      .two,
+      .grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+      .hero { min-height: auto; padding-top: 18px; }
+      .stampbar,
+      .footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .lead { font-size: 19px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <div class="stampbar">
+      <span>Build Small Hackathon concept note</span>
+      <span>MiniCPM-V-4.6 + MiniCPM5-1B</span>
+    </div>
+
+    <section class="hero">
+      <div>
+        <div class="kicker">Dream Customs / 梦境海关</div>
+        <h1>和昨晚的梦结盟</h1>
+        <p class="lead">
+          一个三模态小模型应用：你用语音、图片或文字申报梦境。梦境海关把不安转成第二天的小建议，
+          把怪梦转成一件 5 分钟能完成的有趣小事。
+        </p>
+        <div class="pillrow">
+          <span class="pill">语音输入</span>
+          <span class="pill">图片/草图输入</span>
+          <span class="pill">文字输入</span>
+          <span class="pill">今日盟约卡</span>
+          <span class="pill">非诊断式睡眠陪伴</span>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <img src="assets/dream-passport.svg" alt="梦境入境许可证插图">
+      </div>
+    </section>
+
+    <section class="section band">
+      <h2>产品定位</h2>
+      <div class="two">
+        <div class="card">
+          <h3>它不是梦境诊断器</h3>
+          <p>
+            梦境海关不告诉用户“你有什么心理问题”，也不把梦解释成病症。它把梦当成一个来访者：
+            也许荒诞，也许吵闹，但可以谈判、安置、盖章放行。
+          </p>
+        </div>
+        <div class="card">
+          <h3>它是第二天的小同盟</h3>
+          <p>
+            输出重点不是解释过去，而是给明天一个轻量动作：一条认真建议、一个怪趣任务、
+            一句睡前放行仪式。用户睡不好时，也能获得一点温柔的秩序感。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>三模态申报入口</h2>
+      <div class="image-card">
+        <img src="assets/multimodal-intake.svg" alt="语音、图片、文字输入汇入 Dream Intake JSON 的流程图">
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>语音</h3>
+          <p>
+            睡醒后直接说梦，先由很小的 ASR 适配器转写成文本。它只负责转写，不参与梦境理解，
+            保证 MiniCPM 仍是体验核心。
+          </p>
+        </div>
+        <div class="card">
+          <h3>图片</h3>
+          <p>
+            上传梦境草图、床边便签、截图或随手拍。MiniCPM-V-4.6 读取视觉线索：
+            人、地点、物件、颜色、文字和情绪暗示。
+          </p>
+        </div>
+        <div class="card">
+          <h3>文字</h3>
+          <p>
+            最稳定的主入口。用户直接写梦境内容、醒来后的感觉、反复出现的符号，
+            MiniCPM5-1B 进入结盟谈判。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>MVP 体验流</h2>
+      <div class="flow">
+        <div class="flow-step" data-no="1">
+          <h3>申报</h3>
+          <p>用户用语音、图片或文字提交梦境。系统合并成统一的 Dream Intake JSON。</p>
+        </div>
+        <div class="flow-step" data-no="2">
+          <h3>来访者画像</h3>
+          <p>MiniCPM5-1B 把梦境命名为一个来访者，例如“迟到的电梯”。</p>
+        </div>
+        <div class="flow-step" data-no="3">
+          <h3>结盟谈判</h3>
+          <p>海关官提出 2-3 个温柔古怪的问题，帮助用户把梦转成可行动线索。</p>
+        </div>
+        <div class="flow-step" data-no="4">
+          <h3>今日盟约</h3>
+          <p>生成一张可截图分享的盟约卡：认真建议、怪趣任务、睡前放行。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>模型分工</h2>
+      <div class="two">
+        <div class="card">
+          <h3>MiniCPM-V-4.6：梦境目击证人</h3>
+          <p>
+            负责多模态感知：草图、便签、截图、照片中的视觉元素抽取。输出结构化线索，
+            不承担最终建议，避免视觉模型被迫做长文本人格化写作。
+          </p>
+        </div>
+        <div class="card">
+          <h3>MiniCPM5-1B：梦境外交官</h3>
+          <p>
+            负责核心体验：梦境来访者命名、谈判问题、今日建议、怪趣任务、睡前放行仪式。
+            1B 模型足够轻，和赛题“小而巧”的精神贴合。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Dream Intake JSON</h2>
+      <pre class="spec">{
+  "dream_text": "我梦见自己一直赶不上电梯，楼层按钮会融化。",
+  "visual_clues": ["歪斜电梯门", "蓝色楼道", "融化的数字 14"],
+  "mood": "焦虑但有点滑稽",
+  "recurring_symbols": ["电梯", "迟到", "融化的按钮"],
+  "uncertainty": "梦的后半段记不清",
+  "user_context": "最近晚上常做梦，睡醒后想获得第二天建议"
+}</pre>
+    </section>
+
+    <section class="section">
+      <h2>输出样例</h2>
+      <div class="two">
+        <div class="output-sample">
+          <div class="sample-head">
+            <span>梦境入境许可证</span>
+            <span>DC-06-05-014</span>
+          </div>
+          <p><strong>来访者：</strong>迟到的电梯</p>
+          <p><strong>携带物：</strong>未申报的焦虑、融化的按钮、一小袋没来得及开始的事。</p>
+          <p><strong>准入决定：</strong>准许入境，但必须在今天被安置成一个小动作。</p>
+          <p><strong>今日建议：</strong>提前 10 分钟开始一件最小的任务，不追求完成，只追求启动。</p>
+          <p><strong>怪趣任务：</strong>给电梯写一句道歉信：“抱歉总让你替我背迟到的锅。”</p>
+          <p><strong>睡前放行：</strong>“今日电梯已停靠，未完成事项明日再报关。”</p>
+          <span class="seal">SEALED</span>
+        </div>
+        <div class="image-card">
+          <img src="assets/alliance-card.svg" alt="今日盟约卡插图">
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>安全边界</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>不诊断</h3>
+          <p>不输出心理疾病判断，不解释成创伤证据，不制造恐惧。</p>
+        </div>
+        <div class="card">
+          <h3>轻建议</h3>
+          <p>只给生活层面的温和建议和微行动，避免医疗化、绝对化和命令式措辞。</p>
+        </div>
+        <div class="card">
+          <h3>升级提示</h3>
+          <p>如果用户表达长期严重失眠、自伤念头或强烈痛苦，提示寻求专业帮助。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Demo 叙事</h2>
+      <div class="card">
+        <p>
+          视频可以从真实场景开始：晚上睡不好，早上醒来还记得一个怪梦。用户对着麦克风说几句，
+          又拍一张床边便签。系统把它转成梦境申报表，盖章签发今日盟约卡。
+          结尾展示那个 5 分钟怪趣任务真的被执行了。
+        </p>
+      </div>
+      <p class="note">
+        比赛定位：更偏 Thousand Token Wood，因为它是一个 AI 承重的怪异互动体验；
+        同时也能讲 Backyard AI，因为它来自真实睡眠困扰。
+      </p>
+    </section>
+
+    <footer class="footer">
+      <span>Dream Customs concept draft · Build Small Hackathon</span>
+      <a class="deerflow" href="https://deerflow.tech" target="_blank" rel="noreferrer">Created By Deerflow</a>
+    </footer>
+  </main>
+</body>
+</html>

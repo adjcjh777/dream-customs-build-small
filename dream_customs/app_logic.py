@@ -39,6 +39,10 @@ def _file_path(value: Any) -> str:
         return value
     if isinstance(value, dict):
         return str(value.get("path") or value.get("name") or "")
+    if hasattr(value, "path"):
+        return str(getattr(value, "path") or "")
+    if hasattr(value, "name"):
+        return str(getattr(value, "name") or "")
     if isinstance(value, (list, tuple)) and value:
         return _file_path(value[0])
     return ""

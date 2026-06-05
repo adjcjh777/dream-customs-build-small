@@ -1080,6 +1080,435 @@ ul.options,
     flex-basis: 100% !important;
   }
 }
+
+/* V4: warm, simple Codex-like multimodal composer. */
+:root {
+  --dc-bg-night: oklch(0.185 0.018 55);
+  --dc-bg-void: oklch(0.130 0.012 55);
+  --dc-surface-ink: oklch(0.235 0.018 58);
+  --dc-surface-raised: oklch(0.295 0.020 62);
+  --dc-composer: oklch(0.255 0.014 52);
+  --dc-composer-soft: oklch(0.315 0.015 58);
+  --dc-primary: oklch(0.690 0.105 150);
+  --dc-primary-deep: oklch(0.455 0.090 155);
+  --dc-coral: oklch(0.700 0.140 32);
+  --dc-aurora: oklch(0.745 0.080 185);
+  --dc-lamp: oklch(0.830 0.120 76);
+  --dc-plum: oklch(0.270 0.038 328);
+  --dc-ink-main: oklch(0.960 0.010 78);
+  --dc-ink-muted: oklch(0.760 0.018 78);
+  --dc-border: oklch(0.465 0.024 70);
+  --dc-radius-lg: 18px;
+  --dc-radius-xl: 28px;
+}
+
+html,
+body,
+.gradio-container {
+  background:
+    radial-gradient(circle at 18% -8%, oklch(0.830 0.120 76 / 0.16), transparent 24rem),
+    radial-gradient(circle at 88% 10%, oklch(0.745 0.080 185 / 0.12), transparent 25rem),
+    linear-gradient(180deg, oklch(0.150 0.012 48), var(--dc-bg-night) 48%, var(--dc-bg-void));
+}
+
+.dc-app-shell {
+  gap: 14px !important;
+  max-width: 1260px;
+  padding: 18px clamp(12px, 2.4vw, 28px) 24px;
+}
+
+.dc-statusbar {
+  background:
+    linear-gradient(110deg, oklch(0.145 0.012 48 / 0.95), oklch(0.270 0.038 328 / 0.66)),
+    url("/file=docs/design/assets/dream-customs-probe-morning-console.png");
+  background-position: center 46%;
+  background-size: cover;
+  border-color: oklch(0.830 0.120 76 / 0.25);
+  border-radius: 20px;
+  box-shadow: none;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
+  padding: 18px;
+}
+
+.dc-statusbar::before {
+  background:
+    linear-gradient(90deg, oklch(0.145 0.012 48 / 0.92), oklch(0.235 0.018 58 / 0.76)),
+    radial-gradient(circle at 12% 30%, oklch(0.830 0.120 76 / 0.12), transparent 18rem);
+}
+
+.dc-brand-mark {
+  background: oklch(0.830 0.120 76 / 0.14);
+  border-color: oklch(0.830 0.120 76 / 0.42);
+  border-radius: 14px;
+  color: var(--dc-lamp);
+}
+
+.dc-brand-lockup h1 {
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+  font-weight: 760;
+}
+
+.dc-brand-lockup p {
+  color: oklch(0.840 0.016 78);
+  max-width: 58ch;
+}
+
+.dc-system-status {
+  align-content: center;
+  max-width: 390px;
+}
+
+.dc-system-status span {
+  background: oklch(0.130 0.012 55 / 0.66);
+  border-color: oklch(0.830 0.120 76 / 0.22);
+  color: oklch(0.880 0.018 78);
+}
+
+.dc-focus-grid {
+  align-items: start !important;
+  display: grid !important;
+  gap: 16px !important;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 390px);
+}
+
+.dc-composer-panel {
+  background:
+    radial-gradient(circle at 4% 0%, oklch(0.830 0.120 76 / 0.08), transparent 18rem),
+    linear-gradient(180deg, var(--dc-composer-soft), var(--dc-composer));
+  border: 1px solid oklch(0.830 0.120 76 / 0.18);
+  border-radius: var(--dc-radius-xl);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  padding: 18px;
+}
+
+.dc-composer-head {
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.dc-composer-head h2 {
+  color: var(--dc-ink-main);
+  font-size: clamp(1.08rem, 1.8vw, 1.32rem);
+  font-weight: 760;
+}
+
+.dc-composer-head p {
+  color: var(--dc-ink-muted);
+  max-width: 58ch;
+}
+
+.dc-trust-pill {
+  background: oklch(0.830 0.120 76 / 0.10);
+  border-color: oklch(0.830 0.120 76 / 0.28);
+  color: oklch(0.900 0.060 76);
+}
+
+.dc-inline-notice {
+  background: oklch(0.185 0.018 55 / 0.58);
+  border-color: oklch(0.830 0.120 76 / 0.18);
+  color: oklch(0.880 0.014 78);
+  margin-bottom: 8px;
+}
+
+.dc-dream-input,
+.dc-dream-input .block,
+.dc-dream-input .wrap,
+.dc-dream-input .input-container,
+.dc-dream-input .container {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.dc-dream-input textarea {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--dc-ink-main) !important;
+  font-size: 1.08rem !important;
+  line-height: 1.58 !important;
+  min-height: 138px !important;
+  padding: 8px 2px 12px !important;
+}
+
+.dc-dream-input textarea::placeholder {
+  color: oklch(0.690 0.016 78) !important;
+}
+
+.dc-composer-tools {
+  align-items: end !important;
+  display: grid !important;
+  gap: 8px !important;
+  grid-template-columns: minmax(112px, 0.8fr) minmax(112px, 0.8fr) minmax(130px, 1fr) minmax(128px, 0.9fr) minmax(160px, 1fr);
+}
+
+.dc-composer-tools > * {
+  min-width: 0 !important;
+}
+
+.dc-tool-tile,
+.dc-tool-select,
+.dc-tool-button,
+.dc-upload-button,
+.dc-voice-tool,
+.dc-send-button {
+  min-width: 0 !important;
+}
+
+.dc-tool-tile .block,
+.dc-tool-tile .wrap,
+.dc-tool-tile .container,
+.dc-tool-tile .input-container,
+.dc-tool-select .block,
+.dc-tool-select .wrap,
+.dc-tool-select .container,
+.dc-tool-select .input-container {
+  background: oklch(0.190 0.012 55 / 0.86) !important;
+  border-color: oklch(0.830 0.120 76 / 0.17) !important;
+  border-radius: 16px !important;
+  color: var(--dc-ink-main) !important;
+}
+
+.dc-tool-tile .image-container,
+.dc-tool-tile .audio-container,
+.dc-tool-tile .upload-container,
+.dc-tool-tile .upload-container button,
+.dc-tool-tile .audio-container button {
+  background: oklch(0.190 0.012 55 / 0.86) !important;
+  border-color: oklch(0.830 0.120 76 / 0.18) !important;
+  border-radius: 16px !important;
+  color: var(--dc-ink-muted) !important;
+  min-height: 68px !important;
+}
+
+.dc-tool-tile .image-container,
+.dc-tool-tile .audio-container {
+  min-height: 68px !important;
+}
+
+.dc-tool-select select,
+.dc-tool-select input,
+.dc-tool-select [role="combobox"] {
+  background: oklch(0.190 0.012 55 / 0.86) !important;
+  border-color: transparent !important;
+  color: var(--dc-ink-main) !important;
+  min-height: 42px !important;
+}
+
+.dc-upload-button,
+.dc-upload-button button,
+.dc-voice-tool,
+.dc-voice-tool .block,
+.dc-voice-tool .wrap,
+.dc-voice-tool .container,
+.dc-voice-tool .input-container,
+.dc-voice-tool .audio-container {
+  background: oklch(0.190 0.012 55 / 0.86) !important;
+  border-color: oklch(0.830 0.120 76 / 0.18) !important;
+  border-radius: 999px !important;
+  color: oklch(0.895 0.030 76) !important;
+  min-height: 44px !important;
+}
+
+.dc-upload-button button,
+.dc-voice-tool button {
+  border-radius: 999px !important;
+  min-height: 38px !important;
+}
+
+.dc-voice-tool {
+  max-height: 52px !important;
+  overflow: hidden !important;
+}
+
+.dc-voice-tool .audio-container {
+  height: 44px !important;
+  min-height: 44px !important;
+  overflow: hidden !important;
+}
+
+.dc-composer-panel label,
+.dc-composer-panel .label-wrap span,
+.dc-composer-panel [data-testid="block-label"] {
+  color: oklch(0.865 0.018 78) !important;
+  font-size: 0.76rem !important;
+  font-weight: 690 !important;
+}
+
+.dc-composer-panel .label-wrap,
+.dc-composer-panel label.float {
+  background: oklch(0.190 0.012 55 / 0.86) !important;
+  border-color: oklch(0.830 0.120 76 / 0.16) !important;
+}
+
+.dc-tool-button,
+.dc-tool-button button {
+  background: oklch(0.190 0.012 55) !important;
+  border: 1px solid oklch(0.830 0.120 76 / 0.20) !important;
+  border-radius: 999px !important;
+  color: oklch(0.895 0.030 76) !important;
+  min-height: 44px !important;
+  white-space: normal !important;
+}
+
+.dc-send-button,
+.dc-send-button button {
+  background: var(--dc-primary-deep) !important;
+  border: 1px solid var(--dc-primary) !important;
+  border-radius: 999px !important;
+  color: var(--dc-ink-main) !important;
+  min-height: 48px !important;
+  white-space: normal !important;
+}
+
+.dc-send-button:hover,
+.dc-send-button button:hover,
+.dc-tool-button:hover,
+.dc-tool-button button:hover {
+  transform: translateY(-1px);
+}
+
+.dc-pact-actions {
+  display: grid !important;
+  gap: 8px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dc-pact-actions button {
+  min-height: 46px !important;
+  white-space: normal !important;
+}
+
+.dc-draft-button,
+.dc-draft-button button {
+  background: oklch(0.295 0.020 62) !important;
+  border: 1px solid oklch(0.830 0.120 76 / 0.20) !important;
+  border-radius: 999px !important;
+  color: var(--dc-ink-main) !important;
+}
+
+.dc-seal-button,
+.dc-seal-button button {
+  background: var(--dc-coral) !important;
+  border: 1px solid var(--dc-coral) !important;
+  border-radius: 999px !important;
+  color: oklch(0.130 0.012 55) !important;
+}
+
+.dc-followup-panel,
+.dc-workflow-shortcuts,
+.dc-model-routes,
+.dc-diagnostics,
+.dc-examples {
+  background: oklch(0.185 0.018 55 / 0.72) !important;
+  border: 1px solid oklch(0.830 0.120 76 / 0.14) !important;
+  border-radius: 18px !important;
+  color: var(--dc-ink-main) !important;
+  overflow: hidden;
+}
+
+.dc-stage-nav {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.dc-stage-nav button,
+.dc-secondary-actions button {
+  background: oklch(0.235 0.018 58) !important;
+  border-color: oklch(0.830 0.120 76 / 0.16) !important;
+  border-radius: 999px !important;
+}
+
+.dc-inspector,
+.dc-timeline-shell {
+  background: oklch(0.235 0.018 58 / 0.92);
+  border-color: oklch(0.830 0.120 76 / 0.15);
+  border-radius: 20px;
+}
+
+.dc-inspector {
+  box-shadow: none;
+}
+
+.dc-timeline-shell {
+  margin-top: 2px;
+}
+
+.dc-timeline-event {
+  background: oklch(0.185 0.018 55 / 0.70);
+  border-color: oklch(0.830 0.120 76 / 0.12);
+}
+
+.dc-event-meta span,
+.dc-evidence-chip,
+.dc-inspector dl div {
+  background: oklch(0.185 0.018 55 / 0.68);
+  border-color: oklch(0.830 0.120 76 / 0.13);
+}
+
+.dc-inspector dt,
+.dc-inspector h3,
+.dc-inspector-kicker,
+.dc-permit-row span,
+.dc-timeline-head > span {
+  color: oklch(0.830 0.120 76);
+}
+
+@media (max-width: 980px) {
+  .dc-focus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dc-composer-tools {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .dc-send-button {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 620px) {
+  .dc-app-shell {
+    padding: 10px !important;
+  }
+
+  .dc-statusbar,
+  .dc-composer-panel,
+  .dc-inspector,
+  .dc-timeline-shell,
+  .dc-followup-panel,
+  .dc-workflow-shortcuts {
+    border-radius: 18px;
+  }
+
+  .dc-statusbar {
+    padding: 14px;
+  }
+
+  .dc-composer-panel {
+    padding: 14px;
+  }
+
+  .dc-dream-input textarea {
+    min-height: 128px !important;
+  }
+
+  .dc-composer-tools {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dc-tool-button,
+  .dc-send-button {
+    grid-column: span 1;
+  }
+
+  .dc-pact-actions {
+    grid-template-columns: 1fr;
+  }
+}
 """
 
 
@@ -1101,12 +1530,6 @@ def build_demo() -> gr.Blocks:
         with gr.Column(elem_classes=["dc-app-shell"]):
             status_html = gr.HTML()
 
-            with gr.Row(elem_classes=["dc-stage-nav"]):
-                declare_phase_btn = gr.Button("Declare")
-                inspect_phase_btn = gr.Button("Inspect")
-                draft_phase_btn = gr.Button("Draft")
-                seal_phase_btn = gr.Button("Seal", elem_classes=["dc-stage-seal"])
-
             with gr.Row(elem_classes=["dc-focus-grid"]):
                 with gr.Column(scale=7, elem_classes=["dc-declaration-column"]):
                     with gr.Column(elem_classes=["dc-composer-panel"]):
@@ -1114,44 +1537,59 @@ def build_demo() -> gr.Blocks:
                             """
 <div class="dc-composer-head">
   <div>
-    <h2>File the dream fragment here</h2>
-    <p>Start with text. Add a sketch, voice note, or mood only if it helps.</p>
+    <h2>Tell the customs desk what arrived in the night</h2>
+    <p>One calm place for text, sketch, voice, mood, and model route.</p>
   </div>
-  <span class="dc-trust-pill">Private by default</span>
+  <span class="dc-trust-pill">Playful, not diagnostic</span>
 </div>
 """.strip()
                         )
                         notice_html = gr.HTML()
-                        with gr.Row(elem_classes=["dc-declaration-row"]):
-                            dream_text = gr.Textbox(
-                                label="Dream material",
-                                lines=5,
-                                value="我梦见一部迟到的电梯，按钮都融化了，我一直到不了 14 楼。",
-                                placeholder="Type the dream, a fragment, or a new piece of material.",
+                        dream_text = gr.Textbox(
+                            label="Dream material",
+                            show_label=False,
+                            lines=6,
+                            value="我梦见一部迟到的电梯，按钮都融化了，我一直到不了 14 楼。",
+                            placeholder="Describe a dream, drop in a fragment, or ask the clerk what to do with it.",
+                            elem_classes=["dc-dream-input"],
+                        )
+                        with gr.Row(elem_classes=["dc-composer-tools"]):
+                            image_input = gr.UploadButton(
+                                "Image",
+                                file_types=["image"],
+                                file_count="single",
+                                elem_classes=["dc-upload-button", "dc-image-tool"],
                             )
-                            with gr.Column(elem_classes=["dc-primary-stack"]):
-                                send_btn = gr.Button("Send to customs", elem_classes=["dc-primary"])
-                                draft_btn = gr.Button("Draft pact", elem_classes=["dc-draft-button"])
-                                seal_btn = gr.Button("Seal today's pact", elem_classes=["dc-seal-button"])
-                        with gr.Row(elem_classes=["dc-evidence-grid"]):
-                            image_input = gr.Image(label="Attach image", type="filepath", height=132)
-                            audio_input = gr.Audio(label="Record voice", type="filepath")
+                            audio_input = gr.UploadButton(
+                                "Voice",
+                                file_types=["audio"],
+                                file_count="single",
+                                elem_classes=["dc-upload-button", "dc-audio-tool"],
+                            )
                             mood = gr.Dropdown(
-                                label="Mood chip",
+                                label="Mood",
+                                show_label=False,
                                 choices=["foggy", "anxious", "curious", "tired", "restless", "calm"],
                                 value="foggy",
+                                elem_classes=["dc-tool-select"],
                             )
+                            add_btn = gr.Button("+ Add", elem_classes=["dc-tool-button"])
+                            send_btn = gr.Button("Send", elem_classes=["dc-primary", "dc-send-button"])
+                    with gr.Accordion("Model routes", open=False, elem_classes=["dc-model-routes"]):
                         with gr.Row(elem_classes=["dc-route-row"]):
                             text_backend = gr.Dropdown(
-                                label="Text route",
+                                label="Text",
                                 choices=["demo", "model", "ollama"],
                                 value="demo",
+                                elem_classes=["dc-tool-select"],
                             )
                             vision_backend = gr.Dropdown(
-                                label="Vision route",
+                                label="Vision",
                                 choices=["demo", "model", "ollama"],
                                 value="demo",
+                                elem_classes=["dc-tool-select"],
                             )
+                    with gr.Accordion("Answer or refine the pact", open=False, elem_classes=["dc-followup-panel"]):
                         with gr.Row(elem_classes=["dc-followup-grid"]):
                             answer_text = gr.Textbox(
                                 label="Answer to the clerk",
@@ -1166,15 +1604,23 @@ def build_demo() -> gr.Blocks:
                                 placeholder="Try: make it stranger, make it gentler, or make the action smaller.",
                             )
                         with gr.Row(elem_classes=["dc-secondary-actions"]):
-                            add_btn = gr.Button("Add material")
                             ask_btn = gr.Button("Ask another question")
                             answer_btn = gr.Button("Answer question")
                             skip_btn = gr.Button("Skip question")
                             revise_btn = gr.Button("Revise pact")
                             new_btn = gr.Button("Start new")
+                    with gr.Accordion("Workflow shortcuts", open=False, elem_classes=["dc-workflow-shortcuts"]):
+                        with gr.Row(elem_classes=["dc-stage-nav"]):
+                            declare_phase_btn = gr.Button("Declare")
+                            inspect_phase_btn = gr.Button("Inspect")
+                            draft_phase_btn = gr.Button("Draft")
+                            seal_phase_btn = gr.Button("Seal", elem_classes=["dc-stage-seal"])
 
                 with gr.Column(scale=4, elem_classes=["dc-side-rail"]):
                     inspector_html = gr.HTML()
+                    with gr.Row(elem_classes=["dc-pact-actions"]):
+                        draft_btn = gr.Button("Draft pact", elem_classes=["dc-draft-button"])
+                        seal_btn = gr.Button("Seal today's pact", elem_classes=["dc-seal-button"])
                     sealed_html = gr.HTML(elem_classes=["dc-sealed-output"])
 
             timeline_html = gr.HTML()

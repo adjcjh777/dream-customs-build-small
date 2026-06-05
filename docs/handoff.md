@@ -4,15 +4,15 @@ Last updated: 2026-06-05
 
 ## Current State
 
-The project has shipped a working Gradio MVP and a deployed V2 workbench on Hugging Face Space. The V2 backend/state loop works, but the public UI still needs a V3 rescue pass because the first screen does not match normal user habits.
+The project has shipped a working Gradio MVP and a V4 local UI pass. The current interface centers a warm Codex-like multimodal composer: text, image upload, voice upload, mood, add-material, and send live inside one rounded input surface. Model routes, workflow shortcuts, diagnostics, and examples are collapsed by default.
 
-Known V2 UX problems:
+Current V4 UX decisions:
 
-- The declaration composer appears below the timeline and pact inspector.
-- The primary submit action is buried below many controls.
-- The `Declare / Inspect / Draft / Seal` rail looks interactive but is static HTML.
-- Empty timeline/inspector min-heights create long blank scroll space.
-- Gradio default control styling leaks into the dark visual system.
+- The first screen prioritizes the dream declaration composer and pact inspector.
+- Image and voice use compact upload buttons to avoid large Gradio media drop zones in the main composer.
+- `Draft pact` and `Seal today's pact` sit beside the live pact inspector.
+- The timeline is a supporting "Story so far" section below the first-screen workflow.
+- Technical model route controls are available but not first-level visual chrome.
 
 The original visual HTML concept note remains useful background:
 

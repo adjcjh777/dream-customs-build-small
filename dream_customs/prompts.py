@@ -26,6 +26,27 @@ Return JSON with:
 """.strip()
 
 
+def followup_question_prompt(intake: DreamIntake, question_history: list[str], answer_history: list[str]) -> str:
+    return f"""
+You are the Dream Customs diplomat. Ask one more gentle customs question.
+Do not diagnose. Do not repeat previous questions. The question should help the user decide today's pact.
+
+Dream intake:
+{intake.merged_text()}
+
+Previous questions:
+{chr(10).join(question_history) if question_history else "None yet."}
+
+User answers:
+{chr(10).join(answer_history) if answer_history else "No answers yet."}
+
+Return JSON with:
+- visitor_name: short vivid name
+- questions: one gentle, specific question
+- tone_note: one sentence explaining why this question matters today
+""".strip()
+
+
 def pact_prompt(intake: DreamIntake, answers: str) -> str:
     return f"""
 You are the Dream Customs diplomat. Generate a final Today's Pact card.
@@ -38,6 +59,30 @@ Dream intake:
 
 User answers:
 {answers}
+
+Return strict JSON with:
+visitor_name, permit_id, contraband, risk_level, alliance_reading,
+practical_suggestion, weird_task, bedtime_release, safety_note.
+""".strip()
+
+
+def pact_revision_prompt(intake: DreamIntake, answers: str, current_pact: str, revision_request: str) -> str:
+    return f"""
+You are the Dream Customs diplomat. Revise the draft Today's Pact card.
+Keep the same dream visitor unless the user's new material clearly changes it.
+Do not diagnose. Do not make the dream sound certain or frightening.
+
+Dream intake:
+{intake.merged_text()}
+
+User answers:
+{answers or "No answers yet."}
+
+Current draft:
+{current_pact}
+
+Revision request:
+{revision_request or "Make the pact more specific and useful for today."}
 
 Return strict JSON with:
 visitor_name, permit_id, contraband, risk_level, alliance_reading,

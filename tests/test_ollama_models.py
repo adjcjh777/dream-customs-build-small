@@ -1,4 +1,4 @@
-from dream_customs.models import OllamaTextClient, OllamaVisionClient, _extract_json_object
+from dream_customs.models import HostedMiniCPMTextClient, OllamaTextClient, OllamaVisionClient, _extract_json_object
 
 
 class StubOllamaTextClient(OllamaTextClient):
@@ -17,6 +17,15 @@ class StubOllamaVisionClient(OllamaVisionClient):
 
     def _post_generate(self, prompt: str, image_b64: str, num_predict: int = 256):
         return {"response": self.response_text}
+
+
+class StubHostedTextClient(HostedMiniCPMTextClient):
+    def __init__(self, payload):
+        super().__init__(endpoint="https://example.invalid")
+        self.payload = payload
+
+    def _post_json(self, prompt: str, max_tokens: int = 700):
+        return self.payload
 
 
 def test_extract_json_object_handles_code_fence():
@@ -69,3 +78,23 @@ def test_ollama_vision_client_parses_visual_clues(tmp_path):
     )
     clues = client.extract_clues(str(image_path))
     assert clues == ["passport stamp", "customs desk", "blue", "foggy"]
+
+
+def test_hosted_text_client_parses_common_response_shape():
+    client = StubHostedTextClient(
+        {
+            "choices": [
+                {
+                    "message": {
+                        "content": (
+                            '{"visitor_name":"Gate 14","questions":["What does it ask?"],'
+                            '"tone_note":"Keep it small."}'
+                        )
+                    }
+                }
+            ]
+        }
+    )
+    negotiation = client.generate_negotiation("dream")
+    assert negotiation["visitor_name"] == "Gate 14"
+    assert negotiation["questions"] == ["What does it ask?"]

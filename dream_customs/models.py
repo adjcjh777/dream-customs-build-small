@@ -300,3 +300,177 @@ class MiniCPMVisionClient:
         result = pipe(text=messages)
         text = str(result)
         return [part.strip() for part in text.replace("\n", ",").split(",") if part.strip()][:8]
+
+
+def _hosted_text_from_response(payload: Dict[str, Any]) -> str:
+    for key in ("response", "text", "generated_text", "output"):
+        value = payload.get(key)
+        if isinstance(value, str):
+            return value
+    choices = payload.get("choices")
+    if isinstance(choices, list) and choices:
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message")
+            if isinstance(message, dict) and isinstance(message.get("content"), str):
+                return message["content"]
+            if isinstance(first.get("text"), str):
+                return first["text"]
+    data = payload.get("data")
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return _hosted_text_from_response(data[0])
+    return ""
+
+
+class HostedMiniCPMTextClient:
+    def __init__(
+        self,
+        endpoint: str = "",
+        token: str = "",
+        timeout: float = 60.0,
+        fallback: Optional[FakeTextClient] = None,
+    ):
+        self.endpoint = endpoint.strip()
+        self.token = token.strip()
+        self.timeout = timeout
+        self.fallback = fallback or FakeTextClient()
+
+    def _post_json(self, prompt: str, max_tokens: int = 700) -> Optional[Dict[str, Any]]:
+        if not self.endpoint:
+            return None
+        payload = {
+            "prompt": prompt,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
+            "max_tokens": max_tokens,
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        request = urllib.request.Request(
+            self.endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return None
+
+    def _generate_json(self, prompt: str, schema_hint: str, max_tokens: int = 700) -> Optional[Dict[str, Any]]:
+        strict_prompt = (
+            f"{prompt}\n\n"
+            "Return only a single valid JSON object. No markdown, no code fences, no hidden reasoning.\n"
+            f"Required schema: {schema_hint}"
+        )
+        payload = self._post_json(strict_prompt, max_tokens=max_tokens)
+        if not payload:
+            return None
+        return _extract_json_object(_hosted_text_from_response(payload))
+
+    def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
+        parsed = self._generate_json(
+            prompt,
+            '{"visitor_name":"string","questions":["string"],"tone_note":"string"}',
+            max_tokens=360,
+        )
+        if not parsed:
+            return self.fallback.generate_negotiation(prompt)
+        questions = _as_string_list(parsed.get("questions"))
+        if not parsed.get("visitor_name") or not questions:
+            return self.fallback.generate_negotiation(prompt)
+        return {
+            "visitor_name": str(parsed.get("visitor_name", "")).strip(),
+            "questions": questions[:3],
+            "tone_note": str(parsed.get("tone_note", "")).strip(),
+        }
+
+    def generate_pact(self, prompt: str) -> PactCard:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"visitor_name":"string","permit_id":"string","contraband":["string"],'
+                '"risk_level":"string","alliance_reading":"string","practical_suggestion":"string",'
+                '"weird_task":"string","bedtime_release":"string","safety_note":"string"}'
+            ),
+            max_tokens=780,
+        )
+        if not parsed:
+            return self.fallback.generate_pact(prompt)
+        try:
+            return PactCard(
+                visitor_name=str(parsed["visitor_name"]).strip(),
+                permit_id=str(parsed["permit_id"]).strip(),
+                contraband=_as_string_list(parsed["contraband"]) or ["unfiled dream fragment"],
+                risk_level=str(parsed["risk_level"]).strip(),
+                alliance_reading=str(parsed["alliance_reading"]).strip(),
+                practical_suggestion=str(parsed["practical_suggestion"]).strip(),
+                weird_task=str(parsed["weird_task"]).strip(),
+                bedtime_release=str(parsed["bedtime_release"]).strip(),
+                safety_note=str(parsed.get("safety_note", "")).strip(),
+            )
+        except (KeyError, TypeError, ValueError):
+            return self.fallback.generate_pact(prompt)
+
+
+class HostedMiniCPMVisionClient:
+    def __init__(
+        self,
+        endpoint: str = "",
+        token: str = "",
+        timeout: float = 60.0,
+        fallback: Optional[FakeVisionClient] = None,
+    ):
+        self.endpoint = endpoint.strip()
+        self.token = token.strip()
+        self.timeout = timeout
+        self.fallback = fallback or FakeVisionClient()
+
+    def _post_image(self, image_path: str) -> Optional[Dict[str, Any]]:
+        if not self.endpoint:
+            return None
+        try:
+            with open(image_path, "rb") as image_file:
+                image_b64 = base64.b64encode(image_file.read()).decode("ascii")
+        except OSError:
+            return None
+        payload = {
+            "prompt": visual_clue_prompt(),
+            "image": image_b64,
+            "images": [image_b64],
+            "temperature": 0.1,
+            "max_tokens": 320,
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        request = urllib.request.Request(
+            self.endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return None
+
+    def extract_clues(self, image_path: Optional[str]) -> List[str]:
+        if not image_path:
+            return []
+        payload = self._post_image(image_path)
+        if not payload:
+            return self.fallback.extract_clues(image_path)
+        parsed = _extract_json_object(_hosted_text_from_response(payload))
+        if parsed:
+            clues: List[str] = []
+            for key in ("objects", "places", "visible_text", "colors", "mood_cues", "uncertain_details"):
+                clues.extend(_as_string_list(parsed.get(key)))
+            if clues:
+                return clues[:8]
+        text = _hosted_text_from_response(payload)
+        clues = [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()]
+        return clues[:8] or self.fallback.extract_clues(image_path)

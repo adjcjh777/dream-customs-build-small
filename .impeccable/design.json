@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-05T13:25:00+08:00",
+  "title": "Design System: Dream Customs",
+  "extensions": {
+    "colorMeta": {
+      "bg-night": {
+        "role": "neutral",
+        "displayName": "Night Background",
+        "canonical": "oklch(0.145 0.030 238)",
+        "tonalRamp": [
+          "oklch(0.120 0.030 238)",
+          "oklch(0.180 0.030 238)",
+          "oklch(0.260 0.030 238)",
+          "oklch(0.360 0.030 238)",
+          "oklch(0.500 0.030 238)",
+          "oklch(0.660 0.030 238)",
+          "oklch(0.820 0.030 238)",
+          "oklch(0.940 0.030 238)"
+        ]
+      },
+      "primary-cobalt": {
+        "role": "primary",
+        "displayName": "Cobalt Gate",
+        "canonical": "oklch(0.690 0.105 232)",
+        "tonalRamp": [
+          "oklch(0.180 0.105 232)",
+          "oklch(0.280 0.105 232)",
+          "oklch(0.400 0.105 232)",
+          "oklch(0.520 0.105 232)",
+          "oklch(0.640 0.105 232)",
+          "oklch(0.760 0.105 232)",
+          "oklch(0.860 0.080 232)",
+          "oklch(0.940 0.050 232)"
+        ]
+      },
+      "accent-coral-stamp": {
+        "role": "accent",
+        "displayName": "Coral Stamp Ink",
+        "canonical": "oklch(0.705 0.160 28)",
+        "tonalRamp": [
+          "oklch(0.200 0.130 28)",
+          "oklch(0.320 0.145 28)",
+          "oklch(0.440 0.155 28)",
+          "oklch(0.560 0.160 28)",
+          "oklch(0.680 0.160 28)",
+          "oklch(0.800 0.120 28)",
+          "oklch(0.900 0.070 28)",
+          "oklch(0.960 0.035 28)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "App title and sealed pact headline only."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Dream text, questions, answers, and pact explanations."
+      }
+    },
+    "shadows": [
+      {
+        "name": "composer-focus",
+        "value": "0 0 0 1px oklch(0.690 0.105 232), 0 12px 32px rgba(0, 0, 0, 0.28)",
+        "purpose": "Focused bottom composer."
+      },
+      {
+        "name": "pact-lift",
+        "value": "0 10px 28px rgba(0, 0, 0, 0.24)",
+        "purpose": "Sealed pact card."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-shift",
+        "value": "180ms cubic-bezier(0.25, 1, 0.5, 1)",
+        "purpose": "Buttons, chips, composer focus, and inspector state changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "760px"
+      },
+      {
+        "name": "desktop",
+        "value": "1040px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Default action for continuing the customs flow.",
+      "html": "<button class=\"ds-btn-primary\">Continue negotiation</button>",
+      "css": ".ds-btn-primary { background: oklch(0.510 0.115 234); color: oklch(0.965 0.010 235); border: 0; border-radius: 10px; padding: 12px 16px; font: 680 14px/1.2 Inter, system-ui, sans-serif; transition: background 180ms cubic-bezier(0.25, 1, 0.5, 1), transform 180ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-primary:hover { background: oklch(0.590 0.120 232); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid oklch(0.820 0.110 185); outline-offset: 2px; }"
+    },
+    {
+      "name": "Seal Button",
+      "kind": "button",
+      "refersTo": "button-accent",
+      "description": "Final action that seals today's pact.",
+      "html": "<button class=\"ds-btn-seal\">Seal today's pact</button>",
+      "css": ".ds-btn-seal { background: oklch(0.705 0.160 28); color: oklch(0.080 0.010 250); border: 0; border-radius: 10px; padding: 12px 16px; font: 760 14px/1.2 Inter, system-ui, sans-serif; transition: box-shadow 180ms cubic-bezier(0.25, 1, 0.5, 1), transform 180ms cubic-bezier(0.25, 1, 0.5, 1); } .ds-btn-seal:hover { box-shadow: 0 0 20px rgba(255, 107, 84, 0.24); transform: translateY(-1px); } .ds-btn-seal:focus-visible { outline: 2px solid oklch(0.965 0.010 235); outline-offset: 2px; }"
+    },
+    {
+      "name": "Evidence Chip",
+      "kind": "chip",
+      "refersTo": "evidence-chip",
+      "description": "Shows a queued or extracted dream evidence item.",
+      "html": "<span class=\"ds-evidence-chip\"><span class=\"ds-evidence-dot\"></span>Image extracted</span>",
+      "css": ".ds-evidence-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; border: 1px solid oklch(0.430 0.055 235); border-radius: 999px; background: oklch(0.205 0.035 238); color: oklch(0.965 0.010 235); padding: 5px 10px; font: 650 13px/1.2 Inter, system-ui, sans-serif; } .ds-evidence-dot { width: 8px; height: 8px; border-radius: 999px; background: oklch(0.820 0.110 185); box-shadow: 0 0 12px rgba(96, 220, 205, 0.35); }"
+    },
+    {
+      "name": "Bottom Composer",
+      "kind": "input",
+      "refersTo": "input-composer",
+      "description": "Codex-style dream declaration input with evidence controls.",
+      "html": "<div class=\"ds-composer\"><textarea placeholder=\"Declare a dream fragment...\"></textarea><div class=\"ds-composer-actions\"><button>Attach image</button><button>Record voice</button><button class=\"ds-send\">Send</button></div></div>",
+      "css": ".ds-composer { background: oklch(0.205 0.035 238); color: oklch(0.965 0.010 235); border: 1px solid oklch(0.430 0.055 235); border-radius: 14px; padding: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28); } .ds-composer textarea { width: 100%; min-height: 84px; resize: vertical; color: inherit; background: transparent; border: 0; outline: 0; font: 450 16px/1.55 Inter, system-ui, sans-serif; } .ds-composer textarea::placeholder { color: oklch(0.760 0.030 232); } .ds-composer-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; } .ds-composer button { border: 1px solid oklch(0.430 0.055 235); border-radius: 10px; background: oklch(0.275 0.045 236); color: oklch(0.965 0.010 235); padding: 8px 10px; } .ds-composer .ds-send { background: oklch(0.510 0.115 234); border-color: transparent; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Night Desk",
+    "overview": "Dream Customs should feel like a working customs desk that appears inside a dream at 4:17 a.m. The surface is dark because the user often arrives from bed or after waking, but it is not a generic terminal. Cobalt, aurora cyan, and coral stamp ink carry the strange color. Familiar controls carry trust.",
+    "keyCharacteristics": [
+      "Bottom composer as the primary input, modeled after Codex app behavior.",
+      "Conversation timeline for declarations, questions, and pact drafts.",
+      "Evidence tray for text, image, audio, mood, and model status.",
+      "Pact inspector that can be drafted, revised, or sealed.",
+      "Generated bitmap art as atmospheric header and state art, never as unreadable UI chrome."
+    ],
+    "rules": [
+      {
+        "name": "The Stamp Rarity Rule",
+        "body": "Coral is used for sealing, warnings, and permit marks only. It must not become a general decoration color.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Parchment Rule",
+        "body": "Do not return to cream, beige, or faux paper backgrounds. Dream color comes from night, ink, and evidence light.",
+        "section": "colors"
+      },
+      {
+        "name": "The Low-Light Readability Rule",
+        "body": "Muted text must remain legible on dark surfaces. Never use low-contrast gray for field labels or placeholders.",
+        "section": "typography"
+      },
+      {
+        "name": "The State First Rule",
+        "body": "Shadows communicate focus, hover, or completion. They are not default decoration.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do make the bottom composer the most obvious control on mobile and desktop.",
+      "Do keep every phase actionable with one clear next step.",
+      "Do use generated raster imagery for the dream atmosphere, header state, or empty state.",
+      "Do verify dark-mode contrast for body text, labels, placeholders, chips, and disabled controls.",
+      "Do preserve a deterministic demo backend while adding a model-backed route."
+    ],
+    "donts": [
+      "Don't ship a plain Gradio two-column form as the primary experience.",
+      "Don't use beige parchment, tarot, faux therapy, or generic purple AI visuals.",
+      "Don't use one-shot generation as the whole flow.",
+      "Don't hide Add material, Continue negotiation, or Seal pact below the fold.",
+      "Don't pair a 1px border with a large soft shadow on every card.",
+      "Don't use side-stripe borders, gradient text, or decorative glass panels."
+    ]
+  }
+}

@@ -63,11 +63,60 @@ Local smoke notes from this Mac mini:
 - `openbmb/minicpm-v4.6` pulled successfully, but current Ollama runner returned `unable to load model`.
 - Because of that, the MVP keeps Ollama optional and falls back to deterministic demo behavior.
 
+## Optional Hosted MiniCPM Routes
+
+Hosted routes are intended for Modal experiments or private Space secrets. Set these in the runtime environment only, then switch the UI route menus from `demo` to `model`:
+
+- `DREAM_CUSTOMS_TEXT_ENDPOINT`
+- `DREAM_CUSTOMS_VISION_ENDPOINT`
+- `DREAM_CUSTOMS_HOSTED_TOKEN`
+
+Missing endpoints or route failures fall back to deterministic demo behavior. Do not store token values in env files, git, docs, screenshots, logs, or examples.
+
+Token-safe text smoke:
+
+```bash
+python - <<'PY'
+import os
+from dream_customs.models import HostedMiniCPMTextClient
+
+client = HostedMiniCPMTextClient(
+    endpoint=os.environ["DREAM_CUSTOMS_TEXT_ENDPOINT"],
+    token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+)
+result = client.generate_negotiation("I missed an elevator in a foggy dream.")
+print(result["visitor_name"])
+PY
+```
+
+Token-safe vision smoke:
+
+```bash
+python - <<'PY'
+import os
+from dream_customs.models import HostedMiniCPMVisionClient
+
+client = HostedMiniCPMVisionClient(
+    endpoint=os.environ["DREAM_CUSTOMS_VISION_ENDPOINT"],
+    token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+)
+print(client.extract_clues(os.environ["DREAM_CUSTOMS_SMOKE_IMAGE"]))
+PY
+```
+
 ## Test
 
 ```bash
 python -m pytest -q
 ```
+
+## Deployment Smoke Status
+
+2026-06-05 local V2 verification passed: tests were green and the workbench flow reached a sealed pact through `Send to customs`, `Ask another question`, `Add material`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
+
+The public Space may still show the older one-shot UI until the latest branch is pushed to the Hugging Face Space `main` branch. A 2026-06-05 push attempt was rejected by HF authorization, while the already deployed old Space still opened and returned a text-only demo pact through the remote queue.
+
+Current smoke details are tracked in `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 
 ## Safety
 

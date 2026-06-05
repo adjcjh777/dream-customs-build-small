@@ -6,10 +6,26 @@ from dream_customs.models import (
     FakeASRClient,
     FakeTextClient,
     FakeVisionClient,
+    HostedMiniCPMTextClient,
+    HostedMiniCPMVisionClient,
     OllamaTextClient,
     OllamaVisionClient,
 )
-from dream_customs.pipeline import generate_negotiation, generate_pact, intake_from_modalities
+from dream_customs.pipeline import (
+    add_evidence,
+    answer_question,
+    ask_questions,
+    create_session,
+    draft_pact,
+    generate_negotiation,
+    generate_pact,
+    intake_from_modalities,
+    revise_pact,
+    seal_pact,
+    skip_question,
+)
+from dream_customs.render import render_pact_card, render_pact_inspector, render_status_bar, render_timeline
+from dream_customs.schema import CustomsSession
 
 
 DEFAULT_TEXT_MODEL = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0"
@@ -36,6 +52,11 @@ def _clients(text_backend: str, vision_backend: str):
             model_name=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", DEFAULT_TEXT_MODEL),
             base_url=os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434"),
         )
+    elif text_backend == "model":
+        text_client = HostedMiniCPMTextClient(
+            endpoint=os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", ""),
+            token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+        )
     else:
         text_client = FakeTextClient()
 
@@ -44,10 +65,168 @@ def _clients(text_backend: str, vision_backend: str):
             model_name=os.getenv("DREAM_CUSTOMS_VISION_MODEL", DEFAULT_VISION_MODEL),
             base_url=os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434"),
         )
+    elif vision_backend == "model":
+        vision_client = HostedMiniCPMVisionClient(
+            endpoint=os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", ""),
+            token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+        )
     else:
         vision_client = FakeVisionClient()
 
     return text_client, vision_client, FakeASRClient()
+
+
+def _session_from_state(state: Any) -> CustomsSession:
+    if isinstance(state, CustomsSession):
+        return state
+    if isinstance(state, str) and state.strip():
+        try:
+            return CustomsSession.model_validate_json(state)
+        except ValueError:
+            return create_session()
+    if isinstance(state, dict):
+        try:
+            return CustomsSession.model_validate(state)
+        except ValueError:
+            return create_session()
+    return create_session()
+
+
+def _debug_json(session: CustomsSession, text_backend: str, vision_backend: str) -> str:
+    payload = {
+        "status": session.phase,
+        "text_backend": text_backend,
+        "vision_backend": vision_backend,
+        "session": session.model_dump(mode="json"),
+    }
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
+def _notice(session: CustomsSession) -> str:
+    latest_error = next((event for event in reversed(session.events) if event.role == "error"), None)
+    if latest_error:
+        return f"<div class='dc-inline-notice is-error'>{latest_error.body}</div>"
+    if session.phase == "sealed":
+        return "<div class='dc-inline-notice is-sealed'>Today's pact is sealed. The card below is ready for a screenshot.</div>"
+    if session.phase == "drafting":
+        return "<div class='dc-inline-notice'>Draft ready. Revise it, ask another question, add material, or seal today's pact.</div>"
+    if session.phase == "negotiating":
+        return "<div class='dc-inline-notice'>The clerk has questions. Answer, skip, add material, or draft a pact.</div>"
+    return "<div class='dc-inline-notice'>File any fragment. Text-only stays available if image or voice fails.</div>"
+
+
+def _view(session: CustomsSession, text_backend: str = "demo", vision_backend: str = "demo"):
+    sealed_html = render_pact_card(session.sealed_pact) if session.sealed_pact else ""
+    return (
+        json.dumps(session.model_dump(mode="json"), ensure_ascii=False),
+        render_status_bar(session, text_backend, vision_backend),
+        render_timeline(session),
+        render_pact_inspector(session),
+        sealed_html,
+        _debug_json(session, text_backend, vision_backend),
+        _notice(session),
+    )
+
+
+def initial_workbench_state(text_backend: str = "demo", vision_backend: str = "demo"):
+    return _view(create_session(), text_backend, vision_backend)
+
+
+def start_declaration_action(
+    state: Any,
+    dream_text: str,
+    image_value: Any = None,
+    audio_value: Any = None,
+    mood: str = "",
+    text_backend: str = "demo",
+    vision_backend: str = "demo",
+):
+    session = _session_from_state(state)
+    text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    session = add_evidence(
+        session,
+        dream_text=dream_text or "",
+        image_path=_file_path(image_value) or None,
+        audio_path=_file_path(audio_value) or None,
+        mood=mood or "",
+        vision_client=vision_client,
+        asr_client=asr_client,
+    )
+    if session.phase != "error":
+        session = ask_questions(session, text_client)
+    return _view(session, text_backend, vision_backend)
+
+
+def add_material_action(
+    state: Any,
+    dream_text: str,
+    image_value: Any = None,
+    audio_value: Any = None,
+    mood: str = "",
+    text_backend: str = "demo",
+    vision_backend: str = "demo",
+):
+    session = _session_from_state(state)
+    _text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    session = add_evidence(
+        session,
+        dream_text=dream_text or "",
+        image_path=_file_path(image_value) or None,
+        audio_path=_file_path(audio_value) or None,
+        mood=mood or "",
+        vision_client=vision_client,
+        asr_client=asr_client,
+    )
+    return _view(session, text_backend, vision_backend)
+
+
+def answer_question_action(state: Any, answer: str, text_backend: str = "demo", vision_backend: str = "demo"):
+    session = answer_question(_session_from_state(state), answer or "")
+    return _view(session, text_backend, vision_backend)
+
+
+def skip_question_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+    session = skip_question(_session_from_state(state))
+    return _view(session, text_backend, vision_backend)
+
+
+def ask_another_question_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+    session = _session_from_state(state)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    session = ask_questions(session, text_client, force_another=True)
+    return _view(session, text_backend, vision_backend)
+
+
+def draft_pact_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+    session = _session_from_state(state)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    session = draft_pact(session, text_client)
+    return _view(session, text_backend, vision_backend)
+
+
+def revise_pact_action(
+    state: Any,
+    revision_request: str,
+    text_backend: str = "demo",
+    vision_backend: str = "demo",
+):
+    session = _session_from_state(state)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    session = revise_pact(session, revision_request or "", text_client)
+    return _view(session, text_backend, vision_backend)
+
+
+def seal_pact_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+    session = _session_from_state(state)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    if not session.draft_pact and session.intake.merged_text():
+        session = draft_pact(session, text_client)
+    session = seal_pact(session)
+    return _view(session, text_backend, vision_backend)
+
+
+def start_new_action(text_backend: str = "demo", vision_backend: str = "demo"):
+    return _view(create_session(), text_backend, vision_backend)
 
 
 def run_customs_once(

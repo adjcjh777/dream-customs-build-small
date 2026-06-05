@@ -1,4 +1,4 @@
-from dream_customs.schema import DreamIntake, PactCard
+from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard
 
 
 def test_dream_intake_defaults_lists():
@@ -37,3 +37,18 @@ def test_pact_card_requires_core_fields():
     )
     assert card.safety_note == ""
     assert "Late Elevator" in card.to_plain_text()
+
+
+def test_customs_session_defaults_to_empty_workbench():
+    session = CustomsSession()
+    assert session.phase == "empty"
+    assert session.evidence_items == []
+    assert session.question_history == []
+    assert session.evidence_count() == 0
+
+
+def test_evidence_item_tracks_failure_state():
+    item = EvidenceItem(type="image", label="Image evidence", status="failed", error="No clues extracted")
+    assert item.type == "image"
+    assert item.status == "failed"
+    assert "No clues" in item.error

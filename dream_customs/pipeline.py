@@ -1,9 +1,10 @@
+import re
 from typing import Dict, List, Optional, Tuple
 
-from dream_customs.prompts import negotiation_prompt, pact_prompt
+from dream_customs.prompts import followup_question_prompt, negotiation_prompt, pact_prompt, pact_revision_prompt
 from dream_customs.render import render_pact_card
 from dream_customs.safety import needs_escalation, safety_note
-from dream_customs.schema import DreamIntake, PactCard
+from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard, TimelineEvent
 
 
 def build_intake(
@@ -56,3 +57,333 @@ def generate_pact(intake: DreamIntake, answers: str, text_client) -> Tuple[PactC
     if needs_escalation(merged):
         card.safety_note = safety_note()
     return card, render_pact_card(card)
+
+
+def create_session() -> CustomsSession:
+    return CustomsSession(
+        events=[
+            TimelineEvent(
+                role="system",
+                title="Dream Customs desk opened",
+                body="Start with any fragment: a sentence, a sketch, a voice note, or just the mood left behind.",
+                status="ready",
+            )
+        ]
+    )
+
+
+def _contains_cjk(text: str) -> bool:
+    return bool(re.search(r"[\u4e00-\u9fff]", text))
+
+
+def _append_text(existing: str, new_text: str) -> str:
+    new_text = new_text.strip()
+    if not new_text:
+        return existing
+    if not existing.strip():
+        return new_text
+    if new_text in existing:
+        return existing
+    return f"{existing.strip()}\n{new_text}"
+
+
+def _merge_unique(existing: List[str], incoming: List[str]) -> List[str]:
+    seen = {item.strip().lower() for item in existing}
+    merged = list(existing)
+    for item in incoming:
+        clean = item.strip()
+        if clean and clean.lower() not in seen:
+            merged.append(clean)
+            seen.add(clean.lower())
+    return merged
+
+
+def _event(role: str, title: str, body: str = "", meta: str = "", status: str = "") -> TimelineEvent:
+    return TimelineEvent(role=role, title=title, body=body, meta=meta, status=status)
+
+
+def _record_safety(session: CustomsSession) -> None:
+    merged = "\n".join([session.intake.merged_text(), session.answers_text()])
+    if needs_escalation(merged) and "escalation" not in session.safety_flags:
+        session.safety_flags.append("escalation")
+        session.events.append(
+            _event(
+                "system",
+                "Safety note attached",
+                safety_note(),
+                status="support",
+            )
+        )
+
+
+def add_evidence(
+    session: CustomsSession,
+    dream_text: str = "",
+    image_path: Optional[str] = None,
+    audio_path: Optional[str] = None,
+    mood: str = "",
+    vision_client=None,
+    asr_client=None,
+) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    added_items: List[EvidenceItem] = []
+
+    if dream_text and dream_text.strip():
+        clean_text = dream_text.strip()
+        next_session.intake.dream_text = _append_text(next_session.intake.dream_text, clean_text)
+        added_items.append(EvidenceItem(type="text", label="Dream note", status="selected", content=clean_text))
+
+    if mood and mood.strip() and mood.strip() != next_session.intake.mood:
+        next_session.intake.mood = mood.strip()
+        added_items.append(EvidenceItem(type="mood", label=f"Mood: {mood.strip()}", status="selected", content=mood.strip()))
+
+    if image_path:
+        clues: List[str] = []
+        error = ""
+        try:
+            clues = vision_client.extract_clues(image_path) if vision_client else []
+        except Exception:
+            clues = []
+            error = "Image clue extraction failed. Text-only path remains available."
+        if clues:
+            next_session.intake.visual_clues = _merge_unique(next_session.intake.visual_clues, clues)
+            added_items.append(
+                EvidenceItem(
+                    type="image",
+                    label=f"Image clues ({len(clues)})",
+                    status="extracted",
+                    content=", ".join(clues),
+                    source_path=image_path,
+                )
+            )
+        else:
+            added_items.append(
+                EvidenceItem(
+                    type="image",
+                    label="Image evidence",
+                    status="failed",
+                    source_path=image_path,
+                    error=error or "No visual clues extracted. Continue with text or voice.",
+                )
+            )
+
+    if audio_path:
+        transcript = ""
+        error = ""
+        try:
+            transcript = asr_client.transcribe(audio_path) if asr_client else ""
+        except Exception:
+            error = "Voice transcription failed. Text-only path remains available."
+        if transcript.strip():
+            clean_transcript = transcript.strip()
+            next_session.intake.voice_transcript = _append_text(next_session.intake.voice_transcript, clean_transcript)
+            added_items.append(
+                EvidenceItem(
+                    type="audio",
+                    label="Voice transcript",
+                    status="extracted",
+                    content=clean_transcript,
+                    source_path=audio_path,
+                )
+            )
+        else:
+            added_items.append(
+                EvidenceItem(
+                    type="audio",
+                    label="Voice evidence",
+                    status="failed",
+                    source_path=audio_path,
+                    error=error or "No transcript returned. Continue by typing the fragment.",
+                )
+            )
+
+    if not added_items:
+        next_session.phase = "error"
+        next_session.events.append(
+            _event("error", "No material added", "Add text, image, or voice before asking the clerk.", status="empty")
+        )
+        return next_session
+
+    next_session.evidence_items.extend(added_items)
+    next_session.phase = "declaring"
+    summary = "\n".join(f"{item.label}: {item.content or item.error}" for item in added_items)
+    next_session.events.append(_event("user", "Material added", summary, status="filed"))
+    _record_safety(next_session)
+    return next_session
+
+
+def ask_questions(session: CustomsSession, text_client, force_another: bool = False) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if not next_session.intake.merged_text():
+        next_session.phase = "error"
+        next_session.events.append(
+            _event("error", "Customs has no declaration yet", "Add one dream fragment before asking a question.", status="empty")
+        )
+        return next_session
+
+    prompt = (
+        followup_question_prompt(next_session.intake, next_session.question_history, next_session.answer_history)
+        if force_another
+        else negotiation_prompt(next_session.intake)
+    )
+    negotiation = text_client.generate_negotiation(prompt)
+    questions = [question for question in negotiation.get("questions", []) if question]
+    fresh_questions = [question for question in questions if question not in next_session.question_history]
+    if force_another and not fresh_questions:
+        if _contains_cjk(next_session.intake.merged_text()):
+            fresh_questions = ["如果海关只批准一个更小的动作，你希望今天先放行哪一件事？"]
+        else:
+            fresh_questions = ["If customs approves one smaller action today, which one should it release first?"]
+    if not fresh_questions:
+        fresh_questions = questions[:3]
+
+    next_session.question_history.extend(fresh_questions[:3])
+    next_session.phase = "negotiating"
+    next_session.events.append(
+        _event(
+            "customs",
+            "Customs question filed" if len(fresh_questions) == 1 else "Customs questions filed",
+            "\n".join(fresh_questions[:3]),
+            meta=str(negotiation.get("visitor_name", "")),
+            status="question",
+        )
+    )
+    return next_session
+
+
+def answer_question(session: CustomsSession, answer: str) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if not answer or not answer.strip():
+        next_session.phase = "error"
+        next_session.events.append(
+            _event("error", "No answer filed", "Write a reply, or choose to skip the question.", status="empty")
+        )
+        return next_session
+    next_session.answer_history.append(answer.strip())
+    next_session.phase = "negotiating"
+    next_session.events.append(_event("user", "Answer filed", answer.strip(), status="answered"))
+    _record_safety(next_session)
+    return next_session
+
+
+def skip_question(session: CustomsSession) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if _contains_cjk(next_session.intake.merged_text()):
+        skip_text = "用户选择跳过这一轮问题。"
+    else:
+        skip_text = "The user chose to skip this question."
+    next_session.answer_history.append(skip_text)
+    next_session.phase = "negotiating"
+    next_session.events.append(_event("user", "Question skipped", skip_text, status="skipped"))
+    return next_session
+
+
+def draft_pact(session: CustomsSession, text_client) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if not next_session.intake.merged_text():
+        next_session.phase = "error"
+        next_session.events.append(
+            _event("error", "Pact needs dream material", "Add at least one fragment before drafting a pact.", status="empty")
+        )
+        return next_session
+
+    answers = next_session.answers_text() or "The user has not answered yet; infer a gentle pact from the declaration."
+    card, _html = generate_pact(next_session.intake, answers, text_client)
+    next_session.draft_pact = card
+    next_session.phase = "drafting"
+    next_session.events.append(
+        _event(
+            "pact",
+            "Draft pact prepared",
+            f"{card.visitor_name}\n{card.practical_suggestion}\n{card.weird_task}",
+            meta=card.permit_id,
+            status="draft",
+        )
+    )
+    _record_safety(next_session)
+    return next_session
+
+
+def _apply_revision_hint(card: PactCard, revision_request: str) -> PactCard:
+    request = revision_request.lower()
+    revised = card.model_copy(deep=True)
+    cjk = _contains_cjk(" ".join([revision_request, card.visitor_name, card.alliance_reading]))
+    if any(term in request for term in ["strange", "weird", "怪", "更奇怪", "更怪"]):
+        revised.weird_task = (
+            "把今天最小的任务写在纸上，给它盖一个看不见的放行章。"
+            if cjk
+            else "Write the smallest task on paper and stamp it with an invisible release mark."
+        )
+    elif any(term in request for term in ["gentle", "softer", "温和", "轻一点"]):
+        revised.risk_level = (
+            "浅橙色：先安置它，不急着解释它"
+            if cjk
+            else "soft orange: place it gently before interpreting it"
+        )
+        revised.practical_suggestion = (
+            "今天先选一个不需要立刻完成的小开头，做 5 分钟就停。"
+            if cjk
+            else "Choose one start that does not need finishing today. Stop after five minutes."
+        )
+    elif revision_request.strip():
+        revised.practical_suggestion = (
+            f"{revised.practical_suggestion}（按你的修订请求：{revision_request.strip()}）"
+            if cjk
+            else f"{revised.practical_suggestion} Revision note: {revision_request.strip()}"
+        )
+    return revised
+
+
+def revise_pact(session: CustomsSession, revision_request: str, text_client) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if not next_session.draft_pact:
+        next_session = draft_pact(next_session, text_client)
+        if not next_session.draft_pact:
+            return next_session
+
+    answers = next_session.answers_text()
+    prompt = pact_revision_prompt(
+        next_session.intake,
+        answers,
+        next_session.draft_pact.to_plain_text(),
+        revision_request,
+    )
+    card = text_client.generate_pact(prompt)
+    merged = next_session.intake.merged_text() + "\n" + answers
+    if needs_escalation(merged):
+        card.safety_note = safety_note()
+    card = _apply_revision_hint(card, revision_request or "")
+    next_session.draft_pact = card
+    next_session.phase = "drafting"
+    next_session.events.append(
+        _event(
+            "pact",
+            "Draft pact revised",
+            revision_request.strip() or "The draft was tightened for today's smallest action.",
+            meta=card.permit_id,
+            status="revised",
+        )
+    )
+    return next_session
+
+
+def seal_pact(session: CustomsSession) -> CustomsSession:
+    next_session = session.model_copy(deep=True)
+    if not next_session.draft_pact:
+        next_session.phase = "error"
+        next_session.events.append(
+            _event("error", "Nothing to seal yet", "Draft a pact before sealing today's agreement.", status="empty")
+        )
+        return next_session
+    next_session.sealed_pact = next_session.draft_pact
+    next_session.phase = "sealed"
+    next_session.events.append(
+        _event(
+            "pact",
+            "Today's pact sealed",
+            next_session.sealed_pact.bedtime_release,
+            meta=next_session.sealed_pact.permit_id,
+            status="sealed",
+        )
+    )
+    return next_session

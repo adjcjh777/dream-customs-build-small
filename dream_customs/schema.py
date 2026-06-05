@@ -1,3 +1,5 @@
+from typing import Literal, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -49,3 +51,44 @@ class PactCard(BaseModel):
         if self.safety_note:
             lines.append(f"Safety note: {self.safety_note}")
         return "\n".join(lines)
+
+
+SessionPhase = Literal["empty", "declaring", "negotiating", "drafting", "sealed", "error"]
+EvidenceType = Literal["text", "image", "audio", "mood"]
+EvidenceStatus = Literal["queued", "extracting", "extracted", "failed", "selected"]
+TimelineRole = Literal["system", "user", "customs", "pact", "error"]
+
+
+class EvidenceItem(BaseModel):
+    type: EvidenceType
+    label: str
+    status: EvidenceStatus = "queued"
+    content: str = ""
+    source_path: str = ""
+    error: str = ""
+
+
+class TimelineEvent(BaseModel):
+    role: TimelineRole
+    title: str
+    body: str = ""
+    meta: str = ""
+    status: str = ""
+
+
+class CustomsSession(BaseModel):
+    phase: SessionPhase = "empty"
+    intake: DreamIntake = Field(default_factory=DreamIntake)
+    evidence_items: list[EvidenceItem] = Field(default_factory=list)
+    question_history: list[str] = Field(default_factory=list)
+    answer_history: list[str] = Field(default_factory=list)
+    draft_pact: Optional[PactCard] = None
+    sealed_pact: Optional[PactCard] = None
+    safety_flags: list[str] = Field(default_factory=list)
+    events: list[TimelineEvent] = Field(default_factory=list)
+
+    def answers_text(self) -> str:
+        return "\n".join(answer.strip() for answer in self.answer_history if answer.strip())
+
+    def evidence_count(self) -> int:
+        return len([item for item in self.evidence_items if item.status != "failed"])

@@ -29,11 +29,11 @@ Files:
 
 Steps:
 
-- [ ] Add session state schema for phases: `empty`, `declaring`, `negotiating`, `drafting`, `sealed`, `error`.
-- [ ] Add `EvidenceItem` schema with `type`, `label`, `status`, `content`, `source_path`, and `error`.
-- [ ] Add `CustomsSession` schema that stores `DreamIntake`, evidence items, question history, answer history, draft pact, sealed pact, and safety flags.
-- [ ] Add tests for adding text, image, audio, mood, answer, skip, revise, and seal actions.
-- [ ] Keep text-only path working even if image/audio/model routes fail.
+- [x] Add session state schema for phases: `empty`, `declaring`, `negotiating`, `drafting`, `sealed`, `error`.
+- [x] Add `EvidenceItem` schema with `type`, `label`, `status`, `content`, `source_path`, and `error`.
+- [x] Add `CustomsSession` schema that stores `DreamIntake`, evidence items, question history, answer history, draft pact, sealed pact, and safety flags.
+- [x] Add tests for adding text, image, audio, mood, answer, skip, revise, and seal actions.
+- [x] Keep text-only path working even if image/audio/model routes fail.
 
 ## Task 3: Build Iterative Pipeline
 
@@ -46,11 +46,11 @@ Files:
 
 Steps:
 
-- [ ] Split the one-shot `run_customs_once` into actions: `add_evidence`, `ask_questions`, `answer_question`, `draft_pact`, `revise_pact`, `seal_pact`.
-- [ ] Make each action return structured state plus render-ready view models.
-- [ ] Add prompt templates for continuing negotiation and revising pact tone.
-- [ ] Add buttons for `Add material`, `Ask another question`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
-- [ ] Add a deterministic demo path for all actions.
+- [x] Split the one-shot `run_customs_once` into actions: `add_evidence`, `ask_questions`, `answer_question`, `draft_pact`, `revise_pact`, `seal_pact`.
+- [x] Make each action return structured state plus render-ready view models.
+- [x] Add prompt templates for continuing negotiation and revising pact tone.
+- [x] Add buttons for `Add material`, `Ask another question`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
+- [x] Add a deterministic demo path for all actions.
 
 ## Task 4: Add Hosted Model Path
 
@@ -62,12 +62,12 @@ Files:
 
 Steps:
 
-- [ ] Keep `demo` as fallback.
-- [ ] Add `model` backend option that can call hosted MiniCPM text and vision endpoints.
-- [ ] Use Modal credits for MiniCPM experiments if local or HF Space loading is too slow.
-- [ ] Use HF credits for Space hardware only if needed for stable public demo.
-- [ ] Do not store tokens in repo, logs, docs, or examples.
-- [ ] Add short smoke command for hosted text generation and hosted image clue extraction.
+- [x] Keep `demo` as fallback.
+- [x] Add `model` backend option that can call hosted MiniCPM text and vision endpoints.
+- [x] Use Modal credits for MiniCPM experiments if local or HF Space loading is too slow.
+- [x] Use HF credits for Space hardware only if needed for stable public demo.
+- [x] Do not store tokens in repo, logs, docs, or examples.
+- [x] Add short smoke command for hosted text generation and hosted image clue extraction.
 
 ## Task 5: Rebuild Gradio UI
 
@@ -79,12 +79,12 @@ Files:
 
 Steps:
 
-- [ ] Replace two-column form with app shell: header, timeline, pact inspector, bottom composer.
-- [ ] Composer contains multiline dream input, image upload, audio upload/record, mood chip, backend menu, and primary action.
-- [ ] Timeline renders user evidence, model questions, answers, extraction statuses, and pact drafts.
-- [ ] Pact inspector renders live draft and final sealed card.
-- [ ] Primary actions are visible above the fold on mobile.
-- [ ] Debug JSON moves into a collapsed diagnostics panel.
+- [x] Replace two-column form with app shell: header, timeline, pact inspector, bottom composer.
+- [x] Composer contains multiline dream input, image upload, audio upload/record, mood chip, backend menu, and primary action.
+- [x] Timeline renders user evidence, model questions, answers, extraction statuses, and pact drafts.
+- [x] Pact inspector renders live draft and final sealed card.
+- [x] Primary actions are visible above the fold on mobile.
+- [x] Debug JSON moves into a collapsed diagnostics panel.
 
 ## Task 6: Apply Visual System
 
@@ -96,12 +96,12 @@ Files:
 
 Steps:
 
-- [ ] Implement the OKLCH tokens from `DESIGN.md`.
-- [ ] Use generated probe imagery as header or empty-state atmosphere.
-- [ ] Replace parchment card styling with dark inspector plus sealed pact treatment.
-- [ ] Add focus, hover, disabled, loading, and error states.
-- [ ] Add reduced-motion fallback.
-- [ ] Verify contrast for body, labels, placeholders, chips, and disabled controls.
+- [x] Implement the OKLCH tokens from `DESIGN.md`.
+- [x] Use generated probe imagery as header or empty-state atmosphere.
+- [x] Replace parchment card styling with dark inspector plus sealed pact treatment.
+- [x] Add focus, hover, disabled, loading, and error states.
+- [x] Add reduced-motion fallback.
+- [x] Verify contrast for body, labels, placeholders, chips, and disabled controls.
 
 ## Task 7: Verify Locally And On Space
 
@@ -114,18 +114,18 @@ python app.py
 
 Checks:
 
-- [ ] Text-only declaration can reach sealed pact.
-- [ ] User can add material after receiving questions.
-- [ ] User can ask another question before sealing.
-- [ ] User can revise pact before sealing.
-- [ ] Image and audio failure keep text path alive.
-- [ ] Mobile width is readable.
+- [x] Text-only declaration can reach sealed pact.
+- [x] User can add material after receiving questions.
+- [x] User can ask another question before sealing.
+- [x] User can revise pact before sealing.
+- [x] Image and audio failure keep text path alive.
+- [x] Mobile width is readable.
 - [ ] Space deployment builds and remote queue prediction works.
 
 ## Task 8: Commit And Deploy
 
-- [ ] Commit implementation to `feature/dream-customs-mvp` or a new `feature/uiux-v2` branch.
-- [ ] Push GitHub branch.
+- [x] Commit implementation to `feature/dream-customs-mvp` or a new `feature/uiux-v2` branch.
+- [x] Push GitHub branch.
 - [ ] Upload/merge Space update.
 - [ ] Re-run public Space smoke test.
-- [ ] Update README screenshots or demo instructions.
+- [x] Update README screenshots or demo instructions.

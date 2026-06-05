@@ -1,0 +1,71 @@
+from dream_customs.models import OllamaTextClient, OllamaVisionClient, _extract_json_object
+
+
+class StubOllamaTextClient(OllamaTextClient):
+    def __init__(self, response_text: str):
+        super().__init__()
+        self.response_text = response_text
+
+    def _post_generate(self, prompt: str, num_predict: int = 512):
+        return {"response": self.response_text}
+
+
+class StubOllamaVisionClient(OllamaVisionClient):
+    def __init__(self, response_text: str):
+        super().__init__()
+        self.response_text = response_text
+
+    def _post_generate(self, prompt: str, image_b64: str, num_predict: int = 256):
+        return {"response": self.response_text}
+
+
+def test_extract_json_object_handles_code_fence():
+    parsed = _extract_json_object('```json\n{"visitor_name": "Gate 14"}\n```')
+    assert parsed == {"visitor_name": "Gate 14"}
+
+
+def test_ollama_text_client_parses_negotiation_json():
+    client = StubOllamaTextClient(
+        '{"visitor_name":"迟到的电梯","questions":["它要什么？","你要什么？"],"tone_note":"温和一点"}'
+    )
+    negotiation = client.generate_negotiation("梦见电梯")
+    assert negotiation["visitor_name"] == "迟到的电梯"
+    assert negotiation["questions"] == ["它要什么？", "你要什么？"]
+
+
+def test_ollama_text_client_falls_back_on_empty_json():
+    client = StubOllamaTextClient("{}")
+    negotiation = client.generate_negotiation("梦见电梯")
+    assert negotiation["visitor_name"]
+    assert len(negotiation["questions"]) == 3
+
+
+def test_ollama_text_client_parses_pact_card():
+    client = StubOllamaTextClient(
+        """
+        {
+          "visitor_name":"迟到的电梯",
+          "permit_id":"DC-42",
+          "contraband":["未申报的焦虑"],
+          "risk_level":"yellow",
+          "alliance_reading":"先开始，不急着完成。",
+          "practical_suggestion":"打开一个 5 分钟任务。",
+          "weird_task":"给电梯盖章。",
+          "bedtime_release":"今日放行。",
+          "safety_note":""
+        }
+        """
+    )
+    card = client.generate_pact("梦见电梯")
+    assert card.permit_id == "DC-42"
+    assert card.contraband == ["未申报的焦虑"]
+
+
+def test_ollama_vision_client_parses_visual_clues(tmp_path):
+    image_path = tmp_path / "dream.png"
+    image_path.write_bytes(b"not a real png but enough for adapter encoding")
+    client = StubOllamaVisionClient(
+        '{"objects":["passport stamp"],"places":["customs desk"],"colors":["blue"],"mood_cues":["foggy"]}'
+    )
+    clues = client.extract_clues(str(image_path))
+    assert clues == ["passport stamp", "customs desk", "blue", "foggy"]

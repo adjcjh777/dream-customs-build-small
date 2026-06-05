@@ -1,6 +1,11 @@
+import base64
+import json
 import re
+import urllib.error
+import urllib.request
 from typing import Any, Dict, List, Optional
 
+from dream_customs.prompts import visual_clue_prompt
 from dream_customs.schema import PactCard
 
 
@@ -66,6 +71,199 @@ class FakeTextClient:
             weird_task="Write the elevator a one-sentence apology note.",
             bedtime_release="Today the elevator has docked; unfinished floors report tomorrow.",
         )
+
+
+def _strip_markdown_and_thinking(text: str) -> str:
+    cleaned = text.strip()
+    cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL).strip()
+    cleaned = cleaned.replace("<think>", "").replace("</think>", "").strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?", "", cleaned.strip(), flags=re.IGNORECASE).strip()
+        cleaned = re.sub(r"```$", "", cleaned).strip()
+    return cleaned
+
+
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
+    cleaned = _strip_markdown_and_thinking(text)
+    try:
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        pass
+
+    start = cleaned.find("{")
+    if start < 0:
+        return None
+
+    depth = 0
+    in_string = False
+    escaped = False
+    for index, char in enumerate(cleaned[start:], start=start):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    parsed = json.loads(cleaned[start : index + 1])
+                except json.JSONDecodeError:
+                    return None
+                return parsed if isinstance(parsed, dict) else None
+    return None
+
+
+def _as_string_list(value: Any) -> List[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str) and value.strip():
+        return [part.strip() for part in re.split(r"[,，\n]", value) if part.strip()]
+    return []
+
+
+class OllamaTextClient:
+    def __init__(
+        self,
+        model_name: str = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0",
+        base_url: str = "http://localhost:11434",
+        timeout: float = 45.0,
+        fallback: Optional[FakeTextClient] = None,
+    ):
+        self.model_name = model_name
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self.fallback = fallback or FakeTextClient()
+
+    def _post_generate(self, prompt: str, num_predict: int = 512) -> Dict[str, Any]:
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+            "stream": False,
+            "options": {"temperature": 0.2, "num_predict": num_predict},
+        }
+        data = json.dumps(payload).encode("utf-8")
+        request = urllib.request.Request(
+            f"{self.base_url}/api/generate",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    def _generate_json(self, prompt: str, schema_hint: str, num_predict: int = 512) -> Optional[Dict[str, Any]]:
+        strict_prompt = (
+            f"{prompt}\n\n"
+            "Return only a single valid JSON object. No markdown, no code fences, no hidden reasoning.\n"
+            f"Required schema: {schema_hint}"
+        )
+        try:
+            response = self._post_generate(strict_prompt, num_predict=num_predict)
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return None
+        return _extract_json_object(str(response.get("response", "")))
+
+    def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
+        parsed = self._generate_json(
+            prompt,
+            '{"visitor_name":"string","questions":["string","string"],"tone_note":"string"}',
+            num_predict=320,
+        )
+        if not parsed:
+            return self.fallback.generate_negotiation(prompt)
+        questions = _as_string_list(parsed.get("questions"))
+        if not parsed.get("visitor_name") or not questions:
+            return self.fallback.generate_negotiation(prompt)
+        return {
+            "visitor_name": str(parsed.get("visitor_name", "")).strip(),
+            "questions": questions[:3],
+            "tone_note": str(parsed.get("tone_note", "")).strip(),
+        }
+
+    def generate_pact(self, prompt: str) -> PactCard:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"visitor_name":"string","permit_id":"string","contraband":["string"],'
+                '"risk_level":"string","alliance_reading":"string","practical_suggestion":"string",'
+                '"weird_task":"string","bedtime_release":"string","safety_note":"string"}'
+            ),
+            num_predict=700,
+        )
+        if not parsed:
+            return self.fallback.generate_pact(prompt)
+        try:
+            return PactCard(
+                visitor_name=str(parsed["visitor_name"]).strip(),
+                permit_id=str(parsed["permit_id"]).strip(),
+                contraband=_as_string_list(parsed["contraband"]) or ["unfiled dream fragment"],
+                risk_level=str(parsed["risk_level"]).strip(),
+                alliance_reading=str(parsed["alliance_reading"]).strip(),
+                practical_suggestion=str(parsed["practical_suggestion"]).strip(),
+                weird_task=str(parsed["weird_task"]).strip(),
+                bedtime_release=str(parsed["bedtime_release"]).strip(),
+                safety_note=str(parsed.get("safety_note", "")).strip(),
+            )
+        except (KeyError, TypeError, ValueError):
+            return self.fallback.generate_pact(prompt)
+
+
+class OllamaVisionClient:
+    def __init__(
+        self,
+        model_name: str = "openbmb/minicpm-v4.6",
+        base_url: str = "http://localhost:11434",
+        timeout: float = 60.0,
+    ):
+        self.model_name = model_name
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+
+    def _post_generate(self, prompt: str, image_b64: str, num_predict: int = 256) -> Dict[str, Any]:
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+            "images": [image_b64],
+            "stream": False,
+            "options": {"temperature": 0.1, "num_predict": num_predict},
+        }
+        data = json.dumps(payload).encode("utf-8")
+        request = urllib.request.Request(
+            f"{self.base_url}/api/generate",
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    def extract_clues(self, image_path: Optional[str]) -> List[str]:
+        if not image_path:
+            return []
+        try:
+            with open(image_path, "rb") as image_file:
+                image_b64 = base64.b64encode(image_file.read()).decode("ascii")
+            response = self._post_generate(visual_clue_prompt(), image_b64)
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return []
+
+        text = str(response.get("response", ""))
+        parsed = _extract_json_object(text)
+        if parsed:
+            clues: List[str] = []
+            for key in ("objects", "places", "visible_text", "colors", "mood_cues", "uncertain_details"):
+                clues.extend(_as_string_list(parsed.get(key)))
+            return clues[:8]
+        return [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()][:8]
 
 
 class MiniCPMVisionClient:

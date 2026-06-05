@@ -1,3 +1,5 @@
+import os
+
 import gradio as gr
 from gradio_client import utils as gradio_client_utils
 
@@ -130,4 +132,6 @@ demo = build_demo()
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="127.0.0.1", server_port=7860, show_api=False, show_error=True)
+    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
+    server_port = int(os.getenv("GRADIO_SERVER_PORT", "7860"))
+    demo.launch(server_name=server_name, server_port=server_port, show_api=False, show_error=True)

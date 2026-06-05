@@ -1,3 +1,25 @@
+---
+title: Dream Customs
+emoji: ⚡
+colorFrom: blue
+colorTo: pink
+sdk: gradio
+sdk_version: 4.44.1
+python_version: "3.10"
+app_file: app.py
+pinned: false
+license: mit
+short_description: A playful, non-diagnostic dream customs clerk that turns dream declarations into a next-day pact.
+models:
+  - openbmb/MiniCPM5-1B
+  - openbmb/MiniCPM-V-4.6
+tags:
+  - gradio
+  - minicpm
+  - build-small-hackathon
+  - dream-journal
+---
+
 # Dream Customs / 梦境海关
 
 A Build Small Hackathon Gradio app that helps users form a playful alliance with last night's dream.

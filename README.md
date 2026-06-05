@@ -11,15 +11,35 @@ Dream Customs accepts dream declarations by text, image, or voice. It turns the 
 - `openbmb/MiniCPM-V-4.6` for image/sketch/note understanding.
 - `openbmb/MiniCPM5-1B` for dream negotiation and pact generation.
 - A small ASR adapter may be used only for voice transcription.
+- The app defaults to a stable demo backend so the local Gradio flow always works.
+- Optional Ollama adapters are included for local MiniCPM testing.
 
 ## Run
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python app.py
 ```
+
+Open `http://127.0.0.1:7860`.
+
+## Optional Ollama Models
+
+```bash
+ollama pull hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0
+ollama pull openbmb/minicpm-v4.6
+```
+
+Then switch the UI engine controls from `demo` to `ollama`.
+
+Local smoke notes from this Mac mini:
+
+- Memory/size is fine: 16 GB RAM handled the local model downloads.
+- `hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0` loads in Ollama, but current output was malformed for JSON prompts.
+- `openbmb/minicpm-v4.6` pulled successfully, but current Ollama runner returned `unable to load model`.
+- Because of that, the MVP keeps Ollama optional and falls back to deterministic demo behavior.
 
 ## Test
 

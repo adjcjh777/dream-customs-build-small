@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+.superpowers/
+tmp/
+outputs/
+*.wav
+*.mp3
+*.m4a

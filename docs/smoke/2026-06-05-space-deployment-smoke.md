@@ -55,8 +55,15 @@ Goal for this pass: verify the current UI/UX V2 workbench locally, sync it to th
 - A `huggingface_hub.upload_folder(...)` deploy attempt used the cached token, preserved the current Space parent commit, and avoided printing any token value.
 - The API deploy attempt failed with 403 on the Space LFS batch endpoint:
   - `Make sure your token has the correct permissions.`
+- A follow-up `huggingface_hub.upload_folder(..., create_pr=True)` succeeded and created an HF Space pull request:
+  - PR: `https://huggingface.co/spaces/build-small-hackathon/dream-customs/discussions/5`
+  - Commit: `695a346 Deploy Dream Customs workbench UI`
+  - Ref: `refs/pr/5`
+- `refs/pr/5` was fetched locally and compared against Space `main`; it contains the V2 workbench update. HF stores the large design probe PNGs through LFS, so those files appear as LFS pointer changes in the git ref.
+- Attempting `huggingface_hub.merge_pull_request(..., discussion_num=5)` failed with 403:
+  - `Cannot access content at: https://huggingface.co/api/spaces/build-small-hackathon/dream-customs/discussions/5/merge.`
 
-Result: V2 workbench is not deployed to the public Space in this pass.
+Result: V2 workbench has been uploaded as HF Space PR #5, but it is not deployed to public Space `main` in this pass.
 
 ## Public Space Smoke
 
@@ -82,7 +89,7 @@ Remote queue check:
 - Queue output returned 4 fields and a pact snippet containing `Dream visitor`, `Permit: DC-DEMO-014`, `Today's suggestion`, `Weird task`, and `Bedtime release`.
 - `gradio_client.Client(...)` could not be used because the installed client failed while parsing the remote schema with `TypeError: argument of type 'bool' is not iterable`; raw queue protocol worked.
 
-Result: current old public Space queue works, but the required V2 workbench public Space smoke remains blocked until a token with write permission for `build-small-hackathon/dream-customs` is available.
+Result: current old public Space queue works, but the required V2 workbench public Space smoke remains blocked until HF Space PR #5 is merged.
 
 ## Hosted MiniCPM Route
 
@@ -96,4 +103,4 @@ Result: hosted MiniCPM text and vision route smoke was not run. No token or endp
 
 ## Next Step
 
-Create or provide an HF token with write access to the `build-small-hackathon/dream-customs` Space, or grant the cached token/org role that permission. Then push the current workbench files to Space `main` and rerun the V2 public Space browser and queue smoke.
+Merge HF Space PR #5, or provide an HF token with write/merge access to the `build-small-hackathon/dream-customs` Space. After Space `main` updates, rerun the V2 public Space browser and queue smoke.

@@ -132,6 +132,8 @@ Checks:
 - [x] Existing public Space opened and the currently deployed old one-shot app completed a text-only demo queue prediction through `run_customs_once`.
 - [ ] Current V2 workbench was not deployed to public Space because `git push` to `https://huggingface.co/spaces/build-small-hackathon/dream-customs` was rejected by HF authorization (`You are not authorized to push to this repo`).
 - [ ] Follow-up HF API deploy attempt also failed: the cached token belongs to `ADJCJH` and sees the `build-small-hackathon` org, but the token is fine-grained and scoped only to the user entity; `huggingface_hub.upload_folder(...)` failed with 403 on the Space LFS batch endpoint.
+- [x] HF Space PR created for the V2 workbench update: `https://huggingface.co/spaces/build-small-hackathon/dream-customs/discussions/5`, commit `695a346`.
+- [ ] HF Space PR #5 could not be merged with the cached token; `merge_pull_request(...)` failed with 403, so public Space `main` remains on old commit `990fa75`.
 - [ ] Hosted MiniCPM route smoke was not run because `DREAM_CUSTOMS_TEXT_ENDPOINT`, `DREAM_CUSTOMS_VISION_ENDPOINT`, and `DREAM_CUSTOMS_HOSTED_TOKEN` were missing from the runtime environment.
 
 Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.
@@ -140,7 +142,8 @@ Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 
 - [x] Commit implementation to `feature/dream-customs-mvp` or a new `feature/uiux-v2` branch.
 - [x] Push GitHub branch.
-- [ ] Upload/merge Space update. Blocked on HF push permission as of 2026-06-05.
+- [x] Upload Space update as HF PR #5.
+- [ ] Merge Space update to `main`. Blocked on HF Space merge/write permission as of 2026-06-05.
 - [ ] Re-run public Space V2 smoke test after the Space update is accepted.
 - [x] Re-run existing public Space smoke test for the currently deployed old one-shot app.
 - [x] Update README screenshots or demo instructions.

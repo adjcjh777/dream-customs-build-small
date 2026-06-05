@@ -120,7 +120,7 @@ Checks:
 - [x] User can revise pact before sealing.
 - [x] Image and audio failure keep text path alive.
 - [x] Mobile width is readable.
-- [ ] V2 Space deployment builds and remote queue prediction works.
+- [x] V2 Space deployment builds and remote queue prediction works.
 
 2026-06-05 verification notes:
 
@@ -129,12 +129,17 @@ Checks:
 - [x] Local V2 browser flow reached sealed pact: `Send to customs -> Ask another question -> Add material -> Draft pact -> Revise pact -> Seal today's pact`.
 - [x] Local mobile viewport `390x844` remained readable; pact inspector showed `DC-DEMO-014`, `Sealed`, 3 evidence items, 4 questions, suggestion, weird task, contraband, and bedtime release.
 - [x] Local diagnostics panel opened and showed `status: sealed`, `text_backend: demo`, `vision_backend: demo`, empty `safety_flags`, and empty ordinary-case `safety_note`; the header safety copy stayed visible as playful reflection, not medical advice.
-- [x] Existing public Space opened and the currently deployed old one-shot app completed a text-only demo queue prediction through `run_customs_once`.
-- [ ] Current V2 workbench was not deployed to public Space because `git push` to `https://huggingface.co/spaces/build-small-hackathon/dream-customs` was rejected by HF authorization (`You are not authorized to push to this repo`).
-- [ ] Follow-up HF API deploy attempt also failed: the cached token belongs to `ADJCJH` and sees the `build-small-hackathon` org, but the token is fine-grained and scoped only to the user entity; `huggingface_hub.upload_folder(...)` failed with 403 on the Space LFS batch endpoint.
+- [x] Existing public Space opened and the previously deployed old one-shot app completed a text-only demo queue prediction through `run_customs_once`.
+- [x] Direct `git push` to `https://huggingface.co/spaces/build-small-hackathon/dream-customs` was rejected by HF authorization (`You are not authorized to push to this repo`), so the update proceeded through an HF Space PR instead of force-pushing.
+- [x] Follow-up HF API direct deploy attempt also failed: the cached token belongs to `ADJCJH` and sees the `build-small-hackathon` org, but the token is fine-grained and scoped only to the user entity; `huggingface_hub.upload_folder(...)` failed with 403 on the Space LFS batch endpoint.
 - [x] HF Space PR created for the V2 workbench update: `https://huggingface.co/spaces/build-small-hackathon/dream-customs/discussions/5`, commit `695a346`.
-- [ ] HF Space PR #5 could not be merged with the cached token; `merge_pull_request(...)` failed with 403, so public Space `main` remains on old commit `990fa75`.
-- [ ] Hosted MiniCPM route smoke was not run because `DREAM_CUSTOMS_TEXT_ENDPOINT`, `DREAM_CUSTOMS_VISION_ENDPOINT`, and `DREAM_CUSTOMS_HOSTED_TOKEN` were missing from the runtime environment.
+- [x] HF Space PR #5 API merge with the cached token failed with 403, then the PR was merged through the user's Chrome login state. Space `main` is now `8ad6f00628f800abc2dbefab05163aba94a5723f` (`Deploy Dream Customs workbench UI (#5)`).
+- [x] Public V2 Space opened at `https://build-small-hackathon-dream-customs.hf.space/?v=8ad6f006`; browser smoke reached sealed pact through `Send to customs -> Ask another question -> Add material -> Draft pact -> Revise pact -> Seal today's pact`.
+- [x] Public V2 mobile viewport `390x844` remained readable for the workbench and sealed pact output.
+- [x] Public V2 diagnostics panel opened and showed `status: sealed`, `text_backend: demo`, `vision_backend: demo`, empty `safety_flags`, and sealed pact state.
+- [x] Public V2 raw remote queue prediction completed the full text-only demo flow: load, send, ask, add material, draft, revise, seal. Final state was `sealed=True`, permit `DC-DEMO-014`, visitor `迟到的电梯`, 3 evidence items, 4 questions, and empty `safety_flags`.
+- [x] Hosted MiniCPM text route smoke passed in Space runtime using only runtime configuration. With text route set to `model` and vision route set to `demo`, the remote queue reached sealed pact and diagnostics reported `text_backend: model`; no token or endpoint value was printed, stored, or committed.
+- [x] Public browser console still showed one HF subdomain status 400 request and Gradio endpoint-argument warnings; neither blocked V2 rendering, clicking, diagnostics, queue prediction, or sealed pact output.
 
 Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 
@@ -143,7 +148,7 @@ Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 - [x] Commit implementation to `feature/dream-customs-mvp` or a new `feature/uiux-v2` branch.
 - [x] Push GitHub branch.
 - [x] Upload Space update as HF PR #5.
-- [ ] Merge Space update to `main`. Blocked on HF Space merge/write permission as of 2026-06-05.
-- [ ] Re-run public Space V2 smoke test after the Space update is accepted.
+- [x] Merge Space update to `main` through the user's Chrome login state after API merge returned 403.
+- [x] Re-run public Space V2 smoke test after the Space update was accepted.
 - [x] Re-run existing public Space smoke test for the currently deployed old one-shot app.
 - [x] Update README screenshots or demo instructions.

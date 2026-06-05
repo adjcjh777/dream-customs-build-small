@@ -114,7 +114,7 @@ python -m pytest -q
 
 2026-06-05 local V2 verification passed: tests were green and the workbench flow reached a sealed pact through `Send to customs`, `Ask another question`, `Add material`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
 
-The public Space may still show the older one-shot UI until the latest branch is pushed to the Hugging Face Space `main` branch. A 2026-06-05 push attempt was rejected by HF authorization, while the already deployed old Space still opened and returned a text-only demo pact through the remote queue.
+The public Space now serves the V2 workbench from Space `main` commit `8ad6f00628f800abc2dbefab05163aba94a5723f`. Public browser smoke, mobile readability, diagnostics, raw remote queue prediction, and a hosted text route smoke all reached a sealed pact. Hosted vision route smoke remains optional for the next pass.
 
 Current smoke details are tracked in `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 

@@ -132,6 +132,8 @@ demo = build_demo()
 
 
 if __name__ == "__main__":
-    server_name = "0.0.0.0"
-    server_port = int(os.getenv("GRADIO_SERVER_PORT", "7860"))
-    demo.launch(server_name=server_name, server_port=server_port, show_api=False, show_error=True)
+    if os.getenv("SPACE_ID"):
+        demo.launch(show_api=False, show_error=True)
+    else:
+        server_port = int(os.getenv("GRADIO_SERVER_PORT", "7860"))
+        demo.launch(server_name="127.0.0.1", server_port=server_port, show_api=False, show_error=True)

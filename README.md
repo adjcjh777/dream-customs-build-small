@@ -9,7 +9,7 @@ python_version: "3.10"
 app_file: app.py
 pinned: false
 license: mit
-short_description: A playful, non-diagnostic dream customs clerk that turns dream declarations into a next-day pact.
+short_description: Turn dream declarations into a playful next-day pact.
 models:
   - openbmb/MiniCPM5-1B
   - openbmb/MiniCPM-V-4.6

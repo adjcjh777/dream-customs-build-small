@@ -110,6 +110,14 @@ PY
 python -m pytest -q
 ```
 
+## Deployment Smoke Status
+
+2026-06-05 local V2 verification passed: tests were green and the workbench flow reached a sealed pact through `Send to customs`, `Ask another question`, `Add material`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
+
+The public Space may still show the older one-shot UI until the latest branch is pushed to the Hugging Face Space `main` branch. A 2026-06-05 push attempt was rejected by HF authorization, while the already deployed old Space still opened and returned a text-only demo pact through the remote queue.
+
+Current smoke details are tracked in `docs/smoke/2026-06-05-space-deployment-smoke.md`.
+
 ## Safety
 
 This is not a therapy or diagnosis product. It gives playful reflection, small actions, and escalation copy for severe distress.

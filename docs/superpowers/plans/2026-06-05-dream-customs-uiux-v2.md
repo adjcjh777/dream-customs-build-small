@@ -120,12 +120,26 @@ Checks:
 - [x] User can revise pact before sealing.
 - [x] Image and audio failure keep text path alive.
 - [x] Mobile width is readable.
-- [ ] Space deployment builds and remote queue prediction works.
+- [ ] V2 Space deployment builds and remote queue prediction works.
+
+2026-06-05 verification notes:
+
+- [x] Local tests passed with `.venv/bin/python -m pytest -q`: 31 passed.
+- [x] Local V2 Gradio smoke passed on `127.0.0.1:7861` because `7860` was already occupied by another Python listener.
+- [x] Local V2 browser flow reached sealed pact: `Send to customs -> Ask another question -> Add material -> Draft pact -> Revise pact -> Seal today's pact`.
+- [x] Local mobile viewport `390x844` remained readable; pact inspector showed `DC-DEMO-014`, `Sealed`, 3 evidence items, 4 questions, suggestion, weird task, contraband, and bedtime release.
+- [x] Local diagnostics panel opened and showed `status: sealed`, `text_backend: demo`, `vision_backend: demo`, empty `safety_flags`, and empty ordinary-case `safety_note`; the header safety copy stayed visible as playful reflection, not medical advice.
+- [x] Existing public Space opened and the currently deployed old one-shot app completed a text-only demo queue prediction through `run_customs_once`.
+- [ ] Current V2 workbench was not deployed to public Space because `git push` to `https://huggingface.co/spaces/build-small-hackathon/dream-customs` was rejected by HF authorization (`You are not authorized to push to this repo`).
+- [ ] Hosted MiniCPM route smoke was not run because `DREAM_CUSTOMS_TEXT_ENDPOINT`, `DREAM_CUSTOMS_VISION_ENDPOINT`, and `DREAM_CUSTOMS_HOSTED_TOKEN` were missing from the runtime environment.
+
+Detailed record: `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 
 ## Task 8: Commit And Deploy
 
 - [x] Commit implementation to `feature/dream-customs-mvp` or a new `feature/uiux-v2` branch.
 - [x] Push GitHub branch.
-- [ ] Upload/merge Space update.
-- [ ] Re-run public Space smoke test.
+- [ ] Upload/merge Space update. Blocked on HF push permission as of 2026-06-05.
+- [ ] Re-run public Space V2 smoke test after the Space update is accepted.
+- [x] Re-run existing public Space smoke test for the currently deployed old one-shot app.
 - [x] Update README screenshots or demo instructions.

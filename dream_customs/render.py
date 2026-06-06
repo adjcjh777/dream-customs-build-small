@@ -34,7 +34,7 @@ def render_status_bar(session: CustomsSession, text_backend: str = "demo", visio
     <span class="dc-brand-mark">DC</span>
     <div>
       <h1>Dream Customs / 梦境海关</h1>
-      <p>Turn last night's strange visitor into one gentle pact for the day: a practical suggestion, a small weird task, and a bedtime release.</p>
+  <p>Turn last night's strange visitor into one gentle pact for the day: a safe life tip, a small weird task, and a bedtime release.</p>
     </div>
   </div>
   <div class="dc-system-status">
@@ -145,7 +145,7 @@ def render_pact_inspector(session: CustomsSession) -> str:
     <p>{escape(card.alliance_reading)}</p>
   </section>
   <section>
-    <h3>Today</h3>
+    <h3>Life tip for today</h3>
     <p>{escape(card.practical_suggestion)}</p>
   </section>
   <section>
@@ -251,8 +251,8 @@ def render_pact_card(card: PactCard) -> str:
   <h3>{escape(card.visitor_name)}</h3>
   <p><span class="dc-label">Risk:</span> {escape(card.risk_level)}</p>
   <p><span class="dc-label">Alliance:</span> {escape(card.alliance_reading)}</p>
-  <p><span class="dc-label">Suggestion:</span> {escape(card.practical_suggestion)}</p>
-  <p><span class="dc-label">Weird task:</span> {escape(card.weird_task)}</p>
+  <p><span class="dc-label">Life tip:</span> {escape(card.practical_suggestion)}</p>
+  <p><span class="dc-label">Weird 5-minute task:</span> {escape(card.weird_task)}</p>
   <p><span class="dc-label">Bedtime release:</span> {escape(card.bedtime_release)}</p>
   <div><span class="dc-label">Contraband:</span><ul>{contraband}</ul></div>
   {safety}

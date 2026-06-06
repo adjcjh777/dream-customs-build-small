@@ -261,15 +261,18 @@ body,
   transform: rotate(-11deg);
 }
 
-.dc-intake-grid {
+.dc-workspace-grid {
   align-items: stretch !important;
   display: grid !important;
   gap: 18px !important;
-  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
 }
 
-.dc-composer,
-.dc-side-panel {
+.dc-flow-column {
+  min-width: 0;
+}
+
+.dc-composer {
   background: rgba(255, 252, 246, 0.82) !important;
   border: 1px solid var(--dc-line-strong) !important;
   border-radius: var(--dc-radius-md) !important;
@@ -277,6 +280,20 @@ body,
   min-height: 470px;
   padding: 18px;
   position: relative;
+}
+
+.dc-side-panel {
+  background: rgba(255, 252, 246, 0.86) !important;
+  border: 1px solid var(--dc-line-strong) !important;
+  border-radius: var(--dc-radius-md) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52), var(--dc-soft-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 470px;
+  padding: 18px;
+  position: sticky;
+  top: 12px;
 }
 
 .dc-composer,
@@ -489,13 +506,6 @@ body,
   margin: 12px 0 0;
 }
 
-.dc-side-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  justify-content: space-between;
-}
-
 .dc-side-panel .wrap,
 .dc-side-panel .container,
 .dc-side-panel select {
@@ -511,7 +521,7 @@ body,
   flex-direction: column;
   height: 156px;
   justify-content: center;
-  margin: auto;
+  margin: 8px auto 2px;
   text-align: center;
   transform: rotate(-7deg);
   width: 156px;
@@ -542,7 +552,8 @@ body,
 }
 
 .dc-stage button,
-.dc-dev button {
+.dc-question-actions button,
+.dc-actions button {
   border-radius: var(--dc-radius-sm) !important;
   font-family: Georgia, "Times New Roman", serif !important;
   font-weight: 750 !important;
@@ -595,6 +606,69 @@ button.secondary {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.dc-question {
+  padding: clamp(22px, 3.4vw, 36px);
+}
+
+.dc-question-card {
+  background:
+    linear-gradient(180deg, rgba(255, 252, 246, 0.96), rgba(248, 240, 228, 0.96));
+  border: 1px solid var(--dc-line-strong);
+  border-radius: var(--dc-radius-md);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  color: var(--dc-ink);
+  margin-bottom: 16px;
+  padding: clamp(18px, 3vw, 26px);
+}
+
+.dc-question-kicker {
+  color: var(--dc-coral-dark);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.dc-question-card h2 {
+  color: var(--dc-ink) !important;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.dc-question-card p {
+  color: var(--dc-ink);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.dc-question-original {
+  border-left: 3px solid rgba(11, 91, 100, 0.35);
+  margin-top: 14px !important;
+  padding-left: 12px;
+}
+
+.dc-question-original span {
+  color: var(--dc-teal);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 850;
+  margin-bottom: 4px;
+}
+
+.dc-question-note {
+  color: var(--dc-muted) !important;
+  margin-top: 14px !important;
+}
+
+.dc-question-actions {
+  display: grid !important;
+  gap: 12px !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
 .dc-question h2,
 .dc-card h2 {
   color: var(--dc-ink) !important;
@@ -629,6 +703,14 @@ button.secondary {
   line-height: 1.65;
   padding: clamp(16px, 3vw, 28px);
   position: relative;
+}
+
+.dc-pass-card section:nth-of-type(2) {
+  background: rgba(220, 235, 230, 0.4);
+  border: 1px solid rgba(11, 91, 100, 0.16);
+  border-radius: var(--dc-radius-sm);
+  margin: 12px 0;
+  padding: 14px;
 }
 
 .dc-pass-card::after {
@@ -723,22 +805,25 @@ button.secondary {
 }
 
 .dc-dev {
+  background: rgba(255, 249, 238, 0.7) !important;
+  border: 1px solid rgba(189, 168, 143, 0.58) !important;
   border-radius: var(--dc-radius-md) !important;
-  box-shadow: var(--dc-soft-shadow);
-  margin-top: 18px;
-  padding: 20px !important;
+  box-shadow: none;
+  margin-top: 0;
+  padding: 12px !important;
 }
 
-.dc-dev-grid {
-  align-items: stretch !important;
-  display: grid !important;
-  gap: 0 !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.dc-dev-help {
+  color: var(--dc-muted);
+  display: grid;
+  gap: 4px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-bottom: 10px;
 }
 
-.dc-dev-grid > div,
-.dc-dev > div:not(:last-child) {
-  border-bottom: 1px solid rgba(189, 168, 143, 0.45);
+.dc-dev-help strong {
+  color: var(--dc-ink);
 }
 
 .dc-dev .form,
@@ -753,6 +838,26 @@ button.secondary {
 .dc-dev textarea {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
   font-size: 0.84rem !important;
+}
+
+.dc-dev .wrap,
+.dc-dev .container,
+.dc-dev input,
+.dc-dev textarea,
+.dc-dev select {
+  min-height: 42px !important;
+}
+
+.dc-dev label,
+.dc-dev [data-testid="block-label"] {
+  font-size: 0.78rem !important;
+}
+
+.dc-dev-advanced {
+  background: transparent !important;
+  border: 1px solid rgba(189, 168, 143, 0.42) !important;
+  border-radius: var(--dc-radius-sm) !important;
+  margin-top: 10px;
 }
 
 @keyframes dc-mic-pulse {
@@ -784,17 +889,19 @@ button.secondary {
     margin-left: 54px;
   }
 
-  .dc-intake-grid,
-  .dc-dev-grid,
+  .dc-workspace-grid,
   .dc-row,
   .dc-submit-row,
-  .dc-actions {
+  .dc-actions,
+  .dc-question-actions {
     grid-template-columns: 1fr !important;
   }
 
   .dc-composer,
   .dc-side-panel {
     min-height: 0;
+    position: relative;
+    top: auto;
   }
 
   .dc-side-stamp {

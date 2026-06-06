@@ -16,6 +16,7 @@ from dream_customs.pipeline import (
     seal_pact,
     skip_question,
 )
+from dream_customs.schema import PactCard
 
 
 def test_dated_permit_id_uses_runtime_date_and_preserves_serial():
@@ -67,6 +68,31 @@ def test_generate_pact_adds_safety_note_for_distress():
     intake = build_intake(dream_text="I might hurt myself if I cannot sleep.")
     card, _html = generate_pact(intake, "", FakeTextClient())
     assert card.safety_note
+
+
+def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
+    class UnclearTextClient:
+        def generate_pact(self, prompt):
+            return PactCard(
+                visitor_name="Dreamer",
+                permit_id="DC-001",
+                contraband=["融化蜡", "数字14"],
+                risk_level="中",
+                alliance_reading="联盟成员",
+                practical_suggestion="明天早起观察电梯运行情况，若未超速可尝试模拟操作以熟悉流程。",
+                weird_task="把今天最小的任务写在纸上，给它盖一个看不见的放行章。",
+                bedtime_release="06:30",
+                safety_note="梦境内容无医疗价值，建议保持冷静观察。",
+            )
+
+    intake = build_intake(dream_text="我梦见电梯按钮融化，数字停在 14。", mood="焦虑")
+    card, html = generate_pact(intake, "", UnclearTextClient())
+
+    assert card.visitor_name == "昨夜来访者"
+    assert "喝水" in card.practical_suggestion
+    assert "电梯运行" not in card.practical_suggestion
+    assert card.safety_note == ""
+    assert "Life tip" in html
 
 
 def test_add_evidence_updates_session_with_text_image_audio_and_mood():

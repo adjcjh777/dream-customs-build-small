@@ -164,8 +164,21 @@ def _notice_html(view: dict) -> str:
 
 
 def _question_markdown(view: dict) -> str:
-    question = view.get("question") or ""
-    return f"## 海关想确认一件小事\n\n{question}" if question else "## 海关还在等梦的碎片"
+    question = escape(view.get("question") or "")
+    optional_question = (
+        f"<p class='dc-question-original'><span>可选问题</span>{question}</p>"
+        if question
+        else ""
+    )
+    return f"""
+<div class="dc-question-card">
+  <span class="dc-question-kicker">Optional check-in</span>
+  <h2>还想补充一点吗？</h2>
+  <p>如果你愿意，可以写下醒来后最想处理的一件现实小事，或者告诉我这个梦让你身体有什么感觉。</p>
+  {optional_question}
+  <p class="dc-question-note">不想补充也没关系，直接跳过就能生成今日通行证。</p>
+</div>
+""".strip()
 
 
 def _updates(state: str, view_json: str):
@@ -320,26 +333,27 @@ def build_demo() -> gr.Blocks:
             )
             notice = gr.HTML(_notice_html(initial))
 
-            with gr.Group(visible=True, elem_classes=["dc-stage"]) as declaration_group:
-                with gr.Row(elem_classes=["dc-intake-grid"]):
-                    with gr.Group(elem_classes=["dc-composer"]):
-                        gr.HTML(
-                            """
+            with gr.Row(elem_classes=["dc-workspace-grid"]):
+                with gr.Column(elem_classes=["dc-flow-column"]):
+                    with gr.Group(visible=True, elem_classes=["dc-stage"]) as declaration_group:
+                        with gr.Group(elem_classes=["dc-composer"]):
+                            gr.HTML(
+                                """
 <div class="dc-section-title">
   <span class="dc-title-icon">1</span>
   <strong>Describe your dream</strong>
 </div>
 """.strip()
-                        )
-                        dream_text = gr.Textbox(
-                            label="写下梦的碎片",
-                            placeholder=DREAM_PLACEHOLDER,
-                            lines=12,
-                            value="",
-                            elem_classes=["dc-dream-text"],
-                        )
-                        gr.HTML(
-                            """
+                            )
+                            dream_text = gr.Textbox(
+                                label="写下梦的碎片",
+                                placeholder=DREAM_PLACEHOLDER,
+                                lines=12,
+                                value="",
+                                elem_classes=["dc-dream-text"],
+                            )
+                            gr.HTML(
+                                """
 <div class="dc-mic-control">
   <button type="button" class="dc-mic-button" aria-label="点击话筒开始语音输入">
     <span class="dc-mic-glyph" aria-hidden="true"></span>
@@ -347,158 +361,175 @@ def build_demo() -> gr.Blocks:
   <div class="dc-mic-status" aria-live="polite">点击话筒开始语音输入</div>
 </div>
 """.strip()
-                        )
-                        audio_input = gr.State(None)
-                        gr.HTML(
-                            """
+                            )
+                            audio_input = gr.State(None)
+                            gr.HTML(
+                                """
 <p class="dc-field-tip">Tips: include people, places, emotions, colors, and anything that stood out.</p>
 """.strip()
+                            )
+                        with gr.Row(elem_classes=["dc-submit-row"]):
+                            example_button = gr.Button("清空并试一个例子  →", variant="secondary")
+                            submit_button = gr.Button("盖章生成今日通行证  →", variant="primary")
+                        with gr.Accordion("附加材料", open=False, elem_classes=["dc-attachment-drawer"]):
+                            image_input = gr.Image(label="图片线索", type="filepath", height=160)
+
+                    with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
+                        question_markdown = gr.HTML(_question_markdown(initial))
+                        answer_text = gr.Textbox(
+                            label="你的补充",
+                            placeholder=ANSWER_PLACEHOLDER,
+                            lines=4,
+                            value="",
                         )
-                    with gr.Column(elem_classes=["dc-side-panel"]):
-                        gr.HTML(
-                            """
+                        with gr.Row(elem_classes=["dc-question-actions"]):
+                            answer_button = gr.Button("用这条补充生成卡片", variant="primary")
+                            skip_button = gr.Button("跳过，直接生成", variant="secondary")
+
+                    with gr.Group(visible=False, elem_classes=["dc-stage", "dc-card"]) as card_group:
+                        card_html = gr.HTML("")
+                        with gr.Row(elem_classes=["dc-actions"]):
+                            gentle_button = gr.Button("再温柔一点", variant="secondary")
+                            weird_button = gr.Button("更怪一点", variant="secondary")
+                            copy_button = gr.Button("复制文本", variant="secondary")
+                            reset_button = gr.Button("重新申报", variant="secondary")
+                        card_text = gr.Textbox(
+                            label="可复制文本",
+                            value="",
+                            lines=8,
+                            show_copy_button=True,
+                            elem_classes=["dc-hidden-text"],
+                        )
+
+                with gr.Column(elem_classes=["dc-side-panel"]):
+                    gr.HTML(
+                        """
 <div class="dc-section-title">
   <span class="dc-title-icon">2</span>
   <strong>After waking feeling</strong>
 </div>
 """.strip()
-                        )
-                        mood = gr.Dropdown(label="醒来后的感觉", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
-                        gr.HTML(
-                            """
+                    )
+                    mood = gr.Dropdown(label="醒来后的感觉", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
+                    gr.HTML(
+                        """
 <div class="dc-side-stamp">
   <span>Dream Customs</span>
   <strong>Calm clearance</strong>
   <small>Gentle declarations</small>
 </div>
 """.strip()
+                    )
+                    with gr.Accordion("运行设置", open=True, elem_classes=["dc-dev"]):
+                        gr.HTML(
+                            """
+<div class="dc-dev-help">
+  <strong>给调试用，普通体验不用改。</strong>
+  <span>自动模式会优先使用 Space 已配置的后端；没有端点时会安全回落到演示数据。</span>
+</div>
+""".strip()
                         )
-                with gr.Row(elem_classes=["dc-submit-row"]):
-                    example_button = gr.Button("清空并试一个例子  →", variant="secondary")
-                    submit_button = gr.Button("盖章生成今日通行证  →", variant="primary")
-                with gr.Accordion("附加材料", open=False, elem_classes=["dc-attachment-drawer"]):
-                    image_input = gr.Image(label="图片线索", type="filepath", height=160)
-
-            with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
-                question_markdown = gr.Markdown("## 海关还在等梦的碎片")
-                answer_text = gr.Textbox(
-                    label="你的回答",
-                    placeholder=ANSWER_PLACEHOLDER,
-                    lines=3,
-                    value="",
-                )
-                with gr.Row():
-                    answer_button = gr.Button("回答并生成卡片", variant="primary")
-                    skip_button = gr.Button("跳过，直接生成", variant="secondary")
-
-            with gr.Group(visible=False, elem_classes=["dc-stage", "dc-card"]) as card_group:
-                card_html = gr.HTML("")
-                with gr.Row(elem_classes=["dc-actions"]):
-                    gentle_button = gr.Button("再温柔一点", variant="secondary")
-                    weird_button = gr.Button("更怪一点", variant="secondary")
-                    copy_button = gr.Button("复制文本", variant="secondary")
-                    reset_button = gr.Button("重新申报", variant="secondary")
-                card_text = gr.Textbox(
-                    label="可复制文本",
-                    value="",
-                    lines=8,
-                    show_copy_button=True,
-                    elem_classes=["dc-hidden-text"],
-                )
-
-            with gr.Accordion("开发者设置", open=False, elem_classes=["dc-dev"]):
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_backend = gr.Radio(
-                        label="文本后端",
-                        choices=["demo", "model", "modal", "huggingface", "ollama"],
-                        value=DEFAULT_TEXT_BACKEND,
-                    )
-                    vision_backend = gr.Radio(
-                        label="视觉后端",
-                        choices=["demo", "model", "modal", "huggingface", "ollama"],
-                        value=DEFAULT_VISION_BACKEND,
-                    )
-                    asr_backend = gr.Radio(
-                        label="ASR 后端",
-                        choices=["demo", "modal", "huggingface"],
-                        value="demo",
-                    )
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_endpoint = gr.Textbox(label="文本 Endpoint", value="")
-                    vision_endpoint = gr.Textbox(label="视觉 Endpoint", value="")
-                    asr_endpoint = gr.Textbox(label="ASR Endpoint", value="")
-                hosted_token = gr.Textbox(label="Hosted Token", value="", type="password")
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_model = gr.Textbox(label="文本模型", value=DEFAULT_TEXT_MODEL)
-                    vision_model = gr.Textbox(label="视觉模型", value=DEFAULT_VISION_MODEL)
-                    ollama_url = gr.Textbox(label="Ollama URL", value="http://localhost:11434")
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_timeout_seconds = gr.Number(
-                        label="文本超时秒",
-                        value=DEFAULT_HOSTED_TIMEOUT_SECONDS,
-                        precision=1,
-                    )
-                    vision_timeout_seconds = gr.Number(
-                        label="视觉超时秒",
-                        value=DEFAULT_HOSTED_TIMEOUT_SECONDS,
-                        precision=1,
-                    )
-                    asr_timeout_seconds = gr.Number(
-                        label="ASR 超时秒",
-                        value=DEFAULT_ASR_TIMEOUT_SECONDS,
-                        precision=1,
-                    )
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_latency_budget_ms = gr.Number(
-                        label="Modal 文本延迟预算 ms",
-                        value=DEFAULT_TEXT_LATENCY_BUDGET_MS,
-                        precision=0,
-                    )
-                    vision_latency_budget_ms = gr.Number(
-                        label="Modal 视觉延迟预算 ms",
-                        value=DEFAULT_VISION_LATENCY_BUDGET_MS,
-                        precision=0,
-                    )
-                    asr_latency_budget_ms = gr.Number(
-                        label="ASR 延迟预算 ms",
-                        value=DEFAULT_ASR_LATENCY_BUDGET_MS,
-                        precision=0,
-                    )
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_temperature = gr.Slider(
-                        label="文本温度",
-                        minimum=0,
-                        maximum=0.7,
-                        step=0.05,
-                        value=DEFAULT_TEXT_TEMPERATURE,
-                    )
-                    vision_temperature = gr.Slider(
-                        label="视觉温度",
-                        minimum=0,
-                        maximum=0.7,
-                        step=0.05,
-                        value=DEFAULT_VISION_TEMPERATURE,
-                    )
-                with gr.Row(elem_classes=["dc-dev-grid"]):
-                    text_max_tokens = gr.Slider(
-                        label="文本 max tokens",
-                        minimum=64,
-                        maximum=1200,
-                        step=1,
-                        value=DEFAULT_TEXT_MAX_TOKENS,
-                    )
-                    vision_max_tokens = gr.Slider(
-                        label="视觉 max tokens",
-                        minimum=64,
-                        maximum=800,
-                        step=1,
-                        value=DEFAULT_VISION_MAX_TOKENS,
-                    )
-                debug_json = gr.Code(
-                    label="调试状态",
-                    value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
-                    language="json",
-                )
+                        text_backend = gr.Dropdown(
+                            label="文字生成",
+                            choices=[
+                                ("自动：Space 已配置模型", "model"),
+                                ("演示：稳定假数据", "demo"),
+                                ("Modal/API：私有端点", "modal"),
+                                ("本地 Ollama", "ollama"),
+                            ],
+                            value=DEFAULT_TEXT_BACKEND,
+                        )
+                        vision_backend = gr.Dropdown(
+                            label="图片理解",
+                            choices=[
+                                ("自动：Space 已配置视觉模型", "model"),
+                                ("演示：不调用图片模型", "demo"),
+                                ("Modal/API：私有端点", "modal"),
+                                ("本地 Ollama", "ollama"),
+                            ],
+                            value=DEFAULT_VISION_BACKEND,
+                        )
+                        asr_backend = gr.Dropdown(
+                            label="语音输入",
+                            choices=[
+                                ("浏览器直接转写（当前）", "demo"),
+                                ("Modal ASR 端点（待接入）", "modal"),
+                                ("Hugging Face ASR 端点（待接入）", "huggingface"),
+                            ],
+                            value="demo",
+                        )
+                        with gr.Accordion("高级端点", open=False, elem_classes=["dc-dev-advanced"]):
+                            text_endpoint = gr.Textbox(label="文字 Endpoint", value="")
+                            vision_endpoint = gr.Textbox(label="图片 Endpoint", value="")
+                            asr_endpoint = gr.Textbox(label="ASR Endpoint", value="")
+                            hosted_token = gr.Textbox(label="Hosted Token", value="", type="password")
+                            text_model = gr.Textbox(label="文字模型", value=DEFAULT_TEXT_MODEL)
+                            vision_model = gr.Textbox(label="图片模型", value=DEFAULT_VISION_MODEL)
+                            ollama_url = gr.Textbox(label="Ollama URL", value="http://localhost:11434")
+                            text_timeout_seconds = gr.Number(
+                                label="文字超时秒",
+                                value=DEFAULT_HOSTED_TIMEOUT_SECONDS,
+                                precision=1,
+                            )
+                            vision_timeout_seconds = gr.Number(
+                                label="图片超时秒",
+                                value=DEFAULT_HOSTED_TIMEOUT_SECONDS,
+                                precision=1,
+                            )
+                            asr_timeout_seconds = gr.Number(
+                                label="ASR 超时秒",
+                                value=DEFAULT_ASR_TIMEOUT_SECONDS,
+                                precision=1,
+                            )
+                            text_latency_budget_ms = gr.Number(
+                                label="Modal 文字延迟预算 ms",
+                                value=DEFAULT_TEXT_LATENCY_BUDGET_MS,
+                                precision=0,
+                            )
+                            vision_latency_budget_ms = gr.Number(
+                                label="Modal 图片延迟预算 ms",
+                                value=DEFAULT_VISION_LATENCY_BUDGET_MS,
+                                precision=0,
+                            )
+                            asr_latency_budget_ms = gr.Number(
+                                label="ASR 延迟预算 ms",
+                                value=DEFAULT_ASR_LATENCY_BUDGET_MS,
+                                precision=0,
+                            )
+                            text_temperature = gr.Slider(
+                                label="文字温度",
+                                minimum=0,
+                                maximum=0.7,
+                                step=0.05,
+                                value=DEFAULT_TEXT_TEMPERATURE,
+                            )
+                            vision_temperature = gr.Slider(
+                                label="图片温度",
+                                minimum=0,
+                                maximum=0.7,
+                                step=0.05,
+                                value=DEFAULT_VISION_TEMPERATURE,
+                            )
+                            text_max_tokens = gr.Slider(
+                                label="文字 max tokens",
+                                minimum=64,
+                                maximum=1200,
+                                step=1,
+                                value=DEFAULT_TEXT_MAX_TOKENS,
+                            )
+                            vision_max_tokens = gr.Slider(
+                                label="图片 max tokens",
+                                minimum=64,
+                                maximum=800,
+                                step=1,
+                                value=DEFAULT_VISION_MAX_TOKENS,
+                            )
+                        debug_json = gr.Code(
+                            label="当前状态",
+                            value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
+                            language="json",
+                            visible=False,
+                        )
 
         outputs = [
             session_state,

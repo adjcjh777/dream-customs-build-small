@@ -50,7 +50,7 @@ def _card_plain_text(card: PactCard) -> str:
         f"携带情绪违禁品：{contraband}",
         f"风险等级：{card.risk_level}",
         f"结盟解读：{card.alliance_reading}",
-        f"今日认真建议：{card.practical_suggestion}",
+        f"今日生活建议：{card.practical_suggestion}",
         f"5 分钟怪趣任务：{card.weird_task}",
         f"睡前放行仪式：{card.bedtime_release}",
     ]
@@ -78,15 +78,15 @@ def _render_today_pass(card: PactCard) -> str:
   <h2>{escape(card.visitor_name)}</h2>
   <p class="dc-pass-risk">{escape(card.risk_level)}</p>
   <section>
-    <h3>它可能在保护</h3>
+    <h3>可能代表的情绪</h3>
     <p>{escape(card.alliance_reading)}</p>
   </section>
   <section>
-    <h3>今天的小建议</h3>
+    <h3>今天的生活小 tip</h3>
     <p>{escape(card.practical_suggestion)}</p>
   </section>
   <section>
-    <h3>5 分钟怪任务</h3>
+    <h3>5 分钟怪趣任务</h3>
     <p>{escape(card.weird_task)}</p>
   </section>
   <section>
@@ -137,7 +137,7 @@ def _notice_for_status(status: str, error: str = "") -> str:
     if status == "error":
         return error or "海关还没收到梦的碎片。"
     if status == "question":
-        return "海关只想确认一件小事；你也可以跳过，直接拿通行证。"
+        return "这一步是可选补充：说一点醒来后的真实感受，或者直接跳过。"
     if status == "card":
         return "今日通行证已盖章。它是一个温柔的行动提示，不是诊断。"
     return "写一句、几句，或贴一段梦；文字路径永远可用。"

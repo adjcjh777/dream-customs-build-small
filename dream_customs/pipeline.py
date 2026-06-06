@@ -45,6 +45,71 @@ def _stamp_card_for_today(card: PactCard) -> PactCard:
     return stamped
 
 
+def _looks_unclear_or_dream_literal(text: str) -> bool:
+    clean = (text or "").strip()
+    if len(clean) < 12:
+        return True
+    dream_literals = [
+        "电梯运行",
+        "模拟操作",
+        "印章",
+        "放行",
+        "联盟",
+        "梦境内容",
+        "梦境无",
+        "海关",
+        "宣言",
+        "魔法",
+        "香薰皮",
+        "果酱",
+        "Dreamer",
+    ]
+    return any(term in clean for term in dream_literals)
+
+
+def _safe_practical_suggestion(intake: DreamIntake) -> str:
+    if _contains_cjk(intake.merged_text()):
+        mood = intake.mood.strip()
+        if mood in {"焦虑", "迷雾", "累"}:
+            return "今天先做一件能稳住身体的小事：喝水、吃点东西，把最重要的一件事写成 10 分钟能开始的版本。"
+        return "今天给自己留一个低风险开头：先整理桌面或日程 5 分钟，再只开始一件最小的任务。"
+    return "Do one low-risk stabilizing thing today: drink water, eat something, and write the most important task as a 10-minute first step."
+
+
+def _safe_weird_task(intake: DreamIntake) -> str:
+    if _contains_cjk(intake.merged_text()):
+        return "把今天最小的任务写在纸上，旁边画一个很小的通行章，然后只做 5 分钟。"
+    return "Write your smallest task on paper, draw a tiny clearance stamp beside it, and work on it for just five minutes."
+
+
+def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str) -> PactCard:
+    polished = card.model_copy(deep=True)
+    merged = "\n".join([intake.merged_text(), answers or ""])
+    chinese = _contains_cjk(merged)
+
+    if chinese and (not polished.visitor_name.strip() or re.fullmatch(r"[A-Za-z\s_-]+", polished.visitor_name.strip())):
+        polished.visitor_name = "昨夜来访者"
+
+    if _looks_unclear_or_dream_literal(polished.practical_suggestion):
+        polished.practical_suggestion = _safe_practical_suggestion(intake)
+
+    if _looks_unclear_or_dream_literal(polished.weird_task) and polished.weird_task.strip() == polished.practical_suggestion.strip():
+        polished.weird_task = _safe_weird_task(intake)
+    elif len((polished.weird_task or "").strip()) < 8:
+        polished.weird_task = _safe_weird_task(intake)
+
+    if chinese:
+        if len((polished.alliance_reading or "").strip()) < 12 or "联盟成员" in polished.alliance_reading:
+            polished.alliance_reading = "这个梦可以先当作昨晚情绪留下的一点信号，不需要急着解释，今天先照顾好现实里的节奏。"
+        if polished.risk_level.strip() in {"低", "中", "高"}:
+            polished.risk_level = f"{polished.risk_level.strip()}：适合温和处理，不需要把它当成预兆。"
+
+    if not needs_escalation(merged):
+        polished.safety_note = ""
+
+    return polished
+
+
 def intake_from_modalities(
     dream_text: str,
     image_path: Optional[str],
@@ -72,6 +137,7 @@ def generate_pact(intake: DreamIntake, answers: str, text_client) -> Tuple[PactC
     prompt = pact_prompt(intake, answers)
     card = text_client.generate_pact(prompt)
     merged = intake.merged_text() + "\n" + answers
+    card = _polish_card_for_daily_use(card, intake, answers)
     if needs_escalation(merged):
         card.safety_note = safety_note()
     card = _stamp_card_for_today(card)

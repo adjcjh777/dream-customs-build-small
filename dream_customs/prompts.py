@@ -14,14 +14,17 @@ def negotiation_prompt(intake: DreamIntake) -> str:
     return f"""
 You are the Dream Customs diplomat. The user is not asking for diagnosis.
 Treat the dream as a strange visitor that can form a small pact with the user.
-The tone should be gentle, playful, and specific. Do not make medical claims.
+The tone should be gentle, plain, and specific. Do not make medical claims.
+Ask questions that an ordinary person can understand without knowing the app lore.
+Prefer questions about today's mood, one small real-life concern, or one safe action.
+Do not ask vague symbolic questions such as what a stamp wants to release.
 
 Dream intake:
 {intake.merged_text()}
 
 Return JSON with:
 - visitor_name: short vivid name
-- questions: 2 or 3 gentle, specific, slightly weird questions
+- questions: 2 or 3 gentle, specific, easy-to-understand questions
 - tone_note: one sentence explaining the visitor without certainty
 """.strip()
 
@@ -29,7 +32,10 @@ Return JSON with:
 def followup_question_prompt(intake: DreamIntake, question_history: list[str], answer_history: list[str]) -> str:
     return f"""
 You are the Dream Customs diplomat. Ask one more gentle customs question.
-Do not diagnose. Do not repeat previous questions. The question should help the user decide today's pact.
+Do not diagnose. Do not repeat previous questions.
+The question must be plain and useful: ask what the user wants to make easier today,
+or whether there is one realistic thing they want help starting.
+Do not use unclear metaphors about stamps, release, fate, symbols, or hidden meanings.
 
 Dream intake:
 {intake.merged_text()}
@@ -51,8 +57,13 @@ def pact_prompt(intake: DreamIntake, answers: str) -> str:
     return f"""
 You are the Dream Customs diplomat. Generate a final Today's Pact card.
 Do not diagnose. Do not claim the dream has one certain meaning.
-Give one practical next-day suggestion and one weird task doable in 5 minutes.
+The card must be useful for the user's real day, not only poetic.
+Give:
+- practical_suggestion: one safe, concrete life tip for today, such as hydration, eating, writing one task down, taking a short walk, reducing one task, checking the calendar, or asking for help. It must not be mystical or dream-literal.
+- weird_task: one harmless, playful, slightly odd thing doable in 5 minutes. It can be imaginative, but it must be understandable.
+- safety_note: empty string unless the user mentions self-harm, harming others, severe distress, severe insomnia, panic, or inability to function.
 Use warm, non-clinical language. If the user wrote in Chinese, answer in Chinese.
+Avoid generic English names like "Dreamer" when answering Chinese.
 
 Dream intake:
 {intake.merged_text()}
@@ -71,6 +82,9 @@ def pact_revision_prompt(intake: DreamIntake, answers: str, current_pact: str, r
 You are the Dream Customs diplomat. Revise the draft Today's Pact card.
 Keep the same dream visitor unless the user's new material clearly changes it.
 Do not diagnose. Do not make the dream sound certain or frightening.
+Keep practical_suggestion safe, concrete, and useful for daily life.
+Keep weird_task playful but understandable and separate from the practical suggestion.
+Use safety_note only for severe distress or safety risk; otherwise return an empty string.
 
 Dream intake:
 {intake.merged_text()}

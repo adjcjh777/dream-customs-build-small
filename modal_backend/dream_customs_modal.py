@@ -23,6 +23,8 @@ app = modal.App(APP_NAME)
 
 hf_cache = modal.Volume.from_name("dream-customs-hf-cache", create_if_missing=True)
 
+health_image = modal.Image.debian_slim(python_version="3.11").pip_install("fastapi[standard]")
+
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("git")
@@ -73,7 +75,7 @@ def _stringify_pipeline_result(result: Any) -> str:
     return str(result).strip()
 
 
-@app.function()
+@app.function(image=health_image)
 @modal.fastapi_endpoint(method="GET", docs=True)
 def health() -> Dict[str, str]:
     return {

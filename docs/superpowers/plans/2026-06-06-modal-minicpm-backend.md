@@ -1020,7 +1020,7 @@ rg -n "DREAM_CUSTOMS_TEXT_ENDPOINT|DREAM_CUSTOMS_VISION_ENDPOINT|DREAM_CUSTOMS_H
 
 Expected: `dream_customs/app_logic.py` reads all three variables and README documents them.
 
-- [ ] **Step 2: Confirm or update Space secrets through Hugging Face UI**
+- [x] **Step 2: Confirm or update Space secrets through Hugging Face UI**
 
 Open the Space settings page for `build-small-hackathon/dream-customs`. Confirm these repository secrets already exist, or add/update them as repository secrets, not public variables:
 
@@ -1032,13 +1032,15 @@ DREAM_CUSTOMS_HOSTED_TOKEN
 
 Use the Modal deployed URLs and shared hosted token from the current shell/session. Do not store the values locally. If any value is missing and cannot be safely supplied by the worker, stop immediately and ask the user to fill it before continuing.
 
-Observed 2026-06-06: the local HF token could read enough project state for preflight but failed to update Space secrets through the Hugging Face API with `403 Forbidden: Authorization error`. Secret values were not printed. Public Space model-route verification remains blocked until a token with Space secret write permission is available or the Space secrets are updated through the UI.
+Observed 2026-06-06: the local HF token could read enough project state for preflight but failed to update Space secrets through the Hugging Face API with `403 Forbidden: Authorization error`. The three Space secrets were then replaced through the logged-in Hugging Face UI. Secret values were not printed, documented, or committed.
 
-- [ ] **Step 3: Restart the Space**
+- [x] **Step 3: Restart the Space**
 
 Use the Hugging Face Space settings UI to restart/rebuild the Space after secrets are added.
 
-- [ ] **Step 4: Test public Space model route**
+Observed 2026-06-06: Space restart was triggered from the settings UI and runtime returned to `RUNNING`.
+
+- [x] **Step 4: Test public Space model route**
 
 Open the public Space. In developer settings:
 
@@ -1064,7 +1066,9 @@ Expected: the app reaches the question stage and debug JSON reports:
 
 Also confirm the debug session contains at least one image evidence item with extracted visual clues. If the text route works but the vision route does not, this task is not complete.
 
-- [ ] **Step 5: Test public Space fallback**
+Observed 2026-06-06: public Space model route passed with `status=negotiating`, `text_backend=model`, `vision_backend=model`, one extracted image evidence item, and `visual_clue_count=8`.
+
+- [x] **Step 5: Test public Space fallback**
 
 In developer settings:
 
@@ -1076,6 +1080,8 @@ In developer settings:
 Submit the same dream.
 
 Expected: the app still reaches the question stage and produces a pact card through the demo backend.
+
+Observed 2026-06-06: public Space demo fallback passed with `status=negotiating`, `text_backend=demo`, `vision_backend=demo`, one extracted image evidence item, and `visual_clue_count=3`.
 
 - [x] **Step 6: Update README hosted-route section**
 
@@ -1188,7 +1194,7 @@ Expected: branch pushes successfully.
 
 Observed 2026-06-06: branch `feature/modal-minicpm-backend` pushed successfully to `origin`.
 
-- [ ] **Step 5: Report final state**
+- [x] **Step 5: Report final state**
 
 Report:
 
@@ -1202,6 +1208,8 @@ Report:
 - Public Space model route: pass/fail
 - Public Space demo fallback: pass/fail
 ```
+
+Observed 2026-06-06: final state is ready to report after the Space smoke update commit and push.
 
 ## Execution Prompt For Goal
 

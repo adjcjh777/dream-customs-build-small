@@ -14,9 +14,12 @@
 - Text smoke: PASS with `text_route=ok` and `text_questions=2`
 - Vision smoke: PASS with `vision_route=ok` and `vision_clues=8`
 - Acceptance eval: PASS with `passed=12`, `total=12`, `schema_valid_rate=1.0`, and `failures=[]`
+- Hugging Face Space model route: PASS with `status=negotiating`, `text_backend=model`, `vision_backend=model`, one extracted image evidence item, and `visual_clue_count=8`
+- Hugging Face Space demo fallback: PASS with `status=negotiating`, `text_backend=demo`, `vision_backend=demo`, one extracted image evidence item, and `visual_clue_count=3`
 
 ## Notes
 
 - GPU class remained `L4`; no upgrade was required for `openbmb/MiniCPM-V-4.6`.
 - Modal text output keeps the real MiniCPM route first and repairs missing JSON fields only when schema validation would otherwise fail.
-- Hugging Face Space secret sync was attempted through the local HF token, but the API returned a non-secret `403 Forbidden: Authorization error`. Public Space model-route verification remains pending until the Space secrets are updated with the deployed Modal endpoint values and hosted token.
+- Hugging Face Space secret sync was first attempted through the local HF token, but the API returned a non-secret `403 Forbidden: Authorization error`.
+- The three Space secrets were replaced through the logged-in Hugging Face UI, then the Space was restarted and verified through the public Gradio API.

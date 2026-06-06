@@ -772,7 +772,7 @@ git commit -m "chore: add hosted route smoke script"
 **Files:**
 - Create: `scripts/eval_hosted_routes.py`
 
-- [ ] **Step 1: Create eval script**
+- [x] **Step 1: Create eval script**
 
 Create `scripts/eval_hosted_routes.py`:
 
@@ -848,7 +848,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 2: Run eval without env to verify safe failure**
+- [x] **Step 2: Run eval without env to verify safe failure**
 
 Run:
 

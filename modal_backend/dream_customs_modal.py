@@ -194,6 +194,43 @@ def _fallback_json_response(prompt: str) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
+def _extract_json_object(text: str) -> Dict[str, Any] | None:
+    cleaned = text.strip()
+    try:
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        pass
+    start = cleaned.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for index, char in enumerate(cleaned[start:], start=start):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    parsed = json.loads(cleaned[start : index + 1])
+                except json.JSONDecodeError:
+                    return None
+                return parsed if isinstance(parsed, dict) else None
+    return None
+
+
 def _generate_text(
     tokenizer: Any,
     model: Any,
@@ -263,7 +300,9 @@ async def text(
             }
         ]
         text_output = _generate_text(tokenizer, model, retry_messages, normalized["max_tokens"])
-    if not text_output:
+    if not text_output or (
+        "Required schema:" in normalized["prompt"] and _extract_json_object(text_output) is None
+    ):
         text_output = _fallback_json_response(normalized["prompt"])
     return response_payload(text_output)
 

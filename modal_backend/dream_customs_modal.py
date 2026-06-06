@@ -23,7 +23,11 @@ app = modal.App(APP_NAME)
 
 hf_cache = modal.Volume.from_name("dream-customs-hf-cache", create_if_missing=True)
 
-health_image = modal.Image.debian_slim(python_version="3.11").pip_install("fastapi[standard]")
+health_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .pip_install("fastapi[standard]")
+    .add_local_dir("modal_backend", remote_path="/root/modal_backend")
+)
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -39,6 +43,7 @@ image = (
         "torchvision",
         "transformers>=4.56",
     )
+    .add_local_dir("modal_backend", remote_path="/root/modal_backend")
 )
 
 secrets = [

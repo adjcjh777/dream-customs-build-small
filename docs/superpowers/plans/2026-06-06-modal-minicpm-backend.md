@@ -1176,7 +1176,7 @@ Expected: recent commits show the contract helpers, Modal service, smoke/eval sc
 
 Observed 2026-06-06: recent commits show Modal contracts, backend service, hosted smoke/eval scripts, Modal runtime fixes, schema repair, and smoke documentation.
 
-- [ ] **Step 4: Push branch**
+- [x] **Step 4: Push branch**
 
 Run:
 
@@ -1185,6 +1185,8 @@ git push origin feature/modal-minicpm-backend
 ```
 
 Expected: branch pushes successfully.
+
+Observed 2026-06-06: branch `feature/modal-minicpm-backend` pushed successfully to `origin`.
 
 - [ ] **Step 5: Report final state**
 

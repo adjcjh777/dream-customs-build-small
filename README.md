@@ -73,6 +73,8 @@ The public Space stays lightweight and can call private Modal endpoints through 
 
 Set these only as Hugging Face Space repository secrets or local shell variables. Do not store values in `.env`, docs, logs, screenshots, or git. Missing endpoints or route failures fall back to deterministic demo behavior.
 
+Keep the Hugging Face Space hardware on `CPU basic` for this route. Modal provides the GPU-backed MiniCPM inference, so switching the Space itself to ZeroGPU is unnecessary and will fail at startup unless the app defines a local `@spaces.GPU` function.
+
 Token-safe text smoke:
 
 ```bash

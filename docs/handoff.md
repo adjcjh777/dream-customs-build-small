@@ -146,6 +146,8 @@ Hugging Face Space Gradio UI
 
 The Space keeps `demo` as the default backend and exposes `model` only through developer settings. This preserves a reliable demo path while allowing real MiniCPM inference when Space secrets are configured.
 
+Keep the public Space on `CPU basic`. Modal credits pay for the hidden L4 GPU backend; the Gradio Space does not define a local `@spaces.GPU` function, so switching the Space hardware to ZeroGPU will trigger the Hugging Face startup error `No @spaces.GPU function detected during startup`.
+
 ## Open Questions For User
 
 These do not block initial scaffolding:

@@ -1,0 +1,3 @@
+DEFAULT_TEXT_BACKEND = "model"
+DEFAULT_VISION_BACKEND = "model"
+

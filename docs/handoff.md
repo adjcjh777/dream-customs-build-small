@@ -144,9 +144,9 @@ Hugging Face Space Gradio UI
   -> MiniCPM5-1B text generation and MiniCPM-V-4.6 visual clue extraction
 ```
 
-The Space keeps `demo` as the default backend and exposes `model` only through developer settings. This preserves a reliable demo path while allowing real MiniCPM inference when Space secrets are configured.
+The Space defaults to `model` for both text and vision backends, so a configured Space calls Modal immediately. The `demo` backend remains available in developer settings as the deterministic fallback path.
 
-Keep the public Space on `CPU basic`. Modal credits pay for the hidden L4 GPU backend; the Gradio Space does not define a local `@spaces.GPU` function, so switching the Space hardware to ZeroGPU will trigger the Hugging Face startup error `No @spaces.GPU function detected during startup`.
+The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the lightweight `@spaces.GPU` startup probe. Modal credits still pay for the hidden L4 GPU backend; the ZeroGPU probe is only there to make the HF hardware setting valid for this Gradio frontend.
 
 ## Open Questions For User
 

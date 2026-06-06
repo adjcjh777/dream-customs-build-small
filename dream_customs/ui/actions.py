@@ -3,6 +3,7 @@ from html import escape
 from typing import Any, Dict, List, Tuple
 
 from dream_customs.app_logic import _clients, _debug_json, _file_path, _session_from_state
+from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.pipeline import (
     add_evidence,
     answer_question,
@@ -138,7 +139,10 @@ def _notice_for_status(status: str, error: str = "") -> str:
     return "写一句、几句，或贴一段梦；文字路径永远可用。"
 
 
-def initial_mobile_state(text_backend: str = "demo", vision_backend: str = "demo") -> Tuple[str, str]:
+def initial_mobile_state(
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+) -> Tuple[str, str]:
     return _view(create_session(), text_backend, vision_backend)
 
 
@@ -147,8 +151,8 @@ def submit_dream_action(
     image_value: Any = None,
     audio_value: Any = None,
     mood: str = "",
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ) -> Tuple[str, str]:
     text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
     session = add_evidence(
@@ -169,8 +173,8 @@ def submit_dream_action(
 
 def skip_to_card_action(
     state: Any,
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ) -> Tuple[str, str]:
     session = skip_question(_session_from_state(state))
     return _seal_view(session, text_backend, vision_backend)
@@ -179,8 +183,8 @@ def skip_to_card_action(
 def answer_to_card_action(
     state: Any,
     answer: str,
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ) -> Tuple[str, str]:
     session = answer_question(_session_from_state(state), answer or "")
     if session.phase == "error":
@@ -191,8 +195,8 @@ def answer_to_card_action(
 def revise_card_action(
     state: Any,
     revision_request: str,
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ) -> Tuple[str, str]:
     session = _session_from_state(state)
     if session.sealed_pact and not session.draft_pact:
@@ -205,7 +209,10 @@ def revise_card_action(
     return _view(session, text_backend, vision_backend)
 
 
-def reset_mobile_action(text_backend: str = "demo", vision_backend: str = "demo") -> Tuple[str, str]:
+def reset_mobile_action(
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+) -> Tuple[str, str]:
     return initial_mobile_state(text_backend, vision_backend)
 
 

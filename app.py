@@ -1,5 +1,6 @@
 import os
 
+from dream_customs import zerogpu  # noqa: F401
 from dream_customs.ui.app import build_demo
 
 

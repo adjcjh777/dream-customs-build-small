@@ -4,6 +4,7 @@ from html import escape
 import gradio as gr
 from gradio_client import utils as gradio_client_utils
 
+from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.ui.actions import (
     answer_to_card_action,
     initial_mobile_state,
@@ -183,12 +184,12 @@ def build_demo() -> gr.Blocks:
                     text_backend = gr.Radio(
                         label="文本后端",
                         choices=["demo", "model", "ollama"],
-                        value="demo",
+                        value=DEFAULT_TEXT_BACKEND,
                     )
                     vision_backend = gr.Radio(
                         label="视觉后端",
                         choices=["demo", "model", "ollama"],
-                        value="demo",
+                        value=DEFAULT_VISION_BACKEND,
                     )
                 debug_json = gr.Code(
                     label="调试状态",

@@ -6,6 +6,7 @@ pydantic>=2.7
 pytest>=8.0
 pillow
 soundfile
+spaces
 
 # Optional direct Hugging Face runtime for MiniCPM-V.
 # The default local demo uses Ollama adapters or the stable demo backend.

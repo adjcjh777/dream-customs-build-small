@@ -11,6 +11,7 @@ from dream_customs.models import (
     OllamaTextClient,
     OllamaVisionClient,
 )
+from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.pipeline import (
     add_evidence,
     answer_question,
@@ -49,8 +50,8 @@ def _file_path(value: Any) -> str:
 
 
 def _clients(text_backend: str, vision_backend: str):
-    text_backend = (text_backend or "demo").lower()
-    vision_backend = (vision_backend or "demo").lower()
+    text_backend = (text_backend or DEFAULT_TEXT_BACKEND).lower()
+    vision_backend = (vision_backend or DEFAULT_VISION_BACKEND).lower()
     if text_backend == "ollama":
         text_client = OllamaTextClient(
             model_name=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", DEFAULT_TEXT_MODEL),
@@ -119,7 +120,11 @@ def _notice(session: CustomsSession) -> str:
     return "<div class='dc-inline-notice'>File any fragment. Text-only stays available if image or voice fails.</div>"
 
 
-def _view(session: CustomsSession, text_backend: str = "demo", vision_backend: str = "demo"):
+def _view(
+    session: CustomsSession,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     sealed_html = render_pact_card(session.sealed_pact) if session.sealed_pact else ""
     return (
         json.dumps(session.model_dump(mode="json"), ensure_ascii=False),
@@ -132,7 +137,10 @@ def _view(session: CustomsSession, text_backend: str = "demo", vision_backend: s
     )
 
 
-def initial_workbench_state(text_backend: str = "demo", vision_backend: str = "demo"):
+def initial_workbench_state(
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     return _view(create_session(), text_backend, vision_backend)
 
 
@@ -142,8 +150,8 @@ def start_declaration_action(
     image_value: Any = None,
     audio_value: Any = None,
     mood: str = "",
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ):
     session = _session_from_state(state)
     text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
@@ -167,8 +175,8 @@ def add_material_action(
     image_value: Any = None,
     audio_value: Any = None,
     mood: str = "",
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ):
     session = _session_from_state(state)
     _text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
@@ -184,24 +192,41 @@ def add_material_action(
     return _view(session, text_backend, vision_backend)
 
 
-def answer_question_action(state: Any, answer: str, text_backend: str = "demo", vision_backend: str = "demo"):
+def answer_question_action(
+    state: Any,
+    answer: str,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     session = answer_question(_session_from_state(state), answer or "")
     return _view(session, text_backend, vision_backend)
 
 
-def skip_question_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+def skip_question_action(
+    state: Any,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     session = skip_question(_session_from_state(state))
     return _view(session, text_backend, vision_backend)
 
 
-def ask_another_question_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+def ask_another_question_action(
+    state: Any,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     session = _session_from_state(state)
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
     session = ask_questions(session, text_client, force_another=True)
     return _view(session, text_backend, vision_backend)
 
 
-def draft_pact_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+def draft_pact_action(
+    state: Any,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     session = _session_from_state(state)
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
     session = draft_pact(session, text_client)
@@ -211,8 +236,8 @@ def draft_pact_action(state: Any, text_backend: str = "demo", vision_backend: st
 def revise_pact_action(
     state: Any,
     revision_request: str,
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ):
     session = _session_from_state(state)
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
@@ -220,7 +245,11 @@ def revise_pact_action(
     return _view(session, text_backend, vision_backend)
 
 
-def seal_pact_action(state: Any, text_backend: str = "demo", vision_backend: str = "demo"):
+def seal_pact_action(
+    state: Any,
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     session = _session_from_state(state)
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
     if not session.draft_pact and session.intake.merged_text():
@@ -229,7 +258,10 @@ def seal_pact_action(state: Any, text_backend: str = "demo", vision_backend: str
     return _view(session, text_backend, vision_backend)
 
 
-def start_new_action(text_backend: str = "demo", vision_backend: str = "demo"):
+def start_new_action(
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
+):
     return _view(create_session(), text_backend, vision_backend)
 
 
@@ -239,8 +271,8 @@ def run_customs_once(
     audio_value: Any = None,
     mood: str = "",
     answers: str = "",
-    text_backend: str = "demo",
-    vision_backend: str = "demo",
+    text_backend: str = DEFAULT_TEXT_BACKEND,
+    vision_backend: str = DEFAULT_VISION_BACKEND,
 ) -> Tuple[str, str, str, str]:
     image_path = _file_path(image_value)
     audio_path = _file_path(audio_value)

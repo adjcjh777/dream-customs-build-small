@@ -551,7 +551,7 @@ git commit -m "feat: add modal minicpm backend service"
 **Files:**
 - Read: `modal_backend/dream_customs_modal.py`
 
-- [ ] **Step 1: Confirm Modal CLI is authenticated**
+- [x] **Step 1: Confirm Modal CLI is authenticated**
 
 Run:
 
@@ -569,7 +569,7 @@ modal setup
 
 Complete browser login for workspace `cjh-12569`.
 
-- [ ] **Step 2: Create Modal secret without printing values**
+- [x] **Step 2: Create Modal secret without printing values**
 
 Run with values pasted only into the command invocation, not into a file:
 
@@ -586,6 +586,8 @@ Created secret dream-customs-modal-secrets
 ```
 
 If the secret already exists, update it from the Modal dashboard or recreate it after confirming no unrelated app depends on it.
+
+Observed 2026-06-06: Modal CLI authenticated to workspace `cjh-12569`; Modal secret `dream-customs-modal-secrets` exists. Secret values were not printed or recorded. The hosted token still needs to be synchronized with the Hugging Face Space secret before public Space model-route verification.
 
 - [ ] **Step 3: Serve the Modal app for development**
 

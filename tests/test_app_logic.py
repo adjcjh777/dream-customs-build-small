@@ -1,6 +1,7 @@
 import json
 
 from dream_customs.app_logic import (
+    _clients,
     _debug_json,
     add_material_action,
     ask_another_question_action,
@@ -11,6 +12,7 @@ from dream_customs.app_logic import (
     seal_pact_action,
     start_declaration_action,
 )
+from dream_customs.models import HostedASRClient, HostedMiniCPMTextClient, HostedMiniCPMVisionClient
 
 
 def test_run_customs_once_generates_demo_outputs():
@@ -100,3 +102,36 @@ def test_debug_settings_do_not_expose_hosted_secrets():
     assert debug["developer_settings"]["text_latency_budget_ms"] == 1234
     assert "secret-token" not in debug_json
     assert "modal.example" not in debug_json
+
+
+def test_developer_settings_configure_hosted_clients():
+    text_client, vision_client, asr_client = _clients(
+        "modal",
+        "huggingface",
+        text_endpoint="https://modal.example/text",
+        vision_endpoint="https://hf.example/vision",
+        asr_backend="modal",
+        asr_endpoint="https://modal.example/asr",
+        hosted_token="secret-token",
+        text_timeout_seconds=12,
+        vision_timeout_seconds=34,
+        asr_timeout_seconds=5,
+        text_temperature=0.42,
+        vision_temperature=0.22,
+        text_max_tokens=256,
+        vision_max_tokens=128,
+    )
+
+    assert isinstance(text_client, HostedMiniCPMTextClient)
+    assert isinstance(vision_client, HostedMiniCPMVisionClient)
+    assert isinstance(asr_client, HostedASRClient)
+    assert text_client.endpoint == "https://modal.example/text"
+    assert vision_client.endpoint == "https://hf.example/vision"
+    assert asr_client.endpoint == "https://modal.example/asr"
+    assert text_client.timeout == 12
+    assert vision_client.timeout == 34
+    assert asr_client.timeout == 5
+    assert text_client.temperature == 0.42
+    assert vision_client.temperature == 0.22
+    assert text_client.max_tokens == 256
+    assert vision_client.max_tokens == 128

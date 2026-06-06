@@ -339,14 +339,14 @@ def build_demo() -> gr.Blocks:
                         label="文本 max tokens",
                         minimum=64,
                         maximum=1200,
-                        step=16,
+                        step=1,
                         value=DEFAULT_TEXT_MAX_TOKENS,
                     )
                     vision_max_tokens = gr.Slider(
                         label="视觉 max tokens",
                         minimum=64,
                         maximum=800,
-                        step=16,
+                        step=1,
                         value=DEFAULT_VISION_MAX_TOKENS,
                     )
                 debug_json = gr.Code(

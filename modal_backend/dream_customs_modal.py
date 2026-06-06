@@ -4,7 +4,7 @@ import tempfile
 from typing import Any, Dict
 
 import modal
-from fastapi import Request
+from fastapi import Body, Header
 
 from modal_backend.contracts import (
     AuthError,
@@ -53,10 +53,6 @@ secrets = [
         required_keys=["HF_TOKEN", "DREAM_CUSTOMS_HOSTED_TOKEN"],
     )
 ]
-
-
-def _auth_header(request: Any) -> str:
-    return str(request.headers.get("authorization", ""))
 
 
 def _expected_token() -> str:
@@ -114,12 +110,15 @@ class TextService:
         )
 
     @modal.fastapi_endpoint(method="POST", docs=True)
-    async def text(self, request: Request):
+    async def text(
+        self,
+        payload: Dict[str, Any] = Body(...),
+        authorization: str = Header(""),
+    ):
         try:
-            ensure_authorized(_auth_header(request), _expected_token())
+            ensure_authorized(authorization, _expected_token())
         except AuthError as exc:
             return _json_error(str(exc), status="unauthorized")
-        payload = await request.json()
         normalized = normalize_text_payload(payload)
         if not normalized["prompt"]:
             return _json_error("Missing prompt.")
@@ -155,12 +154,15 @@ class VisionService:
         )
 
     @modal.fastapi_endpoint(method="POST", docs=True)
-    async def vision(self, request: Request):
+    async def vision(
+        self,
+        payload: Dict[str, Any] = Body(...),
+        authorization: str = Header(""),
+    ):
         try:
-            ensure_authorized(_auth_header(request), _expected_token())
+            ensure_authorized(authorization, _expected_token())
         except AuthError as exc:
             return _json_error(str(exc), status="unauthorized")
-        payload = await request.json()
         prompt = str(payload.get("prompt") or "").strip()
         if not prompt:
             prompt = (

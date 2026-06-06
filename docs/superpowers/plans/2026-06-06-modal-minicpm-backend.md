@@ -17,6 +17,8 @@
 - Keep the UI default backend as `demo`.
 - Keep text-only demo fallback working when Modal endpoints are missing, cold, slow, or failing.
 - Keep the model family constrained to `MiniCPM` before trying unrelated small models.
+- Completion requires a working `MiniCPM-V-4.6` vision route. Demo vision fallback is allowed only as runtime resilience after the real vision route has passed smoke; it is not an acceptable substitute for final delivery.
+- Confirm Hugging Face Space secrets at the start of execution. If the Space is missing required secrets or needs updated Modal endpoint values, stop early and ask the user to fill or approve filling them before remote Space verification.
 - Treat voice transcription as unchanged for this pass; ASR remains fake/demo unless a separate plan approves a real ASR adapter.
 
 ## File Structure
@@ -99,6 +101,22 @@ Run:
 ```
 
 Expected: all existing tests pass.
+
+- [ ] **Step 5: Confirm Hugging Face Space secret readiness**
+
+Before writing backend code, open the Hugging Face Space settings for `build-small-hackathon/dream-customs` and confirm whether these repository secrets already exist:
+
+```text
+DREAM_CUSTOMS_TEXT_ENDPOINT
+DREAM_CUSTOMS_VISION_ENDPOINT
+DREAM_CUSTOMS_HOSTED_TOKEN
+```
+
+Expected: the secrets exist, or the worker has stopped and asked the user to fill them before public Space verification. Do not print or copy secret values. If the Modal endpoint URLs will be newly generated later, record only this non-secret status in your notes:
+
+```text
+HF Space secrets preflight: present, may need endpoint value refresh after Modal deploy.
+```
 
 Commit is not needed for this task.
 
@@ -633,7 +651,7 @@ Expected:
 
 - [ ] **Step 6: Record any GPU/load failure**
 
-If Modal fails because `MiniCPM-V-4.6` does not fit on `L4`, change only `VisionService.gpu` to `A10G` first. If it still fails, change only `VisionService.gpu` to `L40S`. Keep `TextService.gpu` on `L4` unless text loading fails.
+If Modal fails because `MiniCPM-V-4.6` does not fit on `L4`, change only `VisionService.gpu` to `A10G` first. If it still fails, change only `VisionService.gpu` to `L40S`; if `L40S` still fails, try `A100-40GB`, then `A100-80GB`. Keep `TextService.gpu` on `L4` unless text loading fails. Do not switch away from `openbmb/MiniCPM-V-4.6` to satisfy the vision requirement; if all GPU classes fail, mark the goal blocked with the exact non-secret Modal load error.
 
 - [ ] **Step 7: Commit GPU adjustment if needed**
 
@@ -672,7 +690,10 @@ def _require(name: str) -> str:
 def main() -> int:
     token = os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "")
     text_endpoint = _require("DREAM_CUSTOMS_TEXT_ENDPOINT")
-    vision_endpoint = os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", "")
+    vision_endpoint = _require("DREAM_CUSTOMS_VISION_ENDPOINT")
+    image_path = _require("DREAM_CUSTOMS_SMOKE_IMAGE")
+    if not Path(image_path).exists():
+        raise SystemExit("DREAM_CUSTOMS_SMOKE_IMAGE does not exist.")
     text_client = HostedMiniCPMTextClient(endpoint=text_endpoint, token=token, timeout=180)
     negotiation = text_client.generate_negotiation(
         "我梦见自己在深夜海关排队，口袋里装着一枚蓝色印章。"
@@ -681,19 +702,15 @@ def main() -> int:
     result = {
         "text_route": "ok" if text_ok else "failed",
         "text_questions": len(negotiation.get("questions", [])),
-        "vision_route": "skipped",
+        "vision_route": "failed",
         "vision_clues": 0,
     }
-    image_path = os.getenv("DREAM_CUSTOMS_SMOKE_IMAGE", "")
-    if vision_endpoint and image_path:
-        if not Path(image_path).exists():
-            raise SystemExit("DREAM_CUSTOMS_SMOKE_IMAGE does not exist.")
-        vision_client = HostedMiniCPMVisionClient(endpoint=vision_endpoint, token=token, timeout=180)
-        clues = vision_client.extract_clues(image_path)
-        result["vision_route"] = "ok" if clues else "failed"
-        result["vision_clues"] = len(clues)
+    vision_client = HostedMiniCPMVisionClient(endpoint=vision_endpoint, token=token, timeout=180)
+    clues = vision_client.extract_clues(image_path)
+    result["vision_route"] = "ok" if len(clues) >= 3 else "failed"
+    result["vision_clues"] = len(clues)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    return 0 if text_ok and result["vision_route"] in {"ok", "skipped"} else 1
+    return 0 if text_ok and result["vision_route"] == "ok" else 1
 
 
 if __name__ == "__main__":
@@ -714,13 +731,15 @@ Expected:
 Missing required environment variable: DREAM_CUSTOMS_TEXT_ENDPOINT
 ```
 
-- [ ] **Step 3: Run script with text endpoint configured**
+- [ ] **Step 3: Run script with text and vision endpoints configured**
 
 Run:
 
 ```bash
 DREAM_CUSTOMS_TEXT_ENDPOINT="$DREAM_CUSTOMS_TEXT_ENDPOINT" \
+DREAM_CUSTOMS_VISION_ENDPOINT="$DREAM_CUSTOMS_VISION_ENDPOINT" \
 DREAM_CUSTOMS_HOSTED_TOKEN="$DREAM_CUSTOMS_HOSTED_TOKEN" \
+DREAM_CUSTOMS_SMOKE_IMAGE="$DREAM_CUSTOMS_SMOKE_IMAGE" \
 .venv/bin/python scripts/smoke_hosted_routes.py
 ```
 
@@ -730,12 +749,12 @@ Expected:
 {
   "text_route": "ok",
   "text_questions": 1,
-  "vision_route": "skipped",
-  "vision_clues": 0
+  "vision_route": "ok",
+  "vision_clues": 3
 }
 ```
 
-The exact `text_questions` count may be `1`, `2`, or `3`.
+The exact `text_questions` count may be `1`, `2`, or `3`. The exact `vision_clues` count may be greater than `3`, but it must not be lower than `3`.
 
 - [ ] **Step 4: Commit smoke script**
 
@@ -907,7 +926,7 @@ Run:
 .venv/bin/python scripts/smoke_hosted_routes.py
 ```
 
-Expected: `text_route` is `ok`. If `DREAM_CUSTOMS_SMOKE_IMAGE` is configured, `vision_route` is `ok` and `vision_clues >= 3`.
+Expected: `text_route` is `ok`, `vision_route` is `ok`, and `vision_clues >= 3`. `DREAM_CUSTOMS_SMOKE_IMAGE` is required because `MiniCPM-V-4.6` vision is a mandatory delivery requirement.
 
 - [ ] **Step 4: Run hosted eval**
 
@@ -938,7 +957,7 @@ Create `docs/smoke/2026-06-06-modal-minicpm-backend-smoke.md`:
 
 - Health endpoint: PASS
 - Text smoke: PASS
-- Vision smoke: PASS or SKIPPED with reason
+- Vision smoke: PASS with `vision_clues >= 3`
 - Acceptance eval: PASS with `passed >= 11`
 
 ## Notes
@@ -947,7 +966,7 @@ Create `docs/smoke/2026-06-06-modal-minicpm-backend-smoke.md`:
 - If a GPU class changed from `L4`, record the final GPU class and why.
 ```
 
-Fill the PASS/SKIPPED lines with the actual observed result. Do not paste endpoint URLs or tokens.
+Fill the PASS lines with the actual observed result. Do not paste endpoint URLs or tokens.
 
 - [ ] **Step 6: Commit smoke record**
 
@@ -975,9 +994,9 @@ rg -n "DREAM_CUSTOMS_TEXT_ENDPOINT|DREAM_CUSTOMS_VISION_ENDPOINT|DREAM_CUSTOMS_H
 
 Expected: `dream_customs/app_logic.py` reads all three variables and README documents them.
 
-- [ ] **Step 2: Set Space secrets through Hugging Face UI**
+- [ ] **Step 2: Confirm or update Space secrets through Hugging Face UI**
 
-Open the Space settings page for `build-small-hackathon/dream-customs`. Add these as repository secrets, not public variables:
+Open the Space settings page for `build-small-hackathon/dream-customs`. Confirm these repository secrets already exist, or add/update them as repository secrets, not public variables:
 
 ```text
 DREAM_CUSTOMS_TEXT_ENDPOINT
@@ -985,7 +1004,7 @@ DREAM_CUSTOMS_VISION_ENDPOINT
 DREAM_CUSTOMS_HOSTED_TOKEN
 ```
 
-Use the Modal deployed URLs and shared hosted token from the current shell/session. Do not store the values locally.
+Use the Modal deployed URLs and shared hosted token from the current shell/session. Do not store the values locally. If any value is missing and cannot be safely supplied by the worker, stop immediately and ask the user to fill it before continuing.
 
 - [ ] **Step 3: Restart the Space**
 
@@ -997,10 +1016,10 @@ Open the public Space. In developer settings:
 
 ```text
 文本后端: model
-视觉后端: demo
+视觉后端: model
 ```
 
-Submit:
+Submit with a smoke image or sketch uploaded:
 
 ```text
 我梦见自己在深夜海关排队，口袋里装着一枚蓝色印章。
@@ -1010,9 +1029,12 @@ Expected: the app reaches the question stage and debug JSON reports:
 
 ```json
 {
-  "text_backend": "model"
+  "text_backend": "model",
+  "vision_backend": "model"
 }
 ```
+
+Also confirm the debug session contains at least one image evidence item with extracted visual clues. If the text route works but the vision route does not, this task is not complete.
 
 - [ ] **Step 5: Test public Space fallback**
 
@@ -1105,10 +1127,10 @@ Expected: all tests pass and diff check is clean.
 Run:
 
 ```bash
-git grep -n "Bearer \\|hf_\\|DREAM_CUSTOMS_HOSTED_TOKEN=.*\\|modal.com/settings\\|DREAM_CUSTOMS_TEXT_ENDPOINT=https://" -- .
+git grep -nE 'hf_[A-Za-z0-9_=-]{20,}|DREAM_CUSTOMS_(TEXT|VISION)_ENDPOINT=https://|DREAM_CUSTOMS_HOSTED_TOKEN=[^"$[:space:]]|modal\\.com/settings/.+/usage' -- .
 ```
 
-Expected: no committed secret values. It is acceptable for docs and code to mention variable names such as `DREAM_CUSTOMS_HOSTED_TOKEN`.
+Expected: no committed secret values. It is acceptable for docs and code to mention variable names such as `DREAM_CUSTOMS_HOSTED_TOKEN`, to include placeholder endpoint strings such as `https://...`, and to include synthetic examples such as `Bearer secret-value`.
 
 - [ ] **Step 3: Review commit history**
 
@@ -1139,7 +1161,7 @@ Report:
 - Modal app deployed: yes/no
 - HF Space secrets configured: yes/no
 - Text route smoke: pass/fail
-- Vision route smoke: pass/fail/skipped
+- Vision route smoke: pass/fail
 - Eval: passed count out of 12
 - Public Space model route: pass/fail
 - Public Space demo fallback: pass/fail
@@ -1150,11 +1172,11 @@ Report:
 Use this prompt when assigning the work to a long-running goal:
 
 ```text
-在 /Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon 继续 Dream Customs。先读 AGENTS.md、docs/spec.md、docs/prd.md、docs/handoff.md 和 docs/superpowers/plans/2026-06-06-modal-minicpm-backend.md。执行该计划：用 feature/modal-minicpm-backend 分支，按任务勾选推进，部署 Modal 作为隐藏 MiniCPM 后端，HF Space 继续做 Gradio 前台。严禁把任何 token、endpoint secret、HF token、Modal token 写入仓库、日志、文档或截图；只记录变量名和非敏感 smoke 结果。默认 backend 保持 demo，model route 只能作为可切换真实推理路径，失败必须 fallback。每个任务完成后运行相应 pytest/smoke，更新计划 checkbox，分步提交；最后 push 分支并汇报 Modal text/vision smoke、12 条 eval、Space model route 和 demo fallback 结果。
+在 /Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon 继续 Dream Customs。先读 AGENTS.md、docs/spec.md、docs/prd.md、docs/handoff.md 和 docs/superpowers/plans/2026-06-06-modal-minicpm-backend.md。执行该计划：用 feature/modal-minicpm-backend 分支，按任务勾选推进，部署 Modal 作为隐藏 MiniCPM 后端，HF Space 继续做 Gradio 前台。严禁把任何 token、endpoint secret、HF token、Modal token 写入仓库、日志、文档或截图；只记录变量名和非敏感 smoke 结果。开工前先确认 HF Space secrets 是否已存在；缺失或需要用户填写时立刻停下请求用户处理。默认 backend 保持 demo，model route 只能作为可切换真实推理路径，失败必须 fallback。MiniCPM-V-4.6 vision route 是硬验收，不允许用 demo vision 或跳过 vision smoke 代替；如果 GPU 不够，升级 Modal GPU，但不要换非 MiniCPM-V-4.6 模型。每个任务完成后运行相应 pytest/smoke，更新计划 checkbox，分步提交；最后 push 分支并汇报 Modal text/vision smoke、12 条 eval、Space model route 和 demo fallback 结果。
 ```
 
 ## Plan Self-Review
 
-- Spec coverage: Modal hidden backend, HF Space lightweight frontend, MiniCPM model constraint, fallback behavior, schema validity, safety eval, and no-secret handling all have explicit tasks.
+- Spec coverage: Modal hidden backend, HF Space lightweight frontend, mandatory MiniCPM-V-4.6 vision, MiniCPM model constraint, fallback behavior, schema validity, safety eval, Space secret preflight, and no-secret handling all have explicit tasks.
 - Placeholder scan: no open placeholder values are required in committed files; endpoint and token values are intentionally shell-only or UI-only.
 - Type consistency: hosted endpoint response shape stays `{"response": "..."}`, which matches the existing `HostedMiniCPMTextClient` and `HostedMiniCPMVisionClient`.

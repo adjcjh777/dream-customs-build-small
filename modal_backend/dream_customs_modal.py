@@ -129,6 +129,29 @@ def _messages_from_payload(payload: Dict[str, Any], prompt: str) -> list[Dict[st
     return [{"role": "user", "content": prompt}]
 
 
+def _generate_text(
+    tokenizer: Any,
+    model: Any,
+    messages: list[Dict[str, str]],
+    max_tokens: int,
+) -> str:
+    inputs = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        enable_thinking=False,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(model.device)
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=max_tokens,
+        do_sample=False,
+    )
+    generated = outputs[0][inputs["input_ids"].shape[-1] :]
+    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+
+
 @app.function(image=health_image)
 @modal.fastapi_endpoint(method="GET", docs=True)
 def health() -> Dict[str, str]:
@@ -162,23 +185,20 @@ async def text(
         return _json_error("Missing prompt.")
     tokenizer, model = _load_text_pipe()
     messages = _messages_from_payload(payload, normalized["prompt"])
-    inputs = tokenizer.apply_chat_template(
-        messages,
-        tokenize=True,
-        add_generation_prompt=True,
-        enable_thinking=False,
-        return_dict=True,
-        return_tensors="pt",
-    ).to(model.device)
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=normalized["max_tokens"],
-        do_sample=normalized["temperature"] > 0,
-        temperature=max(normalized["temperature"], 0.01),
-    )
-    generated = outputs[0][inputs["input_ids"].shape[-1] :]
-    text_output = tokenizer.decode(generated, skip_special_tokens=True)
-    return response_payload(text_output.strip())
+    text_output = _generate_text(tokenizer, model, messages, normalized["max_tokens"])
+    if not text_output:
+        retry_messages = [
+            {
+                "role": "user",
+                "content": (
+                    "Return one compact valid JSON object only. "
+                    "Use the exact schema requested in this task and do not add markdown.\n\n"
+                    f"Task:\n{normalized['prompt']}"
+                ),
+            }
+        ]
+        text_output = _generate_text(tokenizer, model, retry_messages, normalized["max_tokens"])
+    return response_payload(text_output)
 
 
 @app.function(

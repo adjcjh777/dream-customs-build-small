@@ -65,13 +65,13 @@ Local smoke notes from this Mac mini:
 
 ## Optional Hosted MiniCPM Routes
 
-Hosted routes are intended for Modal experiments or private Space secrets. Set these in the runtime environment only, then switch the UI route menus from `demo` to `model`:
+The public Space stays lightweight and can call private Modal endpoints through runtime secrets:
 
-- `DREAM_CUSTOMS_TEXT_ENDPOINT`
-- `DREAM_CUSTOMS_VISION_ENDPOINT`
-- `DREAM_CUSTOMS_HOSTED_TOKEN`
+- `DREAM_CUSTOMS_TEXT_ENDPOINT`: Modal text route for `openbmb/MiniCPM5-1B`.
+- `DREAM_CUSTOMS_VISION_ENDPOINT`: Modal vision route for `openbmb/MiniCPM-V-4.6`.
+- `DREAM_CUSTOMS_HOSTED_TOKEN`: shared bearer token checked by Modal and sent by the Space.
 
-Missing endpoints or route failures fall back to deterministic demo behavior. Do not store token values in env files, git, docs, screenshots, logs, or examples.
+Set these only as Hugging Face Space repository secrets or local shell variables. Do not store values in `.env`, docs, logs, screenshots, or git. Missing endpoints or route failures fall back to deterministic demo behavior.
 
 Token-safe text smoke:
 
@@ -114,7 +114,7 @@ python -m pytest -q
 
 2026-06-05 local V2 verification passed: tests were green and the workbench flow reached a sealed pact through `Send to customs`, `Ask another question`, `Add material`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
 
-The public Space now serves the V2 workbench from Space `main` commit `8ad6f00628f800abc2dbefab05163aba94a5723f`. Public browser smoke, mobile readability, diagnostics, raw remote queue prediction, and a hosted text route smoke all reached a sealed pact. Hosted vision route smoke remains optional for the next pass.
+The public Space now serves the V2 workbench from Space `main` commit `8ad6f00628f800abc2dbefab05163aba94a5723f`. Public browser smoke, mobile readability, diagnostics, raw remote queue prediction, and a hosted text route smoke all reached a sealed pact on 2026-06-05. The current Modal backend pass requires a real `openbmb/MiniCPM-V-4.6` vision route smoke before delivery; demo vision fallback is runtime resilience, not a substitute for that smoke.
 
 Current smoke details are tracked in `docs/smoke/2026-06-05-space-deployment-smoke.md`.
 

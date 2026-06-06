@@ -133,6 +133,19 @@ This directory is now a dedicated Dream Customs repository:
 
 Continue to confirm `git remote -v` before pushing, but the earlier VLA remote warning is no longer the active state.
 
+## Modal Backend Route
+
+The intended production-quality route is:
+
+```text
+Hugging Face Space Gradio UI
+  -> HostedMiniCPMTextClient / HostedMiniCPMVisionClient
+  -> private Modal endpoints
+  -> MiniCPM5-1B text generation and MiniCPM-V-4.6 visual clue extraction
+```
+
+The Space keeps `demo` as the default backend and exposes `model` only through developer settings. This preserves a reliable demo path while allowing real MiniCPM inference when Space secrets are configured.
+
 ## Open Questions For User
 
 These do not block initial scaffolding:

@@ -758,7 +758,7 @@ Expected:
 
 The exact `text_questions` count may be `1`, `2`, or `3`. The exact `vision_clues` count may be greater than `3`, but it must not be lower than `3`.
 
-- [ ] **Step 4: Commit smoke script**
+- [x] **Step 4: Commit smoke script**
 
 Run:
 
@@ -885,7 +885,7 @@ Expected:
 
 The acceptance gate is `passed >= 11`, which is at least 90% schema-valid behavior with required safety notes on the two distress cases.
 
-- [ ] **Step 4: Commit eval script**
+- [x] **Step 4: Commit eval script**
 
 Run:
 
@@ -986,7 +986,7 @@ git commit -m "docs: record modal backend smoke results"
 - Modify: `docs/handoff.md`
 - Read: `dream_customs/app_logic.py`
 
-- [ ] **Step 1: Confirm app already reads hosted env vars**
+- [x] **Step 1: Confirm app already reads hosted env vars**
 
 Run:
 
@@ -1051,7 +1051,7 @@ Submit the same dream.
 
 Expected: the app still reaches the question stage and produces a pact card through the demo backend.
 
-- [ ] **Step 6: Update README hosted-route section**
+- [x] **Step 6: Update README hosted-route section**
 
 Modify the hosted route section in `README.md` so it says:
 
@@ -1067,7 +1067,7 @@ The public Space stays lightweight and can call private Modal endpoints through 
 Set these only as Hugging Face Space repository secrets or local shell variables. Do not store values in `.env`, docs, logs, screenshots, or git. Missing endpoints or route failures fall back to deterministic demo behavior.
 ```
 
-- [ ] **Step 7: Update handoff**
+- [x] **Step 7: Update handoff**
 
 Add this section to `docs/handoff.md`:
 
@@ -1086,7 +1086,7 @@ Hugging Face Space Gradio UI
 The Space keeps `demo` as the default backend and exposes `model` only through developer settings. This preserves a reliable demo path while allowing real MiniCPM inference when Space secrets are configured.
 ````
 
-- [ ] **Step 8: Run docs and unit checks**
+- [x] **Step 8: Run docs and unit checks**
 
 Run:
 
@@ -1097,7 +1097,7 @@ git diff --check
 
 Expected: tests pass and `git diff --check` prints no output.
 
-- [ ] **Step 9: Commit docs**
+- [x] **Step 9: Commit docs**
 
 Run:
 

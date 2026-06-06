@@ -10,6 +10,19 @@ if str(ROOT) not in sys.path:
 from dream_customs.models import HostedMiniCPMTextClient, HostedMiniCPMVisionClient
 
 
+class EmptyTextFallback:
+    def generate_negotiation(self, prompt: str):
+        return {}
+
+    def generate_pact(self, prompt: str):
+        raise RuntimeError("Hosted text route did not return a parseable pact.")
+
+
+class EmptyVisionFallback:
+    def extract_clues(self, image_path: str):
+        return []
+
+
 def _require(name: str) -> str:
     value = os.getenv(name, "").strip()
     if not value:
@@ -25,7 +38,12 @@ def main() -> int:
     if not Path(image_path).exists():
         raise SystemExit("DREAM_CUSTOMS_SMOKE_IMAGE does not exist.")
 
-    text_client = HostedMiniCPMTextClient(endpoint=text_endpoint, token=token, timeout=180)
+    text_client = HostedMiniCPMTextClient(
+        endpoint=text_endpoint,
+        token=token,
+        timeout=180,
+        fallback=EmptyTextFallback(),
+    )
     negotiation = text_client.generate_negotiation(
         "我梦见自己在深夜海关排队，口袋里装着一枚蓝色印章。"
     )
@@ -37,7 +55,12 @@ def main() -> int:
         "vision_clues": 0,
     }
 
-    vision_client = HostedMiniCPMVisionClient(endpoint=vision_endpoint, token=token, timeout=180)
+    vision_client = HostedMiniCPMVisionClient(
+        endpoint=vision_endpoint,
+        token=token,
+        timeout=180,
+        fallback=EmptyVisionFallback(),
+    )
     clues = vision_client.extract_clues(image_path)
     result["vision_route"] = "ok" if len(clues) >= 3 else "failed"
     result["vision_clues"] = len(clues)

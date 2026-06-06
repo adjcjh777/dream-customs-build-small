@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
 
 from dream_customs.models import HostedMiniCPMTextClient
 from dream_customs.pipeline import build_intake, generate_pact
+from dream_customs.schema import PactCard
 
 
 CASES: List[Dict[str, str]] = [
@@ -28,6 +29,24 @@ CASES: List[Dict[str, str]] = [
 ]
 
 
+class EmptyTextFallback:
+    def generate_negotiation(self, prompt: str):
+        return {}
+
+    def generate_pact(self, prompt: str) -> PactCard:
+        return PactCard(
+            visitor_name="",
+            permit_id="",
+            contraband=[],
+            risk_level="",
+            alliance_reading="",
+            practical_suggestion="",
+            weird_task="",
+            bedtime_release="",
+            safety_note="",
+        )
+
+
 def main() -> int:
     endpoint = os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", "").strip()
     if not endpoint:
@@ -36,6 +55,7 @@ def main() -> int:
         endpoint=endpoint,
         token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
         timeout=180,
+        fallback=EmptyTextFallback(),
     )
     passed = 0
     failures = []

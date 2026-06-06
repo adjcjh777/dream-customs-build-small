@@ -4,6 +4,7 @@ import tempfile
 from typing import Any, Dict
 
 import modal
+from fastapi import Request
 
 from modal_backend.contracts import (
     AuthError,
@@ -113,7 +114,7 @@ class TextService:
         )
 
     @modal.fastapi_endpoint(method="POST", docs=True)
-    async def text(self, request):
+    async def text(self, request: Request):
         try:
             ensure_authorized(_auth_header(request), _expected_token())
         except AuthError as exc:
@@ -154,7 +155,7 @@ class VisionService:
         )
 
     @modal.fastapi_endpoint(method="POST", docs=True)
-    async def vision(self, request):
+    async def vision(self, request: Request):
         try:
             ensure_authorized(_auth_header(request), _expected_token())
         except AuthError as exc:

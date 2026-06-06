@@ -1,8 +1,10 @@
 import json
 
 from dream_customs.app_logic import (
+    _debug_json,
     add_material_action,
     ask_another_question_action,
+    create_session,
     draft_pact_action,
     initial_workbench_state,
     run_customs_once,
@@ -74,3 +76,27 @@ def test_workbench_model_route_without_endpoint_falls_back_to_demo():
     debug = json.loads(debug_json)
     assert debug["text_backend"] == "model"
     assert debug["session"]["question_history"]
+
+
+def test_debug_settings_do_not_expose_hosted_secrets():
+    debug_json = _debug_json(
+        create_session(),
+        "modal",
+        "huggingface",
+        text_endpoint="https://modal.example/text",
+        vision_endpoint="https://hf.example/vision",
+        asr_endpoint="https://modal.example/asr",
+        hosted_token="secret-token",
+        text_latency_budget_ms=1234,
+        vision_latency_budget_ms=5678,
+        asr_latency_budget_ms=900,
+    )
+    debug = json.loads(debug_json)
+
+    assert debug["developer_settings"]["text_endpoint_configured"] is True
+    assert debug["developer_settings"]["vision_endpoint_configured"] is True
+    assert debug["developer_settings"]["asr_endpoint_configured"] is True
+    assert debug["developer_settings"]["hosted_token_configured"] is True
+    assert debug["developer_settings"]["text_latency_budget_ms"] == 1234
+    assert "secret-token" not in debug_json
+    assert "modal.example" not in debug_json

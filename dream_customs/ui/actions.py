@@ -107,7 +107,7 @@ def _questions(session: CustomsSession) -> List[str]:
     return session.question_history[-1:] if session.question_history else []
 
 
-def _view_payload(session: CustomsSession, text_backend: str, vision_backend: str) -> Dict[str, Any]:
+def _view_payload(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Dict[str, Any]:
     card = session.sealed_pact or session.draft_pact
     error = _latest_error(session)
     status = "error" if error else "card" if session.sealed_pact else "question" if session.question_history else "declaration"
@@ -121,12 +121,16 @@ def _view_payload(session: CustomsSession, text_backend: str, vision_backend: st
         "card_html": _render_today_pass(card) if card else "",
         "error": error,
         "notice": _notice_for_status(status, error),
-        "debug": json.loads(_debug_json(session, text_backend, vision_backend)),
+        "debug": json.loads(_debug_json(session, text_backend, vision_backend, **settings)),
     }
 
 
-def _view(session: CustomsSession, text_backend: str, vision_backend: str) -> Tuple[str, str]:
-    return _state_json(session), json.dumps(_view_payload(session, text_backend, vision_backend), ensure_ascii=False, indent=2)
+def _view(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Tuple[str, str]:
+    return _state_json(session), json.dumps(
+        _view_payload(session, text_backend, vision_backend, **settings),
+        ensure_ascii=False,
+        indent=2,
+    )
 
 
 def _notice_for_status(status: str, error: str = "") -> str:
@@ -142,8 +146,9 @@ def _notice_for_status(status: str, error: str = "") -> str:
 def initial_mobile_state(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
-    return _view(create_session(), text_backend, vision_backend)
+    return _view(create_session(), text_backend, vision_backend, **settings)
 
 
 def submit_dream_action(
@@ -153,8 +158,9 @@ def submit_dream_action(
     mood: str = "",
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
-    text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     session = add_evidence(
         create_session(),
         dream_text=dream_text or "",
@@ -168,16 +174,17 @@ def submit_dream_action(
         previous_count = len(session.question_history)
         session = ask_questions(session, text_client)
         session = _trim_to_one_visible_question(session, previous_count)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def skip_to_card_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
     session = skip_question(_session_from_state(state))
-    return _seal_view(session, text_backend, vision_backend)
+    return _seal_view(session, text_backend, vision_backend, **settings)
 
 
 def answer_to_card_action(
@@ -185,11 +192,12 @@ def answer_to_card_action(
     answer: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
     session = answer_question(_session_from_state(state), answer or "")
     if session.phase == "error":
-        return _view(session, text_backend, vision_backend)
-    return _seal_view(session, text_backend, vision_backend)
+        return _view(session, text_backend, vision_backend, **settings)
+    return _seal_view(session, text_backend, vision_backend, **settings)
 
 
 def revise_card_action(
@@ -197,28 +205,30 @@ def revise_card_action(
     revision_request: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
     session = _session_from_state(state)
     if session.sealed_pact and not session.draft_pact:
         session.draft_pact = session.sealed_pact
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     session = revise_pact(session, revision_request or "", text_client)
     if session.phase == "error":
-        return _view(session, text_backend, vision_backend)
+        return _view(session, text_backend, vision_backend, **settings)
     session = seal_pact(session)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def reset_mobile_action(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str]:
-    return initial_mobile_state(text_backend, vision_backend)
+    return initial_mobile_state(text_backend, vision_backend, **settings)
 
 
-def _seal_view(session: CustomsSession, text_backend: str, vision_backend: str) -> Tuple[str, str]:
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+def _seal_view(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Tuple[str, str]:
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     session = draft_pact(session, text_client)
     if session.phase != "error":
         session = seal_pact(session)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)

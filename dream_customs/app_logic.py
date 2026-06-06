@@ -6,6 +6,7 @@ from dream_customs.models import (
     FakeASRClient,
     FakeTextClient,
     FakeVisionClient,
+    HostedASRClient,
     HostedMiniCPMTextClient,
     HostedMiniCPMVisionClient,
     OllamaTextClient,
@@ -31,6 +32,15 @@ from dream_customs.schema import CustomsSession
 
 DEFAULT_TEXT_MODEL = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0"
 DEFAULT_VISION_MODEL = "openbmb/minicpm-v4.6"
+DEFAULT_HOSTED_TIMEOUT_SECONDS = 60.0
+DEFAULT_ASR_TIMEOUT_SECONDS = 45.0
+DEFAULT_TEXT_TEMPERATURE = 0.2
+DEFAULT_VISION_TEMPERATURE = 0.1
+DEFAULT_TEXT_MAX_TOKENS = 780
+DEFAULT_VISION_MAX_TOKENS = 320
+DEFAULT_TEXT_LATENCY_BUDGET_MS = 3500
+DEFAULT_VISION_LATENCY_BUDGET_MS = 6500
+DEFAULT_ASR_LATENCY_BUDGET_MS = 2500
 
 
 def _file_path(value: Any) -> str:
@@ -49,36 +59,112 @@ def _file_path(value: Any) -> str:
     return ""
 
 
-def _clients(text_backend: str, vision_backend: str):
+def _as_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _client_settings(
+    text_endpoint: str = "",
+    vision_endpoint: str = "",
+    hosted_token: str = "",
+    ollama_url: str = "",
+    text_model: str = "",
+    vision_model: str = "",
+    text_timeout_seconds: Any = DEFAULT_HOSTED_TIMEOUT_SECONDS,
+    vision_timeout_seconds: Any = DEFAULT_HOSTED_TIMEOUT_SECONDS,
+    text_temperature: Any = DEFAULT_TEXT_TEMPERATURE,
+    vision_temperature: Any = DEFAULT_VISION_TEMPERATURE,
+    text_max_tokens: Any = DEFAULT_TEXT_MAX_TOKENS,
+    vision_max_tokens: Any = DEFAULT_VISION_MAX_TOKENS,
+    asr_backend: str = "demo",
+    asr_endpoint: str = "",
+    asr_timeout_seconds: Any = DEFAULT_ASR_TIMEOUT_SECONDS,
+    text_latency_budget_ms: Any = DEFAULT_TEXT_LATENCY_BUDGET_MS,
+    vision_latency_budget_ms: Any = DEFAULT_VISION_LATENCY_BUDGET_MS,
+    asr_latency_budget_ms: Any = DEFAULT_ASR_LATENCY_BUDGET_MS,
+) -> dict:
+    return {
+        "text_endpoint": (text_endpoint or os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", "")).strip(),
+        "vision_endpoint": (vision_endpoint or os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", "")).strip(),
+        "hosted_token": (hosted_token or os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "")).strip(),
+        "ollama_url": (ollama_url or os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434")).strip(),
+        "text_model": (text_model or os.getenv("DREAM_CUSTOMS_TEXT_MODEL", DEFAULT_TEXT_MODEL)).strip(),
+        "vision_model": (vision_model or os.getenv("DREAM_CUSTOMS_VISION_MODEL", DEFAULT_VISION_MODEL)).strip(),
+        "text_timeout_seconds": max(1.0, _as_float(text_timeout_seconds, DEFAULT_HOSTED_TIMEOUT_SECONDS)),
+        "vision_timeout_seconds": max(1.0, _as_float(vision_timeout_seconds, DEFAULT_HOSTED_TIMEOUT_SECONDS)),
+        "text_temperature": max(0.0, min(_as_float(text_temperature, DEFAULT_TEXT_TEMPERATURE), 0.7)),
+        "vision_temperature": max(0.0, min(_as_float(vision_temperature, DEFAULT_VISION_TEMPERATURE), 0.7)),
+        "text_max_tokens": max(64, min(_as_int(text_max_tokens, DEFAULT_TEXT_MAX_TOKENS), 1200)),
+        "vision_max_tokens": max(64, min(_as_int(vision_max_tokens, DEFAULT_VISION_MAX_TOKENS), 800)),
+        "asr_backend": (asr_backend or "demo").lower(),
+        "asr_endpoint": (asr_endpoint or os.getenv("DREAM_CUSTOMS_ASR_ENDPOINT", "")).strip(),
+        "asr_timeout_seconds": max(1.0, _as_float(asr_timeout_seconds, DEFAULT_ASR_TIMEOUT_SECONDS)),
+        "text_latency_budget_ms": max(0, _as_int(text_latency_budget_ms, DEFAULT_TEXT_LATENCY_BUDGET_MS)),
+        "vision_latency_budget_ms": max(0, _as_int(vision_latency_budget_ms, DEFAULT_VISION_LATENCY_BUDGET_MS)),
+        "asr_latency_budget_ms": max(0, _as_int(asr_latency_budget_ms, DEFAULT_ASR_LATENCY_BUDGET_MS)),
+    }
+
+
+def _clients(text_backend: str, vision_backend: str, **settings):
+    resolved = _client_settings(**settings)
     text_backend = (text_backend or DEFAULT_TEXT_BACKEND).lower()
     vision_backend = (vision_backend or DEFAULT_VISION_BACKEND).lower()
     if text_backend == "ollama":
         text_client = OllamaTextClient(
-            model_name=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", DEFAULT_TEXT_MODEL),
-            base_url=os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434"),
+            model_name=resolved["text_model"],
+            base_url=resolved["ollama_url"],
+            timeout=resolved["text_timeout_seconds"],
+            temperature=resolved["text_temperature"],
+            max_tokens=resolved["text_max_tokens"],
         )
-    elif text_backend == "model":
+    elif text_backend in {"model", "modal", "huggingface"}:
         text_client = HostedMiniCPMTextClient(
-            endpoint=os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", ""),
-            token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+            endpoint=resolved["text_endpoint"],
+            token=resolved["hosted_token"],
+            timeout=resolved["text_timeout_seconds"],
+            temperature=resolved["text_temperature"],
+            max_tokens=resolved["text_max_tokens"],
         )
     else:
         text_client = FakeTextClient()
 
     if vision_backend == "ollama":
         vision_client = OllamaVisionClient(
-            model_name=os.getenv("DREAM_CUSTOMS_VISION_MODEL", DEFAULT_VISION_MODEL),
-            base_url=os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434"),
+            model_name=resolved["vision_model"],
+            base_url=resolved["ollama_url"],
+            timeout=resolved["vision_timeout_seconds"],
         )
-    elif vision_backend == "model":
+    elif vision_backend in {"model", "modal", "huggingface"}:
         vision_client = HostedMiniCPMVisionClient(
-            endpoint=os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", ""),
-            token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
+            endpoint=resolved["vision_endpoint"],
+            token=resolved["hosted_token"],
+            timeout=resolved["vision_timeout_seconds"],
+            temperature=resolved["vision_temperature"],
+            max_tokens=resolved["vision_max_tokens"],
         )
     else:
         vision_client = FakeVisionClient()
 
-    return text_client, vision_client, FakeASRClient()
+    if resolved["asr_backend"] in {"model", "modal", "huggingface"}:
+        asr_client = HostedASRClient(
+            endpoint=resolved["asr_endpoint"],
+            token=resolved["hosted_token"],
+            timeout=resolved["asr_timeout_seconds"],
+        )
+    else:
+        asr_client = FakeASRClient()
+
+    return text_client, vision_client, asr_client
 
 
 def _session_from_state(state: Any) -> CustomsSession:
@@ -97,11 +183,32 @@ def _session_from_state(state: Any) -> CustomsSession:
     return create_session()
 
 
-def _debug_json(session: CustomsSession, text_backend: str, vision_backend: str) -> str:
+def _debug_json(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> str:
+    resolved = _client_settings(**settings)
     payload = {
         "status": session.phase,
         "text_backend": text_backend,
         "vision_backend": vision_backend,
+        "developer_settings": {
+            "text_endpoint_configured": bool(resolved["text_endpoint"]),
+            "vision_endpoint_configured": bool(resolved["vision_endpoint"]),
+            "asr_endpoint_configured": bool(resolved["asr_endpoint"]),
+            "hosted_token_configured": bool(resolved["hosted_token"]),
+            "ollama_url": resolved["ollama_url"],
+            "text_model": resolved["text_model"],
+            "vision_model": resolved["vision_model"],
+            "text_timeout_seconds": resolved["text_timeout_seconds"],
+            "vision_timeout_seconds": resolved["vision_timeout_seconds"],
+            "asr_backend": resolved["asr_backend"],
+            "asr_timeout_seconds": resolved["asr_timeout_seconds"],
+            "text_temperature": resolved["text_temperature"],
+            "vision_temperature": resolved["vision_temperature"],
+            "text_max_tokens": resolved["text_max_tokens"],
+            "vision_max_tokens": resolved["vision_max_tokens"],
+            "text_latency_budget_ms": resolved["text_latency_budget_ms"],
+            "vision_latency_budget_ms": resolved["vision_latency_budget_ms"],
+            "asr_latency_budget_ms": resolved["asr_latency_budget_ms"],
+        },
         "session": session.model_dump(mode="json"),
     }
     return json.dumps(payload, ensure_ascii=False, indent=2)
@@ -124,6 +231,7 @@ def _view(
     session: CustomsSession,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     sealed_html = render_pact_card(session.sealed_pact) if session.sealed_pact else ""
     return (
@@ -132,7 +240,7 @@ def _view(
         render_timeline(session),
         render_pact_inspector(session),
         sealed_html,
-        _debug_json(session, text_backend, vision_backend),
+        _debug_json(session, text_backend, vision_backend, **settings),
         _notice(session),
     )
 
@@ -140,8 +248,9 @@ def _view(
 def initial_workbench_state(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
-    return _view(create_session(), text_backend, vision_backend)
+    return _view(create_session(), text_backend, vision_backend, **settings)
 
 
 def start_declaration_action(
@@ -152,9 +261,10 @@ def start_declaration_action(
     mood: str = "",
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     session = add_evidence(
         session,
         dream_text=dream_text or "",
@@ -166,7 +276,7 @@ def start_declaration_action(
     )
     if session.phase != "error":
         session = ask_questions(session, text_client)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def add_material_action(
@@ -177,9 +287,10 @@ def add_material_action(
     mood: str = "",
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    _text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    _text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     session = add_evidence(
         session,
         dream_text=dream_text or "",
@@ -189,7 +300,7 @@ def add_material_action(
         vision_client=vision_client,
         asr_client=asr_client,
     )
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def answer_question_action(
@@ -197,40 +308,44 @@ def answer_question_action(
     answer: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = answer_question(_session_from_state(state), answer or "")
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def skip_question_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = skip_question(_session_from_state(state))
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def ask_another_question_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     session = ask_questions(session, text_client, force_another=True)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def draft_pact_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     session = draft_pact(session, text_client)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def revise_pact_action(
@@ -238,31 +353,34 @@ def revise_pact_action(
     revision_request: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     session = revise_pact(session, revision_request or "", text_client)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def seal_pact_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
     session = _session_from_state(state)
-    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend)
+    text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
     if not session.draft_pact and session.intake.merged_text():
         session = draft_pact(session, text_client)
     session = seal_pact(session)
-    return _view(session, text_backend, vision_backend)
+    return _view(session, text_backend, vision_backend, **settings)
 
 
 def start_new_action(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ):
-    return _view(create_session(), text_backend, vision_backend)
+    return _view(create_session(), text_backend, vision_backend, **settings)
 
 
 def run_customs_once(
@@ -273,6 +391,7 @@ def run_customs_once(
     answers: str = "",
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    **settings,
 ) -> Tuple[str, str, str, str]:
     image_path = _file_path(image_value)
     audio_path = _file_path(audio_value)
@@ -284,7 +403,7 @@ def run_customs_once(
             json.dumps({"status": "empty"}, ensure_ascii=False, indent=2),
         )
 
-    text_client, vision_client, asr_client = _clients(text_backend, vision_backend)
+    text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     intake = intake_from_modalities(
         dream_text=dream_text or "",
         image_path=image_path or None,
@@ -310,6 +429,9 @@ def run_customs_once(
         "status": "ok",
         "text_backend": text_backend,
         "vision_backend": vision_backend,
+        "developer_settings": json.loads(_debug_json(create_session(), text_backend, vision_backend, **settings))[
+            "developer_settings"
+        ],
         "intake": intake.model_dump(),
         "negotiation": negotiation,
         "pact": card.model_dump(),

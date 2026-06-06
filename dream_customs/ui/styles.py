@@ -6,11 +6,14 @@ CSS = """
   --dc-line: #cbd7d1;
   --dc-panel: #ffffff;
   --dc-panel-soft: #edf4f0;
+  --dc-paper: #fffaf1;
+  --dc-graphite: #26302d;
   --dc-teal: #0f766e;
   --dc-teal-dark: #115e59;
   --dc-coral: #c85235;
   --dc-gold: #b7791f;
-  --dc-shadow: 0 18px 42px rgba(23, 33, 31, 0.12);
+  --dc-shadow: 0 24px 70px rgba(23, 33, 31, 0.13);
+  --dc-soft-shadow: 0 10px 28px rgba(23, 33, 31, 0.08);
   --dc-radius-sm: 6px;
   --dc-radius-md: 8px;
 }
@@ -33,14 +36,14 @@ body,
 
 .dc-shell {
   margin: 0 auto;
-  max-width: 920px;
-  padding: 22px clamp(14px, 3vw, 34px) 30px;
+  max-width: 1060px;
+  padding: 28px clamp(18px, 4vw, 46px) 34px;
 }
 
 .dc-hero {
   border-bottom: 1px solid var(--dc-line);
-  margin-bottom: 16px;
-  padding: 4px 0 18px;
+  margin-bottom: 20px;
+  padding: 4px 0 20px;
 }
 
 .dc-hero h1 {
@@ -65,7 +68,7 @@ body,
   border: 1px solid var(--dc-line) !important;
   border-radius: var(--dc-radius-md) !important;
   box-shadow: var(--dc-shadow);
-  padding: clamp(14px, 2.2vw, 22px);
+  padding: clamp(18px, 3vw, 30px);
 }
 
 .dc-stage textarea,
@@ -83,6 +86,124 @@ body,
   color: var(--dc-ink) !important;
 }
 
+.dc-intake-grid {
+  align-items: stretch !important;
+  display: grid !important;
+  gap: clamp(16px, 3vw, 24px) !important;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 270px);
+}
+
+.dc-composer {
+  background:
+    linear-gradient(180deg, rgba(255, 250, 241, 0.86), rgba(251, 253, 252, 0.98)) !important;
+  border: 1px solid color-mix(in srgb, var(--dc-line) 82%, var(--dc-gold)) !important;
+  border-radius: var(--dc-radius-md) !important;
+  box-shadow: var(--dc-soft-shadow);
+  min-height: 300px;
+  padding: 12px;
+  position: relative;
+}
+
+.dc-composer,
+.dc-composer > div,
+.dc-composer .form {
+  overflow: visible !important;
+}
+
+.dc-dream-text textarea {
+  min-height: 248px !important;
+  padding-bottom: 78px !important;
+  resize: vertical !important;
+}
+
+.dc-mic-input {
+  bottom: 16px;
+  max-width: 132px;
+  min-width: 112px !important;
+  position: absolute !important;
+  right: 16px;
+  z-index: 4;
+}
+
+.dc-mic-input label,
+.dc-mic-input [data-testid="block-label"] {
+  display: none !important;
+}
+
+.dc-mic-input,
+.dc-mic-input .wrap,
+.dc-mic-input .container,
+.dc-mic-input .audio-container,
+.dc-mic-input .component-wrapper {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  min-height: 46px !important;
+}
+
+.dc-mic-input .audio-container,
+.dc-mic-input .wrap {
+  height: 46px !important;
+  overflow: hidden !important;
+}
+
+.dc-mic-input button {
+  background: var(--dc-graphite) !important;
+  border-color: var(--dc-graphite) !important;
+  border-radius: var(--dc-radius-sm) !important;
+  color: #ffffff !important;
+  min-height: 40px !important;
+}
+
+.dc-side-panel {
+  background: var(--dc-paper) !important;
+  border: 1px solid #e3d6bd !important;
+  border-radius: var(--dc-radius-md) !important;
+  box-shadow: var(--dc-soft-shadow);
+  justify-content: space-between;
+  min-height: 300px;
+  padding: 14px;
+}
+
+.dc-side-stamp {
+  border: 1px dashed rgba(200, 82, 53, 0.55);
+  border-radius: var(--dc-radius-md);
+  color: var(--dc-coral);
+  margin-top: 12px;
+  padding: 14px;
+  text-transform: none;
+}
+
+.dc-side-stamp span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 850;
+  margin-bottom: 6px;
+}
+
+.dc-side-stamp strong {
+  color: var(--dc-graphite);
+  display: block;
+  font-size: 1.12rem;
+}
+
+.dc-attachment-drawer {
+  background: transparent !important;
+  border: 1px solid var(--dc-line) !important;
+  border-radius: var(--dc-radius-md) !important;
+  box-shadow: none !important;
+  margin-top: 16px;
+}
+
+.dc-submit-row {
+  align-items: stretch !important;
+  background: transparent !important;
+  display: grid !important;
+  gap: 14px !important;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  margin-top: 18px;
+}
+
 .dc-stage label,
 .dc-stage [data-testid="block-label"],
 .dc-dev label,
@@ -98,9 +219,9 @@ body,
 }
 
 .dc-stage button {
-  border-radius: var(--dc-radius-sm) !important;
+  border-radius: var(--dc-radius-md) !important;
   font-weight: 750 !important;
-  min-height: 44px !important;
+  min-height: 48px !important;
 }
 
 .dc-stage .primary button,
@@ -112,9 +233,13 @@ button.primary {
 }
 
 .dc-stage button.secondary {
-  background: var(--dc-panel-soft) !important;
+  background: #f3eee3 !important;
   border-color: var(--dc-line) !important;
   color: var(--dc-ink) !important;
+}
+
+.dc-submit-row button {
+  box-shadow: var(--dc-soft-shadow);
 }
 
 .dc-row {
@@ -239,7 +364,23 @@ button.primary {
 
 .dc-dev {
   box-shadow: none;
-  margin-top: 12px;
+  margin-top: 16px;
+}
+
+.dc-dev-grid {
+  align-items: stretch !important;
+  display: grid !important;
+  gap: 12px !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dc-dev .form,
+.dc-dev .wrap,
+.dc-dev .container,
+.dc-dev input,
+.dc-dev textarea,
+.dc-dev select {
+  border-radius: var(--dc-radius-sm) !important;
 }
 
 .dc-dev textarea {
@@ -249,7 +390,7 @@ button.primary {
 
 @media (max-width: 720px) {
   .dc-shell {
-    padding: 14px 10px 22px;
+    padding: 16px 12px 24px;
   }
 
   .dc-hero {
@@ -257,16 +398,35 @@ button.primary {
     padding-bottom: 12px;
   }
 
+  .dc-intake-grid,
+  .dc-dev-grid,
   .dc-row,
+  .dc-submit-row,
   .dc-actions {
     grid-template-columns: 1fr;
+  }
+
+  .dc-side-panel {
+    min-height: 0;
+  }
+
+  .dc-side-stamp {
+    display: none;
+  }
+
+  .dc-composer {
+    min-height: 270px;
+  }
+
+  .dc-dream-text textarea {
+    min-height: 220px !important;
   }
 
   .dc-stage,
   .dc-dev {
     border-radius: 8px !important;
     box-shadow: none;
-    padding: 12px;
+    padding: 14px;
   }
 }
 """

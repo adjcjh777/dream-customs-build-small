@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import re
 import urllib.error
 import urllib.request
@@ -136,19 +137,24 @@ class OllamaTextClient:
         model_name: str = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0",
         base_url: str = "http://localhost:11434",
         timeout: float = 45.0,
+        temperature: float = 0.2,
+        max_tokens: int = 700,
         fallback: Optional[FakeTextClient] = None,
     ):
         self.model_name = model_name
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.temperature = max(0.0, min(float(temperature), 0.7))
+        self.max_tokens = max(64, min(int(max_tokens), 1200))
         self.fallback = fallback or FakeTextClient()
 
     def _post_generate(self, prompt: str, num_predict: int = 512) -> Dict[str, Any]:
+        num_predict = max(64, min(int(num_predict), self.max_tokens))
         payload = {
             "model": self.model_name,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": 0.2, "num_predict": num_predict},
+            "options": {"temperature": self.temperature, "num_predict": num_predict},
         }
         data = json.dumps(payload).encode("utf-8")
         request = urllib.request.Request(
@@ -328,20 +334,25 @@ class HostedMiniCPMTextClient:
         endpoint: str = "",
         token: str = "",
         timeout: float = 60.0,
+        temperature: float = 0.2,
+        max_tokens: int = 780,
         fallback: Optional[FakeTextClient] = None,
     ):
         self.endpoint = endpoint.strip()
         self.token = token.strip()
         self.timeout = timeout
+        self.temperature = max(0.0, min(float(temperature), 0.7))
+        self.max_tokens = max(64, min(int(max_tokens), 1200))
         self.fallback = fallback or FakeTextClient()
 
     def _post_json(self, prompt: str, max_tokens: int = 700) -> Optional[Dict[str, Any]]:
         if not self.endpoint:
             return None
+        max_tokens = max(64, min(int(max_tokens), self.max_tokens))
         payload = {
             "prompt": prompt,
             "messages": [{"role": "user", "content": prompt}],
-            "temperature": 0.2,
+            "temperature": self.temperature,
             "max_tokens": max_tokens,
         }
         headers = {"Content-Type": "application/json"}
@@ -421,11 +432,15 @@ class HostedMiniCPMVisionClient:
         endpoint: str = "",
         token: str = "",
         timeout: float = 60.0,
+        temperature: float = 0.1,
+        max_tokens: int = 320,
         fallback: Optional[FakeVisionClient] = None,
     ):
         self.endpoint = endpoint.strip()
         self.token = token.strip()
         self.timeout = timeout
+        self.temperature = max(0.0, min(float(temperature), 0.7))
+        self.max_tokens = max(64, min(int(max_tokens), 800))
         self.fallback = fallback or FakeVisionClient()
 
     def _post_image(self, image_path: str) -> Optional[Dict[str, Any]]:
@@ -440,8 +455,8 @@ class HostedMiniCPMVisionClient:
             "prompt": visual_clue_prompt(),
             "image": image_b64,
             "images": [image_b64],
-            "temperature": 0.1,
-            "max_tokens": 320,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
         }
         headers = {"Content-Type": "application/json"}
         if self.token:
@@ -474,3 +489,60 @@ class HostedMiniCPMVisionClient:
         text = _hosted_text_from_response(payload)
         clues = [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()]
         return clues[:8] or self.fallback.extract_clues(image_path)
+
+
+def _hosted_transcript_from_response(payload: Dict[str, Any]) -> str:
+    for key in ("transcript", "text", "response", "generated_text", "output"):
+        value = payload.get(key)
+        if isinstance(value, str):
+            return value.strip()
+    data = payload.get("data")
+    if isinstance(data, dict):
+        return _hosted_transcript_from_response(data)
+    if isinstance(data, list) and data and isinstance(data[0], dict):
+        return _hosted_transcript_from_response(data[0])
+    return ""
+
+
+class HostedASRClient:
+    def __init__(
+        self,
+        endpoint: str = "",
+        token: str = "",
+        timeout: float = 45.0,
+        fallback: Optional[FakeASRClient] = None,
+    ):
+        self.endpoint = endpoint.strip()
+        self.token = token.strip()
+        self.timeout = timeout
+        self.fallback = fallback or FakeASRClient()
+
+    def transcribe(self, audio_path: Optional[str]) -> str:
+        if not audio_path:
+            return ""
+        if not self.endpoint:
+            return self.fallback.transcribe(audio_path)
+        try:
+            with open(audio_path, "rb") as audio_file:
+                audio_b64 = base64.b64encode(audio_file.read()).decode("ascii")
+        except OSError:
+            return ""
+        payload = {
+            "audio": audio_b64,
+            "filename": os.path.basename(audio_path),
+        }
+        headers = {"Content-Type": "application/json"}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        request = urllib.request.Request(
+            self.endpoint,
+            data=json.dumps(payload).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return self.fallback.transcribe(audio_path)
+        return _hosted_transcript_from_response(payload) or self.fallback.transcribe(audio_path)

@@ -2,6 +2,8 @@ import json
 from datetime import date
 
 from dream_customs.ui.actions import answer_to_card_action, initial_mobile_state, skip_to_card_action, submit_dream_action
+from dream_customs.ui.app import _reset
+from dream_customs.ui.copy import DEFAULT_MOOD
 
 
 def test_mobile_defaults_to_model_backends():
@@ -10,6 +12,32 @@ def test_mobile_defaults_to_model_backends():
 
     assert view["debug"]["text_backend"] == "model"
     assert view["debug"]["vision_backend"] == "model"
+
+
+def test_mobile_reset_restores_calm_mood():
+    settings_values = [
+        "",
+        "",
+        "",
+        "http://localhost:11434",
+        "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0",
+        "openbmb/minicpm-v4.6",
+        60,
+        60,
+        0.2,
+        0.1,
+        780,
+        320,
+        "demo",
+        "",
+        45,
+        3500,
+        6500,
+        2500,
+    ]
+    result = _reset("demo", "demo", *settings_values)
+
+    assert result[-1] == DEFAULT_MOOD
 
 
 def test_zerogpu_probe_is_importable_without_local_gpu():

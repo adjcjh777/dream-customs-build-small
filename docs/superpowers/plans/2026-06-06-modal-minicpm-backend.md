@@ -335,11 +335,11 @@ git commit -m "test: add modal endpoint contract helpers"
 - Create: `modal_backend/dream_customs_modal.py`
 - Modify: `requirements.txt`
 
-- [ ] **Step 1: Decide dependency placement**
+- [x] **Step 1: Decide dependency placement**
 
 Keep Modal-only dependencies inside the Modal image in `modal_backend/dream_customs_modal.py`. Do not add `modal`, `torch`, or heavy Transformers-only deployment packages to `requirements.txt` unless local tests need them. The public Hugging Face Space should stay lightweight.
 
-- [ ] **Step 2: Create Modal service file**
+- [x] **Step 2: Create Modal service file**
 
 Create `modal_backend/dream_customs_modal.py`:
 
@@ -510,7 +510,7 @@ class VisionService:
         return response_payload(str(result).strip())
 ```
 
-- [ ] **Step 3: Run import check without requiring Modal locally**
+- [x] **Step 3: Run import check without requiring Modal locally**
 
 Run:
 
@@ -527,7 +527,7 @@ Expected:
 {'response': 'ok'}
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run:
 
@@ -537,7 +537,7 @@ Run:
 
 Expected: all tests pass.
 
-- [ ] **Step 5: Commit Modal service scaffold**
+- [x] **Step 5: Commit Modal service scaffold**
 
 Run:
 

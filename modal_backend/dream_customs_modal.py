@@ -2,7 +2,7 @@ import io
 import json
 import os
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import modal
 from fastapi import Body, Header
@@ -194,7 +194,7 @@ def _fallback_json_response(prompt: str) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
-def _extract_json_object(text: str) -> Dict[str, Any] | None:
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
     cleaned = text.strip()
     try:
         parsed = json.loads(cleaned)

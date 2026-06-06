@@ -669,7 +669,7 @@ git commit -m "fix: tune modal gpu class for minicpm backend"
 **Files:**
 - Create: `scripts/smoke_hosted_routes.py`
 
-- [ ] **Step 1: Create smoke script**
+- [x] **Step 1: Create smoke script**
 
 Create `scripts/smoke_hosted_routes.py`:
 
@@ -719,7 +719,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 2: Run script without env to verify safe failure**
+- [x] **Step 2: Run script without env to verify safe failure**
 
 Run:
 

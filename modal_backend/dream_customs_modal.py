@@ -83,15 +83,17 @@ def _stringify_pipeline_result(result: Any) -> str:
 def _load_text_pipe():
     global _TEXT_PIPE
     if _TEXT_PIPE is None:
-        from transformers import pipeline
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        _TEXT_PIPE = pipeline(
-            "text-generation",
-            model=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", TEXT_MODEL),
+        model_id = os.getenv("DREAM_CUSTOMS_TEXT_MODEL", TEXT_MODEL)
+        tokenizer = AutoTokenizer.from_pretrained(model_id)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
             device_map="auto",
             torch_dtype="auto",
             trust_remote_code=True,
         )
+        _TEXT_PIPE = (tokenizer, model)
     return _TEXT_PIPE
 
 
@@ -108,6 +110,23 @@ def _load_vision_pipe():
             trust_remote_code=True,
         )
     return _VISION_PIPE
+
+
+def _messages_from_payload(payload: Dict[str, Any], prompt: str) -> list[Dict[str, str]]:
+    messages = payload.get("messages")
+    if isinstance(messages, list) and messages:
+        cleaned = []
+        for item in messages:
+            if isinstance(item, dict) and item.get("content"):
+                cleaned.append(
+                    {
+                        "role": str(item.get("role") or "user"),
+                        "content": str(item.get("content")),
+                    }
+                )
+        if cleaned:
+            return cleaned
+    return [{"role": "user", "content": prompt}]
 
 
 @app.function(image=health_image)
@@ -141,15 +160,25 @@ async def text(
     normalized = normalize_text_payload(payload)
     if not normalized["prompt"]:
         return _json_error("Missing prompt.")
-    pipe = _load_text_pipe()
-    output = pipe(
-        normalized["prompt"],
+    tokenizer, model = _load_text_pipe()
+    messages = _messages_from_payload(payload, normalized["prompt"])
+    inputs = tokenizer.apply_chat_template(
+        messages,
+        tokenize=True,
+        add_generation_prompt=True,
+        enable_thinking=False,
+        return_dict=True,
+        return_tensors="pt",
+    ).to(model.device)
+    outputs = model.generate(
+        **inputs,
         max_new_tokens=normalized["max_tokens"],
         do_sample=normalized["temperature"] > 0,
         temperature=max(normalized["temperature"], 0.01),
-        return_full_text=False,
     )
-    return response_payload(_stringify_pipeline_result(output))
+    generated = outputs[0][inputs["input_ids"].shape[-1] :]
+    text_output = tokenizer.decode(generated, skip_special_tokens=True)
+    return response_payload(text_output.strip())
 
 
 @app.function(

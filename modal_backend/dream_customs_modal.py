@@ -73,7 +73,7 @@ def _stringify_pipeline_result(result: Any) -> str:
     return str(result).strip()
 
 
-@app.function(image=image, secrets=secrets)
+@app.function()
 @modal.fastapi_endpoint(method="GET", docs=True)
 def health() -> Dict[str, str]:
     return {

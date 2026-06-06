@@ -17,7 +17,9 @@
 - Hugging Face Space model route: PASS with `status=negotiating`, `text_backend=model`, `vision_backend=model`, one extracted image evidence item, and `visual_clue_count=8`
 - Hugging Face Space demo fallback: PASS with `status=negotiating`, `text_backend=demo`, `vision_backend=demo`, one extracted image evidence item, and `visual_clue_count=3`
 - Hugging Face Space hardware recovery: PASS after switching the Space from ZeroGPU back to `CPU basic`; public model route and demo fallback were re-smoked successfully.
-- ZeroGPU compatibility fix: pending remote rebuild verification after adding the `@spaces.GPU` startup probe and making `model` the default backend.
+- ZeroGPU compatibility fix: PASS after adding the `@spaces.GPU` startup probe and making `model` the default backend.
+- Hugging Face Space ZeroGPU default model route: PASS with `hardware=zero-a10g`, `status=negotiating`, `text_backend=model`, `vision_backend=model`, one extracted image evidence item, and `visual_clue_count=8`
+- Hugging Face Space ZeroGPU demo fallback: PASS with `hardware=zero-a10g`, `status=negotiating`, `text_backend=demo`, `vision_backend=demo`, one extracted image evidence item, and `visual_clue_count=3`
 
 ## Notes
 

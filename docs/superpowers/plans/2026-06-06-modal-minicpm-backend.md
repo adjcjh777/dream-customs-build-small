@@ -43,7 +43,7 @@
 - Read: `dream_customs/models.py`
 - Read: `dream_customs/app_logic.py`
 
-- [ ] **Step 1: Confirm repository and branch**
+- [x] **Step 1: Confirm repository and branch**
 
 Run:
 
@@ -62,7 +62,7 @@ origin  https://github.com/adjcjh777/dream-customs-build-small.git (fetch)
 origin  https://github.com/adjcjh777/dream-customs-build-small.git (push)
 ```
 
-- [ ] **Step 2: Sync latest code**
+- [x] **Step 2: Sync latest code**
 
 Run:
 
@@ -78,7 +78,7 @@ Already up to date.
 
 If remote changes arrive, read them before editing and keep this plan aligned with the current file names.
 
-- [ ] **Step 3: Create implementation branch**
+- [x] **Step 3: Create implementation branch**
 
 Run:
 
@@ -92,7 +92,7 @@ Expected:
 Switched to a new branch 'feature/modal-minicpm-backend'
 ```
 
-- [ ] **Step 4: Run baseline tests**
+- [x] **Step 4: Run baseline tests**
 
 Run:
 
@@ -102,7 +102,7 @@ Run:
 
 Expected: all existing tests pass.
 
-- [ ] **Step 5: Confirm Hugging Face Space secret readiness**
+- [x] **Step 5: Confirm Hugging Face Space secret readiness**
 
 Before writing backend code, open the Hugging Face Space settings for `build-small-hackathon/dream-customs` and confirm whether these repository secrets already exist:
 
@@ -120,6 +120,8 @@ HF Space secrets preflight: present, may need endpoint value refresh after Modal
 
 Commit is not needed for this task.
 
+Observed 2026-06-06: required secret keys/value readiness was confirmed by the user. Endpoint values still need refresh after Modal deploy. No secret values were recorded.
+
 ## Task 1: Add Pure Modal Endpoint Contract Helpers
 
 **Files:**
@@ -127,7 +129,7 @@ Commit is not needed for this task.
 - Create: `modal_backend/contracts.py`
 - Create: `tests/test_modal_contract.py`
 
-- [ ] **Step 1: Write failing contract tests**
+- [x] **Step 1: Write failing contract tests**
 
 Create `tests/test_modal_contract.py`:
 
@@ -194,7 +196,7 @@ def test_ensure_authorized_rejects_wrong_token():
         raise AssertionError("Expected AuthError")
 ```
 
-- [ ] **Step 2: Run tests to verify failure**
+- [x] **Step 2: Run tests to verify failure**
 
 Run:
 
@@ -208,7 +210,7 @@ Expected:
 ModuleNotFoundError: No module named 'modal_backend'
 ```
 
-- [ ] **Step 3: Create package marker**
+- [x] **Step 3: Create package marker**
 
 Create `modal_backend/__init__.py`:
 
@@ -216,7 +218,7 @@ Create `modal_backend/__init__.py`:
 """Modal backend package for Dream Customs."""
 ```
 
-- [ ] **Step 4: Implement pure endpoint contract helpers**
+- [x] **Step 4: Implement pure endpoint contract helpers**
 
 Create `modal_backend/contracts.py`:
 
@@ -294,7 +296,7 @@ def response_payload(text: str) -> Dict[str, str]:
     return {"response": text}
 ```
 
-- [ ] **Step 5: Run contract tests**
+- [x] **Step 5: Run contract tests**
 
 Run:
 
@@ -308,7 +310,7 @@ Expected:
 9 passed
 ```
 
-- [ ] **Step 6: Run full tests**
+- [x] **Step 6: Run full tests**
 
 Run:
 
@@ -318,7 +320,7 @@ Run:
 
 Expected: all tests pass.
 
-- [ ] **Step 7: Commit contract helpers**
+- [x] **Step 7: Commit contract helpers**
 
 Run:
 

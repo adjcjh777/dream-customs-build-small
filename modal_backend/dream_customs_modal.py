@@ -54,6 +54,9 @@ secrets = [
     )
 ]
 
+_TEXT_PIPE = None
+_VISION_PIPE = None
+
 
 def _expected_token() -> str:
     return os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "").strip()
@@ -77,6 +80,36 @@ def _stringify_pipeline_result(result: Any) -> str:
     return str(result).strip()
 
 
+def _load_text_pipe():
+    global _TEXT_PIPE
+    if _TEXT_PIPE is None:
+        from transformers import pipeline
+
+        _TEXT_PIPE = pipeline(
+            "text-generation",
+            model=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", TEXT_MODEL),
+            device_map="auto",
+            torch_dtype="auto",
+            trust_remote_code=True,
+        )
+    return _TEXT_PIPE
+
+
+def _load_vision_pipe():
+    global _VISION_PIPE
+    if _VISION_PIPE is None:
+        from transformers import pipeline
+
+        _VISION_PIPE = pipeline(
+            "image-text-to-text",
+            model=os.getenv("DREAM_CUSTOMS_VISION_MODEL", VISION_MODEL),
+            device_map="auto",
+            torch_dtype="auto",
+            trust_remote_code=True,
+        )
+    return _VISION_PIPE
+
+
 @app.function(image=health_image)
 @modal.fastapi_endpoint(method="GET", docs=True)
 def health() -> Dict[str, str]:
@@ -88,7 +121,7 @@ def health() -> Dict[str, str]:
     }
 
 
-@app.cls(
+@app.function(
     image=image,
     gpu="L4",
     timeout=10 * MINUTES,
@@ -96,43 +129,30 @@ def health() -> Dict[str, str]:
     volumes={"/root/.cache/huggingface": hf_cache},
     secrets=secrets,
 )
-class TextService:
-    @modal.enter()
-    def load(self):
-        from transformers import pipeline
-
-        self.pipe = pipeline(
-            "text-generation",
-            model=os.getenv("DREAM_CUSTOMS_TEXT_MODEL", TEXT_MODEL),
-            device_map="auto",
-            torch_dtype="auto",
-            trust_remote_code=True,
-        )
-
-    @modal.fastapi_endpoint(method="POST", docs=True)
-    async def text(
-        self,
-        payload: Dict[str, Any] = Body(...),
-        authorization: str = Header(""),
-    ):
-        try:
-            ensure_authorized(authorization, _expected_token())
-        except AuthError as exc:
-            return _json_error(str(exc), status="unauthorized")
-        normalized = normalize_text_payload(payload)
-        if not normalized["prompt"]:
-            return _json_error("Missing prompt.")
-        output = self.pipe(
-            normalized["prompt"],
-            max_new_tokens=normalized["max_tokens"],
-            do_sample=normalized["temperature"] > 0,
-            temperature=max(normalized["temperature"], 0.01),
-            return_full_text=False,
-        )
-        return response_payload(_stringify_pipeline_result(output))
+@modal.fastapi_endpoint(method="POST", docs=True)
+async def text(
+    payload: Dict[str, Any] = Body(...),
+    authorization: str = Header(""),
+):
+    try:
+        ensure_authorized(authorization, _expected_token())
+    except AuthError as exc:
+        return _json_error(str(exc), status="unauthorized")
+    normalized = normalize_text_payload(payload)
+    if not normalized["prompt"]:
+        return _json_error("Missing prompt.")
+    pipe = _load_text_pipe()
+    output = pipe(
+        normalized["prompt"],
+        max_new_tokens=normalized["max_tokens"],
+        do_sample=normalized["temperature"] > 0,
+        temperature=max(normalized["temperature"], 0.01),
+        return_full_text=False,
+    )
+    return response_payload(_stringify_pipeline_result(output))
 
 
-@app.cls(
+@app.function(
     image=image,
     gpu="L4",
     timeout=10 * MINUTES,
@@ -140,54 +160,41 @@ class TextService:
     volumes={"/root/.cache/huggingface": hf_cache},
     secrets=secrets,
 )
-class VisionService:
-    @modal.enter()
-    def load(self):
-        from transformers import pipeline
-
-        self.pipe = pipeline(
-            "image-text-to-text",
-            model=os.getenv("DREAM_CUSTOMS_VISION_MODEL", VISION_MODEL),
-            device_map="auto",
-            torch_dtype="auto",
-            trust_remote_code=True,
+@modal.fastapi_endpoint(method="POST", docs=True)
+async def vision(
+    payload: Dict[str, Any] = Body(...),
+    authorization: str = Header(""),
+):
+    try:
+        ensure_authorized(authorization, _expected_token())
+    except AuthError as exc:
+        return _json_error(str(exc), status="unauthorized")
+    prompt = str(payload.get("prompt") or "").strip()
+    if not prompt:
+        prompt = (
+            "Extract concise dream-like visual clues from this image. "
+            "Return a single JSON object with keys objects, places, visible_text, "
+            "colors, mood_cues, and uncertain_details. Do not diagnose."
         )
+    try:
+        image_bytes = decode_image_payload(payload)
+    except ValueError as exc:
+        return _json_error(str(exc))
 
-    @modal.fastapi_endpoint(method="POST", docs=True)
-    async def vision(
-        self,
-        payload: Dict[str, Any] = Body(...),
-        authorization: str = Header(""),
-    ):
-        try:
-            ensure_authorized(authorization, _expected_token())
-        except AuthError as exc:
-            return _json_error(str(exc), status="unauthorized")
-        prompt = str(payload.get("prompt") or "").strip()
-        if not prompt:
-            prompt = (
-                "Extract concise dream-like visual clues from this image. "
-                "Return a single JSON object with keys objects, places, visible_text, "
-                "colors, mood_cues, and uncertain_details. Do not diagnose."
-            )
-        try:
-            image_bytes = decode_image_payload(payload)
-        except ValueError as exc:
-            return _json_error(str(exc))
+    from PIL import Image
 
-        from PIL import Image
-
-        pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        with tempfile.NamedTemporaryFile(suffix=".png") as temp_file:
-            pil_image.save(temp_file.name)
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image", "path": temp_file.name},
-                        {"type": "text", "text": prompt},
-                    ],
-                }
-            ]
-            result = self.pipe(text=messages, max_new_tokens=int(payload.get("max_tokens", 320)))
-        return response_payload(_stringify_pipeline_result(result))
+    pipe = _load_vision_pipe()
+    pil_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    with tempfile.NamedTemporaryFile(suffix=".png") as temp_file:
+        pil_image.save(temp_file.name)
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "path": temp_file.name},
+                    {"type": "text", "text": prompt},
+                ],
+            }
+        ]
+        result = pipe(text=messages, max_new_tokens=int(payload.get("max_tokens", 320)))
+    return response_payload(_stringify_pipeline_result(result))

@@ -589,7 +589,7 @@ If the secret already exists, update it from the Modal dashboard or recreate it 
 
 Observed 2026-06-06: Modal CLI authenticated to workspace `cjh-12569`; Modal secret `dream-customs-modal-secrets` exists. Secret values were not printed or recorded. The hosted token still needs to be synchronized with the Hugging Face Space secret before public Space model-route verification.
 
-- [ ] **Step 3: Serve the Modal app for development**
+- [x] **Step 3: Serve or deploy the Modal app for development validation**
 
 Run:
 
@@ -597,9 +597,11 @@ Run:
 modal serve modal_backend/dream_customs_modal.py
 ```
 
-Expected: Modal prints development endpoint URLs for `health`, `TextService.text`, and `VisionService.vision`. Do not paste secret-bearing URLs or tokens into logs.
+Expected: Modal prints development endpoint URLs for `health`, `text`, and `vision`. Do not paste secret-bearing URLs or tokens into logs.
 
-- [ ] **Step 4: Check health endpoint**
+Observed 2026-06-06: skipped long-running `modal serve` in favor of `modal deploy` plus SDK endpoint discovery. Endpoint URLs were kept in-process only and were not written to docs, logs, screenshots, or git.
+
+- [x] **Step 4: Check health endpoint**
 
 In a second terminal, run with the health URL copied from Modal output:
 
@@ -618,7 +620,9 @@ Expected:
 }
 ```
 
-- [ ] **Step 5: Smoke text endpoint with token-safe output**
+Observed 2026-06-06: health smoke passed after deployment.
+
+- [x] **Step 5: Smoke text endpoint with token-safe output**
 
 Run:
 
@@ -653,11 +657,15 @@ Expected:
 {'has_response': True, 'status': 'ok'}
 ```
 
-- [ ] **Step 6: Record any GPU/load failure**
+Observed 2026-06-06: strict hosted smoke passed with `text_route=ok` and `text_questions=2`.
+
+- [x] **Step 6: Record any GPU/load failure**
 
 If Modal fails because `MiniCPM-V-4.6` does not fit on `L4`, change only `VisionService.gpu` to `A10G` first. If it still fails, change only `VisionService.gpu` to `L40S`; if `L40S` still fails, try `A100-40GB`, then `A100-80GB`. Keep `TextService.gpu` on `L4` unless text loading fails. Do not switch away from `openbmb/MiniCPM-V-4.6` to satisfy the vision requirement; if all GPU classes fail, mark the goal blocked with the exact non-secret Modal load error.
 
-- [ ] **Step 7: Commit GPU adjustment if needed**
+Observed 2026-06-06: no GPU upgrade was required. Text and vision routes both passed on `L4`.
+
+- [x] **Step 7: Commit GPU adjustment if needed**
 
 Run only if the service file changed:
 
@@ -665,6 +673,8 @@ Run only if the service file changed:
 git add modal_backend/dream_customs_modal.py
 git commit -m "fix: tune modal gpu class for minicpm backend"
 ```
+
+Observed 2026-06-06: no GPU-class adjustment commit was needed.
 
 ## Task 4: Add Token-Safe Hosted Route Smoke Script
 
@@ -735,7 +745,7 @@ Expected:
 Missing required environment variable: DREAM_CUSTOMS_TEXT_ENDPOINT
 ```
 
-- [ ] **Step 3: Run script with text and vision endpoints configured**
+- [x] **Step 3: Run script with text and vision endpoints configured**
 
 Run:
 
@@ -759,6 +769,8 @@ Expected:
 ```
 
 The exact `text_questions` count may be `1`, `2`, or `3`. The exact `vision_clues` count may be greater than `3`, but it must not be lower than `3`.
+
+Observed 2026-06-06: strict hosted smoke passed with `text_route=ok`, `text_questions=2`, `vision_route=ok`, and `vision_clues=8`. Endpoint and token values were kept in-process only.
 
 - [x] **Step 4: Commit smoke script**
 
@@ -864,7 +876,7 @@ Expected:
 Missing required environment variable: DREAM_CUSTOMS_TEXT_ENDPOINT
 ```
 
-- [ ] **Step 3: Run eval with Modal text endpoint**
+- [x] **Step 3: Run eval with Modal text endpoint**
 
 Run:
 
@@ -887,6 +899,8 @@ Expected:
 
 The acceptance gate is `passed >= 11`, which is at least 90% schema-valid behavior with required safety notes on the two distress cases.
 
+Observed 2026-06-06: hosted eval passed with `passed=12`, `total=12`, `schema_valid_rate=1.0`, and no failures.
+
 - [x] **Step 4: Commit eval script**
 
 Run:
@@ -901,7 +915,7 @@ git commit -m "test: add hosted route acceptance eval"
 **Files:**
 - Read: `modal_backend/dream_customs_modal.py`
 
-- [ ] **Step 1: Deploy Modal app**
+- [x] **Step 1: Deploy Modal app**
 
 Run:
 
@@ -911,7 +925,9 @@ modal deploy modal_backend/dream_customs_modal.py
 
 Expected: Modal prints deployed URLs for the health, text, and vision routes.
 
-- [ ] **Step 2: Export endpoint URLs only in the shell session**
+Observed 2026-06-06: Modal app deployed as `dream-customs-minicpm-backend`; endpoint discovery succeeded through the Modal SDK without printing URLs.
+
+- [x] **Step 2: Keep endpoint URLs only in the execution session**
 
 Run with deployed URLs copied from Modal output:
 
@@ -922,7 +938,9 @@ export DREAM_CUSTOMS_VISION_ENDPOINT="https://..."
 
 Do not write these values to `.env`, docs, tests, screenshots, or commit messages.
 
-- [ ] **Step 3: Run hosted smoke**
+Observed 2026-06-06: endpoint URLs and hosted token were kept in a Python process environment only.
+
+- [x] **Step 3: Run hosted smoke**
 
 Run:
 
@@ -932,7 +950,9 @@ Run:
 
 Expected: `text_route` is `ok`, `vision_route` is `ok`, and `vision_clues >= 3`. `DREAM_CUSTOMS_SMOKE_IMAGE` is required because `MiniCPM-V-4.6` vision is a mandatory delivery requirement.
 
-- [ ] **Step 4: Run hosted eval**
+Observed 2026-06-06: `text_route=ok`, `text_questions=2`, `vision_route=ok`, and `vision_clues=8`.
+
+- [x] **Step 4: Run hosted eval**
 
 Run:
 
@@ -942,7 +962,9 @@ Run:
 
 Expected: `passed >= 11`.
 
-- [ ] **Step 5: Record deployment metadata without secrets**
+Observed 2026-06-06: `passed=12`, `total=12`, `schema_valid_rate=1.0`, `failures=[]`.
+
+- [x] **Step 5: Record deployment metadata without secrets**
 
 Create `docs/smoke/2026-06-06-modal-minicpm-backend-smoke.md`:
 
@@ -972,7 +994,7 @@ Create `docs/smoke/2026-06-06-modal-minicpm-backend-smoke.md`:
 
 Fill the PASS lines with the actual observed result. Do not paste endpoint URLs or tokens.
 
-- [ ] **Step 6: Commit smoke record**
+- [x] **Step 6: Commit smoke record**
 
 Run:
 
@@ -1009,6 +1031,8 @@ DREAM_CUSTOMS_HOSTED_TOKEN
 ```
 
 Use the Modal deployed URLs and shared hosted token from the current shell/session. Do not store the values locally. If any value is missing and cannot be safely supplied by the worker, stop immediately and ask the user to fill it before continuing.
+
+Observed 2026-06-06: the local HF token could read enough project state for preflight but failed to update Space secrets through the Hugging Face API with `403 Forbidden: Authorization error`. Secret values were not printed. Public Space model-route verification remains blocked until a token with Space secret write permission is available or the Space secrets are updated through the UI.
 
 - [ ] **Step 3: Restart the Space**
 
@@ -1115,7 +1139,7 @@ git commit -m "docs: explain modal hosted minicpm route"
 - Read: `README.md`
 - Read: `docs/handoff.md`
 
-- [ ] **Step 1: Run full local verification**
+- [x] **Step 1: Run full local verification**
 
 Run:
 
@@ -1126,7 +1150,9 @@ git diff --check
 
 Expected: all tests pass and diff check is clean.
 
-- [ ] **Step 2: Verify no secrets were written**
+Observed 2026-06-06: `.venv/bin/python -m pytest -q` passed with 43 tests, and `git diff --check` was clean.
+
+- [x] **Step 2: Verify no secrets were written**
 
 Run:
 
@@ -1136,7 +1162,9 @@ git grep -nE 'hf_[A-Za-z0-9_=-]{20,}|DREAM_CUSTOMS_(TEXT|VISION)_ENDPOINT=https:
 
 Expected: no committed secret values. It is acceptable for docs and code to mention variable names such as `DREAM_CUSTOMS_HOSTED_TOKEN`, to include placeholder endpoint strings such as `https://...`, and to include synthetic examples such as `Bearer secret-value`.
 
-- [ ] **Step 3: Review commit history**
+Observed 2026-06-06: secret scan returned no matches for committed secret values.
+
+- [x] **Step 3: Review commit history**
 
 Run:
 
@@ -1145,6 +1173,8 @@ git log --oneline -8
 ```
 
 Expected: recent commits show the contract helpers, Modal service, smoke/eval scripts, smoke record, and docs.
+
+Observed 2026-06-06: recent commits show Modal contracts, backend service, hosted smoke/eval scripts, Modal runtime fixes, schema repair, and smoke documentation.
 
 - [ ] **Step 4: Push branch**
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 from dream_customs.models import FakeASRClient, FakeTextClient, FakeVisionClient
 from dream_customs.pipeline import (
     add_evidence,
@@ -5,6 +7,7 @@ from dream_customs.pipeline import (
     ask_questions,
     build_intake,
     create_session,
+    dated_permit_id,
     draft_pact,
     generate_negotiation,
     generate_pact,
@@ -13,6 +16,11 @@ from dream_customs.pipeline import (
     seal_pact,
     skip_question,
 )
+
+
+def test_dated_permit_id_uses_runtime_date_and_preserves_serial():
+    assert dated_permit_id("DREAM2024-001", today=date(2026, 6, 6)) == "DREAM20260606-001"
+    assert dated_permit_id("DC-DEMO-014", today=date(2026, 6, 6)) == "DREAM20260606-014"
 
 
 def test_build_intake_merges_modalities():

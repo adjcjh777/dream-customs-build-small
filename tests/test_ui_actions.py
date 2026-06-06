@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from dream_customs.ui.actions import answer_to_card_action, initial_mobile_state, skip_to_card_action, submit_dream_action
 
@@ -37,7 +38,8 @@ def test_mobile_mvp_submit_then_skip_auto_seals_pact():
     assert view["status"] == "card"
     assert view["phase"] == "sealed"
     assert "今日通行证" in view["card_title"]
-    assert "DC-DEMO-014" in view["card_text"]
+    assert f"DREAM{date.today():%Y%m%d}-014" in view["card_text"]
+    assert "DC-DEMO-014" not in view["card_text"]
     assert "迟到的电梯" in view["card_html"]
 
 

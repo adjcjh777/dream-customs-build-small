@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from typing import Dict, List, Optional, Tuple
 
 from dream_customs.prompts import followup_question_prompt, negotiation_prompt, pact_prompt, pact_revision_prompt
@@ -25,6 +26,23 @@ def build_intake(
         uncertainty=uncertainty,
         user_context=user_context,
     )
+
+
+def dated_permit_id(permit_id: str, today: Optional[date] = None) -> str:
+    today = today or date.today()
+    text = (permit_id or "").strip()
+    serial_match = re.search(r"(?:^|[-_#])(\d{1,6})\s*$", text) or re.search(
+        r"(\d+)(?!.*\d)",
+        text,
+    )
+    serial = serial_match.group(1)[-3:].zfill(3) if serial_match else "001"
+    return f"DREAM{today:%Y%m%d}-{serial}"
+
+
+def _stamp_card_for_today(card: PactCard) -> PactCard:
+    stamped = card.model_copy(deep=True)
+    stamped.permit_id = dated_permit_id(stamped.permit_id)
+    return stamped
 
 
 def intake_from_modalities(
@@ -56,6 +74,7 @@ def generate_pact(intake: DreamIntake, answers: str, text_client) -> Tuple[PactC
     merged = intake.merged_text() + "\n" + answers
     if needs_escalation(merged):
         card.safety_note = safety_note()
+    card = _stamp_card_for_today(card)
     return card, render_pact_card(card)
 
 
@@ -353,6 +372,7 @@ def revise_pact(session: CustomsSession, revision_request: str, text_client) -> 
     if needs_escalation(merged):
         card.safety_note = safety_note()
     card = _apply_revision_hint(card, revision_request or "")
+    card = _stamp_card_for_today(card)
     next_session.draft_pact = card
     next_session.phase = "drafting"
     next_session.events.append(
@@ -375,6 +395,7 @@ def seal_pact(session: CustomsSession) -> CustomsSession:
             _event("error", "Nothing to seal yet", "Draft a pact before sealing today's agreement.", status="empty")
         )
         return next_session
+    next_session.draft_pact = _stamp_card_for_today(next_session.draft_pact)
     next_session.sealed_pact = next_session.draft_pact
     next_session.phase = "sealed"
     next_session.events.append(

@@ -70,6 +70,9 @@
 - 如果需要正式提交，先确认是否已初始化/切换到 Dream Customs 专用仓库。
 - 在仓库归属未确认前，可以本地写文件，但不要强行 `git add` / `git commit` / `git push` 到父级 VLA 仓库。
 - 如果建立新功能分支，使用 `feature/xxx` 命名。
+- 用户要求修改完成后，默认不仅推送 GitHub 分支，也要同步提交到 Hugging Face Space，并完成可用的 merge / 部署路径；不要只停在本地或 GitHub 分支。
+- 同步 HF Space 前先确认 `space` remote 指向 `build-small-hackathon/dream-customs`，并复核当前分支与提交 SHA，避免误推到其他 Space 或父级仓库。
+- 如果 HF Space 同步涉及密钥、账单、权限弹窗、强制覆盖公开 `main`、或无法自动 merge 的 PR/Discussion，则先说明具体阻塞并请求用户确认；不要打印或保存任何 token。
 
 ## 实现原则
 

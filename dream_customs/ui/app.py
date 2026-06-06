@@ -50,6 +50,105 @@ def _json_schema_to_python_type(schema, defs):
 
 gradio_client_utils._json_schema_to_python_type = _json_schema_to_python_type
 
+VOICE_JS = r"""
+() => {
+  const bindVoiceButton = () => {
+    const button = document.querySelector(".dc-mic-button");
+    const status = document.querySelector(".dc-mic-status");
+    const textarea = document.querySelector(".dc-dream-text textarea");
+
+    if (!button || !textarea || button.dataset.bound === "true") {
+      return;
+    }
+    button.dataset.bound = "true";
+
+    const setStatus = (message, mode) => {
+      if (status) {
+        status.textContent = message;
+        status.dataset.mode = mode || "";
+      }
+      button.dataset.mode = mode || "";
+      button.setAttribute("aria-label", message);
+    };
+
+    const appendTranscript = (text) => {
+      const transcript = text.trim();
+      if (!transcript) {
+        return;
+      }
+      const spacer = textarea.value.trim() ? "\n" : "";
+      textarea.value = `${textarea.value}${spacer}${transcript}`;
+      textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: transcript }));
+      textarea.dispatchEvent(new Event("change", { bubbles: true }));
+      textarea.focus();
+    };
+
+    button.addEventListener("click", async () => {
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Recognition) {
+        setStatus("当前浏览器不支持直接语音输入，可先手动输入，ASR 通道待接入。", "error");
+        textarea.focus();
+        return;
+      }
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      } catch (error) {
+        setStatus("没有获得麦克风权限，请允许浏览器录音后再试。", "error");
+        return;
+      }
+
+      const recognition = new Recognition();
+      recognition.lang = "zh-CN";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
+
+      let latestTranscript = "";
+
+      recognition.onstart = () => {
+        setStatus("正在听，把梦说出来。", "listening");
+      };
+
+      recognition.onresult = (event) => {
+        latestTranscript = Array.from(event.results)
+          .map((result) => result[0]?.transcript || "")
+          .join("")
+          .trim();
+        if (latestTranscript) {
+          setStatus(`正在记录：${latestTranscript}`, "listening");
+        }
+      };
+
+      recognition.onerror = (event) => {
+        const message = event.error === "not-allowed"
+          ? "麦克风权限被拒绝，请允许录音后再试。"
+          : "这次没有听清，可以再点一次话筒。";
+        setStatus(message, "error");
+      };
+
+      recognition.onend = () => {
+        if (latestTranscript) {
+          appendTranscript(latestTranscript);
+          setStatus("已写入梦境碎片。", "done");
+        } else if (button.dataset.mode === "listening") {
+          setStatus("没有检测到语音，可以再点一次话筒。", "idle");
+        }
+      };
+
+      recognition.start();
+    });
+  };
+
+  bindVoiceButton();
+  const observer = new MutationObserver(bindVoiceButton);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+"""
+
 
 def _load_view(view_json: str) -> dict:
     try:
@@ -187,7 +286,7 @@ def build_demo() -> gr.Blocks:
     initial_state, initial_view = initial_mobile_state()
     initial = _load_view(initial_view)
 
-    with gr.Blocks(css=CSS, title="梦境海关") as demo:
+    with gr.Blocks(css=CSS, js=VOICE_JS, title="梦境海关") as demo:
         session_state = gr.State(initial_state)
         view_state = gr.State(initial_view)
 
@@ -195,8 +294,27 @@ def build_demo() -> gr.Blocks:
             gr.HTML(
                 f"""
 <header class="dc-hero">
-  <h1>{APP_TITLE}</h1>
-  <p>{APP_SUBTITLE}</p>
+  <div class="dc-hero-top">
+    <div class="dc-menu-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="dc-brand-lockup">
+      <div class="dc-passport-icon" aria-hidden="true">
+        <span class="dc-cloud-dot one"></span>
+        <span class="dc-cloud-dot two"></span>
+        <span class="dc-cloud-dot three"></span>
+      </div>
+      <div>
+        <p class="dc-brand-kicker">DREAM CUSTOMS</p>
+        <h1>{APP_TITLE}</h1>
+        <p class="dc-brand-subtitle">A gentle dream declaration desk</p>
+      </div>
+    </div>
+    <div class="dc-clearance-badge" aria-hidden="true">
+      <span>Dream Clearance</span>
+      <strong>DC-2026-0606</strong>
+      <small>Status: Ready</small>
+    </div>
+  </div>
+  <p class="dc-hero-copy">{APP_SUBTITLE}</p>
 </header>
 """.strip()
             )
@@ -205,32 +323,59 @@ def build_demo() -> gr.Blocks:
             with gr.Group(visible=True, elem_classes=["dc-stage"]) as declaration_group:
                 with gr.Row(elem_classes=["dc-intake-grid"]):
                     with gr.Group(elem_classes=["dc-composer"]):
+                        gr.HTML(
+                            """
+<div class="dc-section-title">
+  <span class="dc-title-icon">1</span>
+  <strong>Describe your dream</strong>
+</div>
+""".strip()
+                        )
                         dream_text = gr.Textbox(
                             label="写下梦的碎片",
                             placeholder=DREAM_PLACEHOLDER,
-                            lines=8,
+                            lines=12,
                             value="",
                             elem_classes=["dc-dream-text"],
                         )
-                        audio_input = gr.Audio(
-                            label="语音线索",
-                            sources=["microphone"],
-                            type="filepath",
-                            elem_classes=["dc-mic-input"],
+                        gr.HTML(
+                            """
+<div class="dc-mic-control">
+  <button type="button" class="dc-mic-button" aria-label="点击话筒开始语音输入">
+    <span class="dc-mic-glyph" aria-hidden="true"></span>
+  </button>
+  <div class="dc-mic-status" aria-live="polite">点击话筒开始语音输入</div>
+</div>
+""".strip()
+                        )
+                        audio_input = gr.State(None)
+                        gr.HTML(
+                            """
+<p class="dc-field-tip">Tips: include people, places, emotions, colors, and anything that stood out.</p>
+""".strip()
                         )
                     with gr.Column(elem_classes=["dc-side-panel"]):
+                        gr.HTML(
+                            """
+<div class="dc-section-title">
+  <span class="dc-title-icon">2</span>
+  <strong>After waking feeling</strong>
+</div>
+""".strip()
+                        )
                         mood = gr.Dropdown(label="醒来后的感觉", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
                         gr.HTML(
                             """
 <div class="dc-side-stamp">
   <span>Dream Customs</span>
   <strong>Calm clearance</strong>
+  <small>Gentle declarations</small>
 </div>
 """.strip()
                         )
                 with gr.Row(elem_classes=["dc-submit-row"]):
-                    example_button = gr.Button("试一个例子", variant="secondary")
-                    submit_button = gr.Button("生成今日通行证", variant="primary")
+                    example_button = gr.Button("清空并试一个例子  →", variant="secondary")
+                    submit_button = gr.Button("盖章生成今日通行证  →", variant="primary")
                 with gr.Accordion("附加材料", open=False, elem_classes=["dc-attachment-drawer"]):
                     image_input = gr.Image(label="图片线索", type="filepath", height=160)
 

@@ -194,6 +194,43 @@ def _fallback_json_response(prompt: str) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
+def _empty_value(value: Any) -> bool:
+    if isinstance(value, str):
+        return not value.strip()
+    if isinstance(value, list):
+        return not [item for item in value if str(item).strip()]
+    return value is None
+
+
+def _repair_json_response(prompt: str, text_output: str) -> str:
+    if "Required schema:" not in prompt:
+        return text_output
+    parsed = _extract_json_object(text_output)
+    fallback = _extract_json_object(_fallback_json_response(prompt))
+    if parsed is None or fallback is None:
+        return _fallback_json_response(prompt)
+
+    if "permit_id" in prompt or "practical_suggestion" in prompt:
+        required_keys = (
+            "visitor_name",
+            "permit_id",
+            "contraband",
+            "risk_level",
+            "alliance_reading",
+            "practical_suggestion",
+            "weird_task",
+            "bedtime_release",
+            "safety_note",
+        )
+    else:
+        required_keys = ("visitor_name", "questions", "tone_note")
+
+    for key in required_keys:
+        if _empty_value(parsed.get(key)):
+            parsed[key] = fallback.get(key, "")
+    return json.dumps(parsed, ensure_ascii=False)
+
+
 def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
     cleaned = text.strip()
     try:
@@ -300,10 +337,10 @@ async def text(
             }
         ]
         text_output = _generate_text(tokenizer, model, retry_messages, normalized["max_tokens"])
-    if not text_output or (
-        "Required schema:" in normalized["prompt"] and _extract_json_object(text_output) is None
-    ):
+    if not text_output:
         text_output = _fallback_json_response(normalized["prompt"])
+    else:
+        text_output = _repair_json_response(normalized["prompt"], text_output)
     return response_payload(text_output)
 
 

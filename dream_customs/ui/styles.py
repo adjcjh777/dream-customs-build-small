@@ -804,6 +804,11 @@ button.secondary {
   min-height: 130px !important;
 }
 
+footer.svelte-1rjryqp,
+a.built-with[href*="gradio.app"] {
+  display: none !important;
+}
+
 .dc-dev {
   background: rgba(255, 249, 238, 0.7) !important;
   border: 1px solid rgba(189, 168, 143, 0.58) !important;

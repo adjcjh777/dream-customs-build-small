@@ -1,11 +1,11 @@
-APP_TITLE = "梦境海关"
-APP_SUBTITLE = "把昨晚的梦丢进来，我帮你换成今天的一张小通行证。"
+APP_TITLE = "Dream Customs"
+APP_SUBTITLE = "Turn last night's strange fragment into one gentle clearance pass for today."
 
-DREAM_PLACEHOLDER = "例如：我梦见电梯一直不到，按钮像蜡一样融化。"
-ANSWER_PLACEHOLDER = "可以只回一句，也可以留空后直接跳过。"
+DREAM_PLACEHOLDER = "For example: I kept missing an elevator, and the buttons melted like wax."
+ANSWER_PLACEHOLDER = "Add one sentence if it helps, or leave this blank and skip ahead."
 
-EXAMPLE_DREAM = "我梦见自己一直赶不上电梯，按钮像蜡一样融化，楼层数字停在 14。"
-EXAMPLE_MOOD = "焦虑"
+EXAMPLE_DREAM = "I kept missing an elevator. The buttons melted like wax, and the floor number froze at 14."
+EXAMPLE_MOOD = "Uneasy"
 
-DEFAULT_MOOD = "平静"
-MOOD_OPTIONS = ["迷雾", "焦虑", "好奇", "累", "平静"]
+DEFAULT_MOOD = "Calm"
+MOOD_OPTIONS = ["Foggy", "Uneasy", "Curious", "Tired", "Calm"]

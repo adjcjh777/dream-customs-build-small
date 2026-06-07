@@ -10,10 +10,6 @@ from dream_customs.prompts import visual_clue_prompt
 from dream_customs.schema import PactCard
 
 
-def _contains_cjk(text: str) -> bool:
-    return bool(re.search(r"[\u4e00-\u9fff]", text))
-
-
 class FakeVisionClient:
     def extract_clues(self, image_path: Optional[str]) -> List[str]:
         if not image_path:
@@ -30,47 +26,26 @@ class FakeASRClient:
 
 class FakeTextClient:
     def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
-        if _contains_cjk(prompt):
-            return {
-                "visitor_name": "迟到的电梯",
-                "questions": [
-                    "这个梦醒来后最明显的感觉是什么：紧张、疲惫、好奇，还是别的？",
-                    "今天有没有一件现实里的小事，你希望先轻一点开始？",
-                    "你想让我给你偏生活建议，还是偏 5 分钟怪趣任务？",
-                ],
-                "tone_note": "这个来访者也许不是敌人，而是在提醒你把开始和完成分开。",
-            }
         return {
             "visitor_name": "Late Elevator",
             "questions": [
-                "Was the elevator blocking you, or buying you a slower morning?",
-                "If it lets you carry one unfinished thing into today, which one is smallest?",
-                "Would you trade it a five-minute action for a release stamp?",
+                "What feeling was strongest when you woke up: pressure, tiredness, curiosity, or something else?",
+                "Is there one real-life thing you would like to make easier today?",
+                "Would you rather receive a practical life tip, a tiny odd task, or both?",
             ],
-            "tone_note": "This visitor may be asking you to separate starting from finishing.",
+            "tone_note": "This visitor may be asking for a smaller start, not a perfect finish.",
         }
 
     def generate_pact(self, prompt: str) -> PactCard:
-        if _contains_cjk(prompt):
-            return PactCard(
-                visitor_name="迟到的电梯",
-                permit_id="DC-DEMO-014",
-                contraband=["未申报的焦虑", "融化的按钮", "一小袋没来得及开始的事"],
-                risk_level="橙色：需要被安置，但不需要被害怕",
-                alliance_reading="这个梦也许在提醒你，今天先把启动一件事和完成一件事分开。",
-                practical_suggestion="今天先把最重要的一件事写成 10 分钟能开始的版本，只要求打开它，不要求完成。",
-                weird_task="在纸上画一个很小的电梯按钮，给今天的最小任务按一下，然后做 5 分钟。",
-                bedtime_release="今日电梯已停靠，未完成事项明日再报关。",
-            )
         return PactCard(
             visitor_name="Late Elevator",
             permit_id="DC-DEMO-014",
-            contraband=["unfiled anxiety", "melted buttons", "one pouch of unstarted tasks"],
-            risk_level="orange: needs placement, not fear",
-            alliance_reading="This visitor asks you to separate starting from finishing.",
-            practical_suggestion="Open one small task ten minutes early. You only need to start it.",
-            weird_task="Write the elevator a one-sentence apology note.",
-            bedtime_release="Today the elevator has docked; unfinished floors report tomorrow.",
+            contraband=["unfiled pressure", "melted buttons", "a pocket of unstarted tasks"],
+            risk_level="orange: worth placing gently, not fearing",
+            alliance_reading="This dream may be pointing to the pressure of starting and finishing at the same time.",
+            practical_suggestion="Choose one task and define only its first 10 minutes. Open it, then pause for water.",
+            weird_task="Draw a tiny elevator button on paper, press it once, and work for five minutes.",
+            bedtime_release="The elevator has docked for tonight. Unfinished floors can report tomorrow.",
         )
 
 

@@ -62,8 +62,9 @@ Give:
 - practical_suggestion: one safe, concrete life tip for today, such as hydration, eating, writing one task down, taking a short walk, reducing one task, checking the calendar, or asking for help. It must not be mystical or dream-literal.
 - weird_task: one harmless, playful, slightly odd thing doable in 5 minutes. It can be imaginative, but it must be understandable.
 - safety_note: empty string unless the user mentions self-harm, harming others, severe distress, severe insomnia, panic, or inability to function.
-Use warm, non-clinical language. If the user wrote in Chinese, answer in Chinese.
-Avoid generic English names like "Dreamer" when answering Chinese.
+Use warm, non-clinical language.
+Avoid generic names like "Dreamer"; name the dream visitor with a short, vivid phrase.
+Write the final card in polished English for an English-language demo, even if the dream fragment contains another language.
 
 Dream intake:
 {intake.merged_text()}
@@ -85,6 +86,7 @@ Do not diagnose. Do not make the dream sound certain or frightening.
 Keep practical_suggestion safe, concrete, and useful for daily life.
 Keep weird_task playful but understandable and separate from the practical suggestion.
 Use safety_note only for severe distress or safety risk; otherwise return an empty string.
+Write the revised card in polished English for an English-language demo, even if the dream fragment contains another language.
 
 Dream intake:
 {intake.merged_text()}

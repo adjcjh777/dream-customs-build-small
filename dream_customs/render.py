@@ -33,7 +33,7 @@ def render_status_bar(session: CustomsSession, text_backend: str = "demo", visio
   <div class="dc-brand-lockup">
     <span class="dc-brand-mark">DC</span>
     <div>
-      <h1>Dream Customs / 梦境海关</h1>
+      <h1>Dream Customs</h1>
   <p>Turn last night's strange visitor into one gentle pact for the day: a safe life tip, a small weird task, and a bedtime release.</p>
     </div>
   </div>

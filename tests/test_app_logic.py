@@ -17,16 +17,16 @@ from dream_customs.models import HostedASRClient, HostedMiniCPMTextClient, Hoste
 
 def test_run_customs_once_generates_demo_outputs():
     negotiation, pact_text, html, debug_json = run_customs_once(
-        dream_text="我梦见迟到的电梯。",
+        dream_text="I dreamed of a late elevator.",
         mood="foggy",
-        answers="我想先完成一件小事。",
+        answers="I want to start one small thing first.",
     )
     debug = json.loads(debug_json)
     assert "Visitor:" in negotiation
     assert "Dream visitor:" in pact_text
     assert "Today's Pact" in html
     assert debug["status"] == "ok"
-    assert debug["intake"]["dream_text"] == "我梦见迟到的电梯。"
+    assert debug["intake"]["dream_text"] == "I dreamed of a late elevator."
 
 
 def test_run_customs_once_requires_one_modality():

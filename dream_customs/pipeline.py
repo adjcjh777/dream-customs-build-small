@@ -63,32 +63,34 @@ def _looks_unclear_or_dream_literal(text: str) -> bool:
         "香薰皮",
         "果酱",
         "Dreamer",
+        "dream content has no medical value",
+        "release stamp",
+        "customs stamp",
+        "clearance stamp",
+        "magical",
     ]
     return any(term in clean for term in dream_literals)
 
 
 def _safe_practical_suggestion(intake: DreamIntake) -> str:
-    if _contains_cjk(intake.merged_text()):
-        mood = intake.mood.strip()
-        if mood in {"焦虑", "迷雾", "累"}:
-            return "今天先做一件能稳住身体的小事：喝水、吃点东西，把最重要的一件事写成 10 分钟能开始的版本。"
-        return "今天给自己留一个低风险开头：先整理桌面或日程 5 分钟，再只开始一件最小的任务。"
+    mood = intake.mood.strip().lower()
+    if mood in {"uneasy", "foggy", "tired", "焦虑", "迷雾", "累"}:
+        return (
+            "Start with one body-level reset today: drink water, eat something simple, "
+            "then write the most important task as a 10-minute first step."
+        )
     return "Do one low-risk stabilizing thing today: drink water, eat something, and write the most important task as a 10-minute first step."
 
 
 def _safe_weird_task(intake: DreamIntake) -> str:
-    if _contains_cjk(intake.merged_text()):
-        return "把今天最小的任务写在纸上，旁边画一个很小的通行章，然后只做 5 分钟。"
     return "Write your smallest task on paper, draw a tiny clearance stamp beside it, and work on it for just five minutes."
 
 
 def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str) -> PactCard:
     polished = card.model_copy(deep=True)
     merged = "\n".join([intake.merged_text(), answers or ""])
-    chinese = _contains_cjk(merged)
-
-    if chinese and (not polished.visitor_name.strip() or re.fullmatch(r"[A-Za-z\s_-]+", polished.visitor_name.strip())):
-        polished.visitor_name = "昨夜来访者"
+    if not polished.visitor_name.strip() or polished.visitor_name.strip().lower() == "dreamer":
+        polished.visitor_name = "Night Visitor"
 
     if _looks_unclear_or_dream_literal(polished.practical_suggestion):
         polished.practical_suggestion = _safe_practical_suggestion(intake)
@@ -98,11 +100,13 @@ def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str
     elif len((polished.weird_task or "").strip()) < 8:
         polished.weird_task = _safe_weird_task(intake)
 
-    if chinese:
-        if len((polished.alliance_reading or "").strip()) < 12 or "联盟成员" in polished.alliance_reading:
-            polished.alliance_reading = "这个梦可以先当作昨晚情绪留下的一点信号，不需要急着解释，今天先照顾好现实里的节奏。"
-        if polished.risk_level.strip() in {"低", "中", "高"}:
-            polished.risk_level = f"{polished.risk_level.strip()}：适合温和处理，不需要把它当成预兆。"
+    if len((polished.alliance_reading or "").strip()) < 12 or "联盟成员" in polished.alliance_reading:
+        polished.alliance_reading = (
+            "You can treat this as a small signal from last night's feelings, not a prophecy. "
+            "Today, protect a realistic pace."
+        )
+    if polished.risk_level.strip() in {"低", "中", "高", "low", "medium", "high"}:
+        polished.risk_level = "medium: handle gently, without treating it as a warning sign"
 
     if not needs_escalation(merged):
         polished.safety_note = ""
@@ -155,10 +159,6 @@ def create_session() -> CustomsSession:
             )
         ]
     )
-
-
-def _contains_cjk(text: str) -> bool:
-    return bool(re.search(r"[\u4e00-\u9fff]", text))
 
 
 def _append_text(existing: str, new_text: str) -> str:
@@ -315,10 +315,7 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
     questions = [question for question in negotiation.get("questions", []) if question]
     fresh_questions = [question for question in questions if question not in next_session.question_history]
     if force_another and not fresh_questions:
-        if _contains_cjk(next_session.intake.merged_text()):
-            fresh_questions = ["如果海关只批准一个更小的动作，你希望今天先放行哪一件事？"]
-        else:
-            fresh_questions = ["If customs approves one smaller action today, which one should it release first?"]
+        fresh_questions = ["If today only needs one smaller first step, what should that step be?"]
     if not fresh_questions:
         fresh_questions = questions[:3]
 
@@ -353,10 +350,7 @@ def answer_question(session: CustomsSession, answer: str) -> CustomsSession:
 
 def skip_question(session: CustomsSession) -> CustomsSession:
     next_session = session.model_copy(deep=True)
-    if _contains_cjk(next_session.intake.merged_text()):
-        skip_text = "用户选择跳过这一轮问题。"
-    else:
-        skip_text = "The user chose to skip this question."
+    skip_text = "The user chose to skip this question."
     next_session.answer_history.append(skip_text)
     next_session.phase = "negotiating"
     next_session.events.append(_event("user", "Question skipped", skip_text, status="skipped"))
@@ -392,29 +386,20 @@ def draft_pact(session: CustomsSession, text_client) -> CustomsSession:
 def _apply_revision_hint(card: PactCard, revision_request: str) -> PactCard:
     request = revision_request.lower()
     revised = card.model_copy(deep=True)
-    cjk = _contains_cjk(" ".join([revision_request, card.visitor_name, card.alliance_reading]))
     if any(term in request for term in ["strange", "weird", "怪", "更奇怪", "更怪"]):
         revised.weird_task = (
-            "把今天最小的任务写在纸上，给它盖一个看不见的放行章。"
-            if cjk
-            else "Write the smallest task on paper and stamp it with an invisible release mark."
+            "Write the smallest task on paper and stamp it with an invisible release mark."
         )
     elif any(term in request for term in ["gentle", "softer", "温和", "轻一点"]):
         revised.risk_level = (
-            "浅橙色：先安置它，不急着解释它"
-            if cjk
-            else "soft orange: place it gently before interpreting it"
+            "soft orange: place it gently before interpreting it"
         )
         revised.practical_suggestion = (
-            "今天先选一个不需要立刻完成的小开头，做 5 分钟就停。"
-            if cjk
-            else "Choose one start that does not need finishing today. Stop after five minutes."
+            "Choose one start that does not need finishing today. Stop after five minutes."
         )
     elif revision_request.strip():
         revised.practical_suggestion = (
-            f"{revised.practical_suggestion}（按你的修订请求：{revision_request.strip()}）"
-            if cjk
-            else f"{revised.practical_suggestion} Revision note: {revision_request.strip()}"
+            f"{revised.practical_suggestion} Revision note: {revision_request.strip()}"
         )
     return revised
 

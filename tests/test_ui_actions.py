@@ -48,8 +48,8 @@ def test_zerogpu_probe_is_importable_without_local_gpu():
 
 def test_mobile_mvp_submit_then_skip_auto_seals_pact():
     state, view_json = submit_dream_action(
-        dream_text="我梦见迟到的电梯。",
-        mood="焦虑",
+        dream_text="I dreamed of a late elevator.",
+        mood="Uneasy",
         text_backend="demo",
         vision_backend="demo",
     )
@@ -65,23 +65,28 @@ def test_mobile_mvp_submit_then_skip_auto_seals_pact():
 
     assert view["status"] == "card"
     assert view["phase"] == "sealed"
-    assert "今日通行证" in view["card_title"]
+    assert "Today's Clearance Pass" in view["card_title"]
     assert f"DREAM{date.today():%Y%m%d}-014" in view["card_text"]
     assert "DC-DEMO-014" not in view["card_text"]
-    assert "迟到的电梯" in view["card_html"]
+    assert "Late Elevator" in view["card_html"]
 
 
 def test_mobile_mvp_answer_to_card_auto_seals_pact():
     state, _view_json = submit_dream_action(
-        dream_text="我梦见按钮融化，电梯一直不到。",
-        mood="迷雾",
+        dream_text="I dreamed the elevator buttons melted and the elevator never came.",
+        mood="Foggy",
         text_backend="demo",
         vision_backend="demo",
     )
 
-    state, view_json = answer_to_card_action(state, "它可能是在让我慢一点。", text_backend="demo", vision_backend="demo")
+    state, view_json = answer_to_card_action(
+        state,
+        "It may be asking me to slow down.",
+        text_backend="demo",
+        vision_backend="demo",
+    )
     view = json.loads(view_json)
 
     assert view["status"] == "card"
     assert view["phase"] == "sealed"
-    assert "它可能是在让我慢一点。" in view["debug"]["session"]["answer_history"]
+    assert "It may be asking me to slow down." in view["debug"]["session"]["answer_history"]

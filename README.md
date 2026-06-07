@@ -20,7 +20,7 @@ tags:
   - dream-journal
 ---
 
-# Dream Customs / 梦境海关
+# Dream Customs
 
 A Build Small Hackathon Gradio app that helps users form a playful alliance with last night's dream.
 

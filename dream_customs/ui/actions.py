@@ -42,20 +42,20 @@ def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) 
 
 
 def _card_plain_text(card: PactCard) -> str:
-    contraband = "、".join(card.contraband)
+    contraband = ", ".join(card.contraband)
     parts = [
-        "今日通行证",
-        f"来访者：{card.visitor_name}",
-        f"入境编号：{card.permit_id}",
-        f"携带情绪违禁品：{contraband}",
-        f"风险等级：{card.risk_level}",
-        f"结盟解读：{card.alliance_reading}",
-        f"今日生活建议：{card.practical_suggestion}",
-        f"5 分钟怪趣任务：{card.weird_task}",
-        f"睡前放行仪式：{card.bedtime_release}",
+        "Today's Clearance Pass",
+        f"Visitor: {card.visitor_name}",
+        f"Permit ID: {card.permit_id}",
+        f"Emotional contraband: {contraband}",
+        f"Risk level: {card.risk_level}",
+        f"Alliance reading: {card.alliance_reading}",
+        f"Life tip for today: {card.practical_suggestion}",
+        f"5-minute odd task: {card.weird_task}",
+        f"Bedtime release: {card.bedtime_release}",
     ]
     if card.safety_note:
-        parts.append(f"安全提示：{card.safety_note}")
+        parts.append(f"Support note: {card.safety_note}")
     return "\n".join(parts)
 
 
@@ -63,7 +63,7 @@ def _render_today_pass(card: PactCard) -> str:
     contraband = "".join(f"<li>{escape(item)}</li>" for item in card.contraband)
     safety = (
         "<section class='dc-pass-safety'>"
-        "<strong>必要时的安全提示</strong>"
+        "<strong>Support note, if needed</strong>"
         f"<p>{escape(card.safety_note)}</p>"
         "</section>"
         if card.safety_note
@@ -72,33 +72,33 @@ def _render_today_pass(card: PactCard) -> str:
     return f"""
 <article class="dc-pass-card">
   <div class="dc-pass-topline">
-    <span>今日通行证</span>
+    <span>Today's Clearance Pass</span>
     <span>{escape(card.permit_id)}</span>
   </div>
   <h2>{escape(card.visitor_name)}</h2>
   <p class="dc-pass-risk">{escape(card.risk_level)}</p>
   <section>
-    <h3>可能代表的情绪</h3>
+    <h3>What it may be carrying</h3>
     <p>{escape(card.alliance_reading)}</p>
   </section>
   <section>
-    <h3>今天的生活小 tip</h3>
+    <h3>Life tip for today</h3>
     <p>{escape(card.practical_suggestion)}</p>
   </section>
   <section>
-    <h3>5 分钟怪趣任务</h3>
+    <h3>5-minute odd task</h3>
     <p>{escape(card.weird_task)}</p>
   </section>
   <section>
-    <h3>携带情绪违禁品</h3>
+    <h3>Emotional contraband</h3>
     <ul>{contraband}</ul>
   </section>
   <section>
-    <h3>睡前放行词</h3>
+    <h3>Bedtime release</h3>
     <p>{escape(card.bedtime_release)}</p>
   </section>
   {safety}
-  <div class="dc-pass-seal">SEALED / 已放行</div>
+  <div class="dc-pass-seal">SEALED / CLEARED</div>
 </article>
 """.strip()
 
@@ -116,7 +116,7 @@ def _view_payload(session: CustomsSession, text_backend: str, vision_backend: st
         "phase": session.phase,
         "question": _questions(session)[0] if _questions(session) else "",
         "questions": _questions(session),
-        "card_title": "今日通行证" if card else "",
+        "card_title": "Today's Clearance Pass" if card else "",
         "card_text": _card_plain_text(card) if card else "",
         "card_html": _render_today_pass(card) if card else "",
         "error": error,
@@ -135,12 +135,12 @@ def _view(session: CustomsSession, text_backend: str, vision_backend: str, **set
 
 def _notice_for_status(status: str, error: str = "") -> str:
     if status == "error":
-        return error or "海关还没收到梦的碎片。"
+        return error or "Dream Customs has not received a fragment yet."
     if status == "question":
-        return "这一步是可选补充：说一点醒来后的真实感受，或者直接跳过。"
+        return "Optional check-in: add one grounded detail, or skip straight to the pass."
     if status == "card":
-        return "今日通行证已盖章。它是一个温柔的行动提示，不是诊断。"
-    return "写一句、几句，或贴一段梦；文字路径永远可用。"
+        return "Today's pass is sealed. Treat it as a gentle action cue, not a diagnosis."
+    return "Write a sentence, a few lines, or paste a dream fragment. Text always works."
 
 
 def initial_mobile_state(

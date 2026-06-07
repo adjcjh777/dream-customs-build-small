@@ -88,8 +88,8 @@ def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
     intake = build_intake(dream_text="我梦见电梯按钮融化，数字停在 14。", mood="焦虑")
     card, html = generate_pact(intake, "", UnclearTextClient())
 
-    assert card.visitor_name == "昨夜来访者"
-    assert "喝水" in card.practical_suggestion
+    assert card.visitor_name == "Night Visitor"
+    assert "drink water" in card.practical_suggestion
     assert "电梯运行" not in card.practical_suggestion
     assert card.safety_note == ""
     assert "Life tip" in html
@@ -98,7 +98,7 @@ def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
 def test_add_evidence_updates_session_with_text_image_audio_and_mood():
     session = add_evidence(
         create_session(),
-        dream_text="我梦见电梯按钮融化。",
+        dream_text="I dreamed the elevator buttons melted.",
         image_path="demo.png",
         audio_path="demo.wav",
         mood="anxious",
@@ -106,7 +106,7 @@ def test_add_evidence_updates_session_with_text_image_audio_and_mood():
         asr_client=FakeASRClient(),
     )
     assert session.phase == "declaring"
-    assert "电梯" in session.intake.dream_text
+    assert "elevator" in session.intake.dream_text
     assert "blue hallway" in session.intake.visual_clues
     assert "The buttons melted" in session.intake.voice_transcript
     assert session.intake.mood == "anxious"

@@ -73,7 +73,24 @@ def test_vision_witness_flattens_report_into_demo_clues():
     assert clues[0] == "Scene: A hand-drawn elevator panel is stuck on floor 14."
     assert "Object: elevator button" in clues
     assert "Visible text: 14" in clues
+    assert "Spatial relation: button below the frozen number" in clues
+    assert "Mood cue: stuck" in clues
+    assert "Uncertain detail: whether the floor is a basement" in clues
     assert "Surprising detail: The buttons look melted rather than broken." in clues
+
+
+def test_vision_witness_limits_visual_clues_for_demo():
+    witness = VisionWitness(
+        scene_summary="A long witness report.",
+        objects=[f"object {index}" for index in range(6)],
+        visible_text=[f"text {index}" for index in range(4)],
+        spatial_relations=["near the door", "under the clock"],
+        mood_cues=["bright", "cold"],
+        uncertain_details=["which room it is"],
+        surprising_detail="A tiny moon is taped to the wall.",
+    )
+
+    assert len(witness.to_visual_clues()) == 12
 
 
 def test_dream_brief_carries_evidence_and_demo_language():
@@ -89,6 +106,15 @@ def test_dream_brief_carries_evidence_and_demo_language():
     assert brief.language == "en"
     assert "floor 14" in brief.anchors
     assert brief.visual_evidence == ["Visible text: 14"]
+
+
+def test_dream_brief_defaults_to_demo_language_and_empty_lists():
+    brief = DreamBrief()
+
+    assert brief.language == "en"
+    assert brief.anchors == []
+    assert brief.visual_evidence == []
+    assert brief.safety_flags == []
 
 
 def test_pact_critique_flags_template_and_grammar_failures():

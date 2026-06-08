@@ -1,4 +1,107 @@
-from dream_customs.schema import DreamIntake
+import json
+
+from dream_customs.schema import DreamBrief, DreamIntake, PactCard, PactCritique
+
+
+def _json_block(value) -> str:
+    return json.dumps(value.model_dump(mode="json"), ensure_ascii=False, indent=2)
+
+
+def visual_witness_prompt() -> str:
+    return (
+        "You are MiniCPM-V-4.6 acting as the visual witness clerk for Dream Customs. "
+        "Describe only what is visible in the dream sketch, note, screenshot, or photo. "
+        "Return strict JSON with keys: scene_summary, objects, visible_text, "
+        "spatial_relations, mood_cues, uncertain_details, surprising_detail. "
+        "Use short concrete observations. Mark uncertainty instead of guessing. "
+        "Do not diagnose the user."
+    )
+
+
+def dream_brief_prompt(intake: DreamIntake) -> str:
+    return f"""
+You are the Dream Customs briefing clerk. Create an English demo brief for the pact writer.
+Do not diagnose the user. Do not claim the dream has one fixed meaning.
+Extract concrete anchors from the user's own dream text, voice transcript, mood, and visual clues.
+Reuse visual evidence when present instead of treating the image as decoration.
+Keep the brief specific enough that a later card cannot fall back to generic wellness advice.
+
+Dream intake:
+{intake.merged_text()}
+
+Return strict JSON with:
+- anchors: 3 to 5 concrete dream details, objects, places, actions, or visible text
+- emotional_hypothesis: one gentle maybe-statement, not a diagnosis
+- today_bridge: one realistic bridge from the dream to today
+- visual_evidence: concrete visual clues to preserve, or an empty list
+- safety_flags: only severe distress or safety concerns, otherwise an empty list
+- language: exactly "en"
+""".strip()
+
+
+def pact_draft_prompt(brief: DreamBrief, answers: str) -> str:
+    return f"""
+You are the Dream Customs pact writer. Write natural English for a public English demo.
+Use the DreamBrief as the source of truth, not a template fallback.
+Use at least two anchors from the brief across the card.
+Use visual_evidence if present, especially visible text, objects, or spatial details.
+Do not use template phrases, generic wellness filler, diagnosis, frightening certainty, or mystical absolutes.
+Keep practical_suggestion useful for today and keep weird_task harmless, playful, and doable in 5 minutes.
+
+DreamBrief:
+{_json_block(brief)}
+
+User answers:
+{answers or "No answers yet."}
+
+Return strict JSON with PactCard fields:
+visitor_name, permit_id, contraband, risk_level, alliance_reading,
+practical_suggestion, weird_task, bedtime_release, safety_note.
+""".strip()
+
+
+def pact_critique_prompt(brief: DreamBrief, card: PactCard) -> str:
+    return f"""
+You are the Dream Customs demo quality reviewer. Check this drafted card against the brief.
+Flag screenshot regressions and English quality problems before the card reaches the public demo.
+Check repeated articles such as "the an" and "the the", awkward grammar, template fallback,
+invented details, diagnosis, frightening certainty, generic wellness advice, missing anchors,
+and whether the card sounds like natural English.
+Do not add new dream facts. Judge only against the DreamBrief and the card.
+
+DreamBrief:
+{_json_block(brief)}
+
+Draft PactCard:
+{_json_block(card)}
+
+Return strict JSON with:
+- passes: boolean
+- issues: list of short issue labels
+- rewrite_instruction: one actionable instruction for a rewrite, or an empty string if passes is true
+""".strip()
+
+
+def pact_rewrite_prompt(brief: DreamBrief, card: PactCard, critique: PactCritique) -> str:
+    return f"""
+You are the Dream Customs pact rewriter. Follow the critique instruction exactly.
+Rewrite without repeated articles, awkward grammar, invented details, diagnosis, or frightening certainty.
+Preserve the DreamBrief anchors and safe non-diagnostic tone.
+Write natural English for the public English demo.
+
+DreamBrief:
+{_json_block(brief)}
+
+Current PactCard:
+{_json_block(card)}
+
+Critique:
+{_json_block(critique)}
+
+Return strict JSON with PactCard fields:
+visitor_name, permit_id, contraband, risk_level, alliance_reading,
+practical_suggestion, weird_task, bedtime_release, safety_note.
+""".strip()
 
 
 def visual_clue_prompt() -> str:

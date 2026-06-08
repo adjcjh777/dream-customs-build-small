@@ -274,7 +274,7 @@ Open `http://127.0.0.1:7862`, submit the customs-window wet-paper dream, skip op
 - the final pass references wet paper/customs/unfinished promises;
 - mobile width has no obvious overflow.
 
-- [ ] **Step 4: Commit and push GitHub branch**
+- [x] **Step 4: Commit and push GitHub branch**
 
 Run:
 
@@ -284,7 +284,7 @@ git commit -m "fix: ground dream customs story flow"
 git push origin feature/dream-customs-ui-voice-settings
 ```
 
-- [ ] **Step 5: Sync Hugging Face Space and verify live app**
+- [x] **Step 5: Sync Hugging Face Space and verify live app**
 
 Push or create a Space PR to `space/main` according to the current auth state. Then verify the live Space `/config` and public app page show the updated runtime settings behavior and pass generation flow.
 

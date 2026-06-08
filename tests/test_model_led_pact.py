@@ -21,6 +21,12 @@ def test_dream_brief_prompt_requires_english_demo_brief():
     assert "anchors" in prompt
     assert "visual_evidence" in prompt
     assert "Do not diagnose" in prompt
+    assert "emotional_hypothesis" in prompt
+    assert "today_bridge" in prompt
+    assert "safety_flags" in prompt
+    assert "language" in prompt
+    assert '"en"' in prompt
+    assert "Return strict JSON" in prompt
 
 
 def test_pact_draft_prompt_uses_brief_not_template_fallback():
@@ -36,7 +42,17 @@ def test_pact_draft_prompt_uses_brief_not_template_fallback():
     assert "Write natural English" in prompt
     assert "Use at least two anchors" in prompt
     assert "Do not use template phrases" in prompt
+    assert "Use visual_evidence if present" in prompt
     assert "elevator" in prompt
+    assert "visitor_name" in prompt
+    assert "permit_id" in prompt
+    assert "contraband" in prompt
+    assert "risk_level" in prompt
+    assert "alliance_reading" in prompt
+    assert "practical_suggestion" in prompt
+    assert "weird_task" in prompt
+    assert "bedtime_release" in prompt
+    assert "safety_note" in prompt
 
 
 def test_pact_critique_prompt_checks_screenshot_regression():
@@ -63,6 +79,13 @@ def test_pact_critique_prompt_checks_screenshot_regression():
     assert "the the" in prompt
     assert "invented details" in prompt
     assert "natural English" in prompt
+    assert "passes" in prompt
+    assert "issues" in prompt
+    assert "rewrite_instruction" in prompt
+    assert "diagnosis" in prompt
+    assert "frightening certainty" in prompt
+    assert "generic wellness" in prompt
+    assert "missing anchors" in prompt
 
 
 def test_pact_rewrite_prompt_uses_critique_instruction():
@@ -93,3 +116,15 @@ def test_pact_rewrite_prompt_uses_critique_instruction():
     assert "Rewrite without repeated articles" in prompt
     assert "Return strict JSON" in prompt
     assert "floor 14" in prompt
+    assert "visitor_name" in prompt
+    assert "permit_id" in prompt
+    assert "contraband" in prompt
+    assert "risk_level" in prompt
+    assert "alliance_reading" in prompt
+    assert "practical_suggestion" in prompt
+    assert "weird_task" in prompt
+    assert "bedtime_release" in prompt
+    assert "safety_note" in prompt
+    assert "safe non-diagnostic" in prompt
+    assert "natural English" in prompt
+    assert "Do not add objects" in prompt

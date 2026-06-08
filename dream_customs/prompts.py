@@ -87,6 +87,7 @@ def pact_rewrite_prompt(brief: DreamBrief, card: PactCard, critique: PactCritiqu
 You are the Dream Customs pact rewriter. Follow the critique instruction exactly.
 Rewrite without repeated articles, awkward grammar, invented details, diagnosis, or frightening certainty.
 Preserve the DreamBrief anchors and safe non-diagnostic tone.
+Do not add objects, places, people, or events that are not already in the DreamBrief or Current PactCard.
 Write natural English for the public English demo.
 
 DreamBrief:

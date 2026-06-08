@@ -338,6 +338,23 @@ def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str
     return polished
 
 
+def _extract_visual_clues(vision_client, image_path: Optional[str]) -> List[str]:
+    if not image_path:
+        return []
+    try:
+        if hasattr(vision_client, "extract_witness"):
+            witness = vision_client.extract_witness(image_path)
+            clues = witness.to_visual_clues()
+            if clues:
+                return clues
+    except Exception:
+        pass
+    try:
+        return vision_client.extract_clues(image_path)
+    except Exception:
+        return []
+
+
 def intake_from_modalities(
     dream_text: str,
     image_path: Optional[str],
@@ -350,7 +367,7 @@ def intake_from_modalities(
     return build_intake(
         dream_text=dream_text or "",
         voice_transcript=asr_client.transcribe(audio_path),
-        visual_clues=vision_client.extract_clues(image_path),
+        visual_clues=_extract_visual_clues(vision_client, image_path),
         mood=mood or "",
         user_context=user_context,
     )

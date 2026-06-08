@@ -322,3 +322,24 @@ def test_image_audio_failures_keep_text_path_alive():
     assert session.draft_pact is not None
     assert any(item.status == "failed" for item in session.evidence_items)
     assert "Text still works." in session.intake.dream_text
+
+
+def test_witness_failure_keeps_text_path_alive():
+    class BrokenWitnessVision:
+        def extract_witness(self, image_path):
+            raise RuntimeError("vision offline")
+
+        def extract_clues(self, image_path):
+            return ["fallback clue"]
+
+    intake = intake_from_modalities(
+        dream_text="Text still works.",
+        image_path="demo.png",
+        audio_path=None,
+        mood="Foggy",
+        vision_client=BrokenWitnessVision(),
+        asr_client=FakeASRClient(),
+    )
+
+    assert "Text still works." in intake.merged_text()
+    assert "fallback clue" in intake.merged_text()

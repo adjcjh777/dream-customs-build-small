@@ -127,11 +127,58 @@ has_zh_anchor=True
 - Chrome extension control returned a closed native pipe while opening the same local URL.
 - Because both browser automation surfaces were unstable, no visual screenshot claim is made here. The local Gradio `/config`, app build check, action flow, full pytest suite, and deterministic quality evaluator passed.
 
-## Deployment Status
+## GitHub Sync
 
-Not yet deployed in this smoke file. After commit and GitHub/HF sync, update this file or add a follow-up remote smoke section with:
+Feature branch commit:
 
-- GitHub PR URL and merge commit.
-- HF Space PR discussion URL and Space `main` SHA.
-- Public Space `/config` result.
-- Public app flow check.
+```text
+0193b67 feat: polish dream qa post-refactor flow
+```
+
+GitHub PR:
+
+```text
+https://github.com/adjcjh777/dream-customs-build-small/pull/2
+```
+
+Observed PR status:
+
+```text
+MERGED
+merge_commit=f2cafa12f9db694acf2181a54fc6059419bbd4e7
+```
+
+Result: GitHub `main` contains the English-first Dream QA polish.
+
+## Hugging Face Space Sync
+
+HF Space PR:
+
+```text
+https://huggingface.co/spaces/build-small-hackathon/dream-customs/discussions/17
+```
+
+Observed refs:
+
+```text
+space/main=19c54925bbb525405bc2540391a434ddaeba4139
+refs/pr/17=2017dd6906f3cce640e4a53508ea21b163c3b52e
+```
+
+Observed discussion metadata:
+
+```text
+num=17
+title=Deploy Dream QA post-refactor polish
+status=open
+is_pull_request=True
+```
+
+Merge status: BLOCKED.
+
+Blockers observed:
+
+- Chrome extension automation could list browser sessions but failed to control Chrome tabs with `native pipe is closed`.
+- HF Hub API `merge_pull_request(... discussion_num=17)` returned an `HfHubHTTPError`; this matches the previous pattern where API merge rights are not available from the cached token.
+
+Result: HF Space PR #17 is ready but not merged. Public Space `main` is still `19c54925...` until a logged-in browser merge succeeds or the HF token gains merge permission.

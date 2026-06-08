@@ -10,6 +10,24 @@
 
 ---
 
+## Execution Status 2026-06-05
+
+- [x] Project scaffold, README, package marker, pytest path hook.
+- [x] `DreamIntake` and `PactCard` schemas.
+- [x] Safety layer with escalation copy for severe distress.
+- [x] Prompt templates for visual clue extraction, negotiation, and pact generation.
+- [x] HTML pact card renderer.
+- [x] Fake model clients and deterministic pipeline.
+- [x] Ollama adapters for MiniCPM5 text and MiniCPM-V vision, kept optional.
+- [x] Gradio app with text, image, voice inputs and backend selectors.
+- [x] Local smoke checks: pytest, app import, `get_api_info`, HTTP 200, `/config`, `/api/predict`.
+- [x] Local Ollama pull: `hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0` and `openbmb/minicpm-v4.6`.
+- [ ] Submission packaging, demo video script, and final material checklist.
+
+Implementation note: detailed steps below are the original TDD plan. The final code keeps the demo backend as default because local Ollama smoke tests showed MiniCPM5 GGUF returning malformed output and MiniCPM-V failing to load in the current Ollama runner.
+
+---
+
 ## File Structure
 
 - Create `app.py`: Gradio UI and event handlers.

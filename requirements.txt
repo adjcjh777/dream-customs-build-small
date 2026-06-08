@@ -1,0 +1,14 @@
+gradio>=4.44,<5.0
+fastapi>=0.112,<0.113
+starlette>=0.37.2,<0.38
+huggingface_hub<1.0
+pydantic>=2.7
+pytest>=8.0
+pillow
+soundfile
+spaces
+
+# Optional direct Hugging Face runtime for MiniCPM-V.
+# The default local demo uses Ollama adapters or the stable demo backend.
+# transformers>=4.56
+# torch

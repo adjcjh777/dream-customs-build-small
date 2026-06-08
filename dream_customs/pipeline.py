@@ -2,7 +2,16 @@ import re
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
-from dream_customs.prompts import followup_question_prompt, negotiation_prompt, pact_prompt, pact_revision_prompt
+from dream_customs.prompts import (
+    dream_brief_prompt,
+    followup_question_prompt,
+    negotiation_prompt,
+    pact_critique_prompt,
+    pact_draft_prompt,
+    pact_prompt,
+    pact_revision_prompt,
+    pact_rewrite_prompt,
+)
 from dream_customs.render import render_pact_card
 from dream_customs.safety import needs_escalation, safety_note
 from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard, TimelineEvent
@@ -49,7 +58,9 @@ _ANCHOR_STOPWORDS = {
     "about",
     "after",
     "again",
+    "an",
     "asked",
+    "a",
     "before",
     "behind",
     "being",
@@ -71,6 +82,7 @@ _ANCHOR_STOPWORDS = {
     "promise",
     "through",
     "today",
+    "the",
     "window",
     "with",
 }
@@ -360,6 +372,43 @@ def generate_pact(intake: DreamIntake, answers: str, text_client) -> Tuple[PactC
     return card, render_pact_card(card)
 
 
+def _clean_repeated_articles(text: str) -> str:
+    clean = re.sub(r"\bthe\s+an\s+", "an ", text, flags=re.IGNORECASE)
+    clean = re.sub(r"\bthe\s+the\s+", "the ", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\ban\s+an\s+", "an ", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\ba\s+a\s+", "a ", clean, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", clean).strip()
+
+
+def _clean_card_grammar(card: PactCard) -> PactCard:
+    cleaned = card.model_copy(deep=True)
+    cleaned.visitor_name = _clean_repeated_articles(cleaned.visitor_name)
+    cleaned.risk_level = _clean_repeated_articles(cleaned.risk_level)
+    cleaned.alliance_reading = _clean_repeated_articles(cleaned.alliance_reading)
+    cleaned.practical_suggestion = _clean_repeated_articles(cleaned.practical_suggestion)
+    cleaned.weird_task = _clean_repeated_articles(cleaned.weird_task)
+    cleaned.bedtime_release = _clean_repeated_articles(cleaned.bedtime_release)
+    cleaned.contraband = [_clean_repeated_articles(item) for item in cleaned.contraband]
+    return cleaned
+
+
+def generate_model_led_pact(intake: DreamIntake, answers: str, text_client) -> Tuple[PactCard, str]:
+    brief = text_client.generate_brief(dream_brief_prompt(intake))
+    card = text_client.generate_pact_draft(pact_draft_prompt(brief, answers))
+    critique = text_client.critique_pact(pact_critique_prompt(brief, card))
+    if not critique.passes and critique.rewrite_instruction.strip():
+        card = text_client.rewrite_pact(pact_rewrite_prompt(brief, card, critique))
+    card = _clean_card_grammar(card)
+    card = _polish_card_for_daily_use(card, intake, answers)
+    merged = intake.merged_text() + "\n" + answers
+    if needs_escalation(merged):
+        card.safety_note = safety_note()
+    else:
+        card.safety_note = ""
+    card = _stamp_card_for_today(card)
+    return card, render_pact_card(card)
+
+
 def create_session() -> CustomsSession:
     return CustomsSession(
         events=[
@@ -590,7 +639,10 @@ def draft_pact(session: CustomsSession, text_client) -> CustomsSession:
         return next_session
 
     answers = next_session.answers_text() or "The user has not answered yet; infer a gentle pact from the declaration."
-    card, _html = generate_pact(next_session.intake, answers, text_client)
+    try:
+        card, _html = generate_model_led_pact(next_session.intake, answers, text_client)
+    except AttributeError:
+        card, _html = generate_pact(next_session.intake, answers, text_client)
     next_session.draft_pact = card
     next_session.phase = "drafting"
     next_session.events.append(

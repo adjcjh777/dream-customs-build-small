@@ -230,6 +230,35 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
     assert session.sealed_pact == session.draft_pact
 
 
+def test_draft_pact_falls_back_to_legacy_generate_pact_client():
+    class LegacyPactOnlyClient:
+        def generate_pact(self, prompt):
+            return PactCard(
+                visitor_name="Legacy Elevator",
+                permit_id="DC-014",
+                contraband=["melted buttons"],
+                risk_level="medium: handle gently, without treating it as a warning sign",
+                alliance_reading="The elevator can be treated as a request for one smaller move.",
+                practical_suggestion="Write one next step before touching the bigger task.",
+                weird_task="Draw a tiny elevator button and press it once.",
+                bedtime_release="Tonight, the elevator can wait quietly outside the room.",
+            )
+
+    session = add_evidence(
+        create_session(),
+        dream_text="I missed an elevator and the buttons melted.",
+        mood="Uneasy",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+    )
+
+    session = draft_pact(session, LegacyPactOnlyClient())
+
+    assert session.phase == "drafting"
+    assert session.draft_pact is not None
+    assert session.draft_pact.visitor_name == "Legacy Elevator"
+
+
 def test_image_audio_failures_keep_text_path_alive():
     class FailingVision:
         def extract_clues(self, image_path):

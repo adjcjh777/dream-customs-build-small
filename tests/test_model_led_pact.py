@@ -1,5 +1,5 @@
 from dream_customs.models import FakeTextClient
-from dream_customs.pipeline import build_intake
+from dream_customs.pipeline import build_intake, generate_model_led_pact
 from dream_customs.prompts import (
     dream_brief_prompt,
     pact_critique_prompt,
@@ -142,3 +142,58 @@ def test_fake_text_client_supports_model_led_methods():
     assert brief.anchors
     assert card.visitor_name
     assert critique.passes
+
+
+def test_model_led_pact_rewrites_screenshot_elevator_regression():
+    class CriticTextClient(FakeTextClient):
+        def generate_pact_draft(self, prompt):
+            return PactCard(
+                visitor_name="An Elevator",
+                permit_id="DREAM20260608-015",
+                contraband=["melted buttons", "froze at 14"],
+                risk_level="medium: handle gently, without treating it as a warning sign",
+                alliance_reading="I am safe, but the wax is sticky and the floor is cold.",
+                practical_suggestion="Pick one real task that feels like the an elevator.",
+                weird_task="I will try to push the floor button with my hand instead of the lever.",
+                bedtime_release="Tonight, the an elevator and the the button are logged.",
+            )
+
+        def critique_pact(self, prompt):
+            return PactCritique(
+                passes=False,
+                issues=["repeated article", "invented lever"],
+                rewrite_instruction="Rewrite without repeated articles or the invented lever.",
+            )
+
+        def rewrite_pact(self, prompt):
+            return PactCard(
+                visitor_name="The Elevator Stuck at 14",
+                permit_id="DREAM20260608-015",
+                contraband=["melted buttons", "floor 14", "the urge to freeze before starting"],
+                risk_level="medium: handle gently, without treating it as a warning sign",
+                alliance_reading=(
+                    "The elevator, wax-soft buttons, and frozen 14 can be treated as a small scene "
+                    "about getting stuck before the first move."
+                ),
+                practical_suggestion="Choose one stalled task and write only the next button-sized action.",
+                weird_task="Draw floor 14 on a sticky note, tap it once, and spend five minutes on the first step.",
+                bedtime_release=(
+                    "Tonight, the elevator can stay on floor 14 while tomorrow's first button waits quietly."
+                ),
+            )
+
+    intake = build_intake(
+        dream_text="I kept missing an elevator. The buttons melted like wax, and the floor number froze at 14.",
+        visual_clues=["Visible text: 14", "Object: melted elevator button"],
+        mood="Uneasy",
+    )
+
+    card, html = generate_model_led_pact(intake, "", CriticTextClient())
+    joined = card.to_plain_text().lower()
+
+    assert "the an" not in joined
+    assert "the the" not in joined
+    assert "lever" not in joined
+    assert "floor 14" in joined
+    assert "melted" in joined or "wax" in joined
+    assert "Today's Clearance Pass" in html or "Today's Pact" in html

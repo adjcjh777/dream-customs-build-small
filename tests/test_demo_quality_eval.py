@@ -1,4 +1,4 @@
-from scripts.evaluate_demo_quality import evaluate_text, load_cases
+from scripts.evaluate_demo_quality import evaluate_cases, evaluate_text, load_cases
 
 
 def test_evaluate_text_passes_grounded_english_card():
@@ -28,3 +28,22 @@ def test_load_cases_returns_ten_demo_eval_cases():
 
     assert len(cases) == 10
     assert {case["id"] for case in cases} >= {"elevator_wax_floor14"}
+
+
+def test_evaluate_cases_fails_when_case_required_terms_are_missing():
+    report = evaluate_cases(
+        [
+            {
+                "id": "bad_case",
+                "dream_text": "I saw a door.",
+                "visual_clues": [],
+                "mood": "Uneasy",
+                "required_terms": ["elevator"],
+                "banned_terms": [],
+            }
+        ]
+    )
+
+    assert not report["passes"]
+    assert report["failures"][0]["id"] == "bad_case"
+    assert "missing required term: elevator" in report["failures"][0]["issues"]

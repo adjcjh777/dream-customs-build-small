@@ -87,6 +87,18 @@ def test_ollama_vision_client_parses_visual_clues(tmp_path):
     assert clues == ["passport stamp", "customs desk", "blue", "foggy"]
 
 
+def test_ollama_vision_client_does_not_treat_legacy_flat_json_as_witness(tmp_path):
+    image_path = tmp_path / "dream.png"
+    image_path.write_bytes(b"not a real png but enough for adapter encoding")
+    client = StubOllamaVisionClient(
+        '{"objects":["passport stamp"],"places":["customs desk"],"colors":["blue"],"mood_cues":["foggy"]}'
+    )
+
+    witness = client.extract_witness(str(image_path))
+
+    assert witness.to_visual_clues() == []
+
+
 def test_ollama_vision_client_preserves_flat_text_clues(tmp_path):
     image_path = tmp_path / "dream.png"
     image_path.write_bytes(b"not a real png but enough for adapter encoding")
@@ -200,6 +212,22 @@ def test_hosted_vision_client_preserves_flat_text_clues():
     clues = StubHostedFlatTextVisionClient(endpoint="https://example.test").extract_clues("demo.png")
 
     assert clues == ["passport stamp", "customs desk", "blue"]
+
+
+def test_hosted_vision_client_does_not_treat_legacy_flat_json_as_witness():
+    class StubHostedLegacyFlatJsonVisionClient(HostedMiniCPMVisionClient):
+        def _post_image(self, image_path):
+            return {
+                "response": (
+                    '{"objects":["passport stamp"],"places":["customs desk"],'
+                    '"colors":["blue"],"mood_cues":["foggy"]}'
+                )
+            }
+
+    client = StubHostedLegacyFlatJsonVisionClient(endpoint="https://example.test")
+
+    assert client.extract_witness("demo.png").to_visual_clues() == []
+    assert client.extract_clues("demo.png") == ["passport stamp", "customs desk", "blue", "foggy"]
 
 
 def test_hosted_vision_client_accepts_partial_witness_json():

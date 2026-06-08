@@ -397,7 +397,7 @@ class OllamaVisionClient:
 
         text = str(response.get("response", ""))
         parsed = _extract_json_object(text)
-        if parsed and _has_witness_report_fields(parsed):
+        if parsed and _has_witness_report_fields(parsed) and not _has_legacy_flat_clue_fields(parsed):
             return _vision_witness_from_parsed(parsed)
         if not parsed:
             return _simple_witness_from_text(text)
@@ -675,7 +675,7 @@ class HostedMiniCPMVisionClient:
             return self.fallback.extract_witness(image_path)
         text = _hosted_text_from_response(payload)
         parsed = _extract_json_object(text)
-        if parsed and _has_witness_report_fields(parsed):
+        if parsed and _has_witness_report_fields(parsed) and not _has_legacy_flat_clue_fields(parsed):
             return _vision_witness_from_parsed(parsed)
         if not parsed:
             return _simple_witness_from_text(text)

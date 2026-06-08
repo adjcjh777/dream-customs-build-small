@@ -21,10 +21,43 @@ def load_cases(path: str = "tests/fixtures/demo_eval_cases.json") -> list[dict]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def case_source_text(case: dict) -> str:
+    return " ".join(
+        part
+        for part in [
+            str(case.get("dream_text", "")),
+            str(case.get("voice_transcript", "")),
+            " ".join(str(clue) for clue in case.get("visual_clues", [])),
+        ]
+        if part.strip()
+    )
+
+
+def evaluate_case(case: dict) -> dict:
+    result = evaluate_text(
+        case_source_text(case),
+        required_terms=case.get("required_terms", []),
+        banned_terms=case.get("banned_terms", []),
+    )
+    return {"id": case.get("id", ""), **result}
+
+
+def evaluate_cases(cases: list[dict]) -> dict:
+    results = [evaluate_case(case) for case in cases]
+    failures = [result for result in results if not result["passes"]]
+    return {
+        "case_count": len(cases),
+        "ids": [case["id"] for case in cases],
+        "failures": failures,
+        "passes": not failures,
+    }
+
+
 def main() -> int:
     cases = load_cases()
-    print(json.dumps({"case_count": len(cases), "ids": [case["id"] for case in cases]}, indent=2))
-    return 0
+    report = evaluate_cases(cases)
+    print(json.dumps(report, indent=2))
+    return 0 if report["passes"] else 1
 
 
 if __name__ == "__main__":

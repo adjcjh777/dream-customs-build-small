@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from dream_customs.models import FakeASRClient, FakeTextClient, FakeVisionClient
 from dream_customs.pipeline import (
     add_evidence,
@@ -257,6 +259,44 @@ def test_draft_pact_falls_back_to_legacy_generate_pact_client():
     assert session.phase == "drafting"
     assert session.draft_pact is not None
     assert session.draft_pact.visitor_name == "Legacy Elevator"
+
+
+def test_draft_pact_exposes_internal_model_led_attribute_errors():
+    class BrokenModelLedClient:
+        def generate_brief(self, prompt):
+            raise AttributeError("internal model-led bug")
+
+        def generate_pact_draft(self, prompt):
+            raise AssertionError("generate_pact_draft should not run")
+
+        def critique_pact(self, prompt):
+            raise AssertionError("critique_pact should not run")
+
+        def rewrite_pact(self, prompt):
+            raise AssertionError("rewrite_pact should not run")
+
+        def generate_pact(self, prompt):
+            return PactCard(
+                visitor_name="Hidden Legacy Fallback",
+                permit_id="DC-999",
+                contraband=["hidden bug"],
+                risk_level="medium: handle gently, without treating it as a warning sign",
+                alliance_reading="This should not be generated when model-led internals fail.",
+                practical_suggestion="This fallback should stay unreachable.",
+                weird_task="This fallback should stay unreachable.",
+                bedtime_release="This fallback should stay unreachable.",
+            )
+
+    session = add_evidence(
+        create_session(),
+        dream_text="I missed an elevator and the buttons melted.",
+        mood="Uneasy",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+    )
+
+    with pytest.raises(AttributeError, match="internal model-led bug"):
+        draft_pact(session, BrokenModelLedClient())
 
 
 def test_image_audio_failures_keep_text_path_alive():

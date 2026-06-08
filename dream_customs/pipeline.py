@@ -409,6 +409,13 @@ def generate_model_led_pact(intake: DreamIntake, answers: str, text_client) -> T
     return card, render_pact_card(card)
 
 
+def _supports_model_led_pact(text_client) -> bool:
+    return all(
+        callable(getattr(text_client, name, None))
+        for name in ("generate_brief", "generate_pact_draft", "critique_pact", "rewrite_pact")
+    )
+
+
 def create_session() -> CustomsSession:
     return CustomsSession(
         events=[
@@ -639,9 +646,9 @@ def draft_pact(session: CustomsSession, text_client) -> CustomsSession:
         return next_session
 
     answers = next_session.answers_text() or "The user has not answered yet; infer a gentle pact from the declaration."
-    try:
+    if _supports_model_led_pact(text_client):
         card, _html = generate_model_led_pact(next_session.intake, answers, text_client)
-    except AttributeError:
+    else:
         card, _html = generate_pact(next_session.intake, answers, text_client)
     next_session.draft_pact = card
     next_session.phase = "drafting"

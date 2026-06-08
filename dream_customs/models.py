@@ -6,8 +6,8 @@ import urllib.error
 import urllib.request
 from typing import Any, Dict, List, Optional
 
-from dream_customs.prompts import visual_clue_prompt
-from dream_customs.schema import PactCard
+from dream_customs.prompts import visual_clue_prompt, visual_witness_prompt
+from dream_customs.schema import DreamBrief, PactCard, PactCritique, VisionWitness
 
 
 class FakeVisionClient:
@@ -15,6 +15,19 @@ class FakeVisionClient:
         if not image_path:
             return []
         return ["blue hallway", "melted elevator buttons", "number 14"]
+
+    def extract_witness(self, image_path: Optional[str]) -> VisionWitness:
+        if not image_path:
+            return VisionWitness()
+        return VisionWitness(
+            scene_summary="A blue hallway with a melted elevator button.",
+            objects=["elevator button", "blue hallway"],
+            visible_text=["14"],
+            spatial_relations=["button near the frozen floor number"],
+            mood_cues=["stuck", "uncertain"],
+            uncertain_details=[],
+            surprising_detail="The button looks soft, almost waxy.",
+        )
 
 
 class FakeASRClient:
@@ -25,6 +38,16 @@ class FakeASRClient:
 
 
 class FakeTextClient:
+    def generate_brief(self, prompt: str) -> DreamBrief:
+        return DreamBrief(
+            anchors=["elevator", "melted buttons", "floor 14"],
+            emotional_hypothesis="The dream may be protecting the user from freezing at the start of a task.",
+            today_bridge="Choose one stalled task and name the next small movement.",
+            visual_evidence=["Visible text: 14"],
+            safety_flags=[],
+            language="en",
+        )
+
     def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
         return {
             "visitor_name": "Late Elevator",
@@ -47,6 +70,15 @@ class FakeTextClient:
             weird_task="Draw a tiny elevator button on paper, press it once, and work for five minutes.",
             bedtime_release="The elevator has docked for tonight. Unfinished floors can report tomorrow.",
         )
+
+    def generate_pact_draft(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
+
+    def critique_pact(self, prompt: str) -> PactCritique:
+        return PactCritique(passes=True, issues=[], rewrite_instruction="")
+
+    def rewrite_pact(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
 
 
 def _strip_markdown_and_thinking(text: str) -> str:
@@ -104,6 +136,77 @@ def _as_string_list(value: Any) -> List[str]:
     if isinstance(value, str) and value.strip():
         return [part.strip() for part in re.split(r"[,，\n]", value) if part.strip()]
     return []
+
+
+def _as_bool(value: Any, default: bool = True) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"false", "no", "0"}:
+            return False
+        if normalized in {"true", "yes", "1"}:
+            return True
+    if value is None:
+        return default
+    return bool(value)
+
+
+def _dream_brief_from_parsed(parsed: Dict[str, Any]) -> DreamBrief:
+    return DreamBrief(
+        anchors=_as_string_list(parsed.get("anchors")),
+        emotional_hypothesis=str(parsed.get("emotional_hypothesis", "")).strip(),
+        today_bridge=str(parsed.get("today_bridge", "")).strip(),
+        visual_evidence=_as_string_list(parsed.get("visual_evidence")),
+        safety_flags=_as_string_list(parsed.get("safety_flags")),
+        language=str(parsed.get("language", "en")).strip() or "en",
+    )
+
+
+def _pact_critique_from_parsed(parsed: Dict[str, Any]) -> PactCritique:
+    return PactCritique(
+        passes=_as_bool(parsed.get("passes"), default=True),
+        issues=_as_string_list(parsed.get("issues")),
+        rewrite_instruction=str(parsed.get("rewrite_instruction", "")).strip(),
+    )
+
+
+def _has_witness_report_fields(parsed: Dict[str, Any]) -> bool:
+    return bool(
+        str(parsed.get("scene_summary", "")).strip()
+        or _as_string_list(parsed.get("spatial_relations"))
+        or str(parsed.get("surprising_detail", "")).strip()
+    )
+
+
+def _vision_witness_from_parsed(parsed: Dict[str, Any]) -> VisionWitness:
+    return VisionWitness(
+        scene_summary=str(parsed.get("scene_summary", "")).strip(),
+        objects=_as_string_list(parsed.get("objects")),
+        visible_text=_as_string_list(parsed.get("visible_text")),
+        spatial_relations=_as_string_list(parsed.get("spatial_relations")),
+        mood_cues=_as_string_list(parsed.get("mood_cues")),
+        uncertain_details=_as_string_list(parsed.get("uncertain_details")),
+        surprising_detail=str(parsed.get("surprising_detail", "")).strip(),
+    )
+
+
+def _flat_visual_clues_from_parsed(parsed: Dict[str, Any]) -> List[str]:
+    clues: List[str] = []
+    for key in ("objects", "places", "visible_text", "colors", "mood_cues", "uncertain_details"):
+        clues.extend(_as_string_list(parsed.get(key)))
+    return clues[:8]
+
+
+def _flat_visual_clues_from_text(text: str) -> List[str]:
+    return [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()][:8]
+
+
+def _simple_witness_from_text(text: str) -> VisionWitness:
+    clues = _flat_visual_clues_from_text(text)
+    if not clues:
+        return VisionWitness()
+    return VisionWitness(scene_summary="; ".join(clues[:2]), objects=clues[2:6])
 
 
 class OllamaTextClient:
@@ -197,6 +300,42 @@ class OllamaTextClient:
         except (KeyError, TypeError, ValueError):
             return self.fallback.generate_pact(prompt)
 
+    def generate_brief(self, prompt: str) -> DreamBrief:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"anchors":["string"],"emotional_hypothesis":"string",'
+                '"today_bridge":"string","visual_evidence":["string"],'
+                '"safety_flags":["string"],"language":"en"}'
+            ),
+            num_predict=520,
+        )
+        if not parsed:
+            return self.fallback.generate_brief(prompt)
+        try:
+            return _dream_brief_from_parsed(parsed)
+        except (TypeError, ValueError):
+            return self.fallback.generate_brief(prompt)
+
+    def generate_pact_draft(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
+
+    def critique_pact(self, prompt: str) -> PactCritique:
+        parsed = self._generate_json(
+            prompt,
+            '{"passes":true,"issues":["string"],"rewrite_instruction":"string"}',
+            num_predict=360,
+        )
+        if not parsed:
+            return self.fallback.critique_pact(prompt)
+        try:
+            return _pact_critique_from_parsed(parsed)
+        except (TypeError, ValueError):
+            return self.fallback.critique_pact(prompt)
+
+    def rewrite_pact(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
+
 
 class OllamaVisionClient:
     def __init__(
@@ -204,10 +343,12 @@ class OllamaVisionClient:
         model_name: str = "openbmb/minicpm-v4.6",
         base_url: str = "http://localhost:11434",
         timeout: float = 60.0,
+        fallback: Optional[FakeVisionClient] = None,
     ):
         self.model_name = model_name
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
+        self.fallback = fallback or FakeVisionClient()
 
     def _post_generate(self, prompt: str, image_b64: str, num_predict: int = 256) -> Dict[str, Any]:
         payload = {
@@ -227,24 +368,44 @@ class OllamaVisionClient:
         with urllib.request.urlopen(request, timeout=self.timeout) as response:
             return json.loads(response.read().decode("utf-8"))
 
+    def extract_witness(self, image_path: Optional[str]) -> VisionWitness:
+        if not image_path:
+            return VisionWitness()
+        try:
+            with open(image_path, "rb") as image_file:
+                image_b64 = base64.b64encode(image_file.read()).decode("ascii")
+            response = self._post_generate(visual_witness_prompt(), image_b64, num_predict=320)
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return self.fallback.extract_witness(image_path)
+
+        text = str(response.get("response", ""))
+        parsed = _extract_json_object(text)
+        if parsed and _has_witness_report_fields(parsed):
+            return _vision_witness_from_parsed(parsed)
+        if not parsed:
+            return _simple_witness_from_text(text)
+        return VisionWitness()
+
     def extract_clues(self, image_path: Optional[str]) -> List[str]:
         if not image_path:
             return []
+        witness_clues = self.extract_witness(image_path).to_visual_clues()
+        if witness_clues:
+            return witness_clues
         try:
             with open(image_path, "rb") as image_file:
                 image_b64 = base64.b64encode(image_file.read()).decode("ascii")
             response = self._post_generate(visual_clue_prompt(), image_b64)
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
-            return []
+            return self.fallback.extract_clues(image_path)
 
         text = str(response.get("response", ""))
         parsed = _extract_json_object(text)
         if parsed:
-            clues: List[str] = []
-            for key in ("objects", "places", "visible_text", "colors", "mood_cues", "uncertain_details"):
-                clues.extend(_as_string_list(parsed.get(key)))
-            return clues[:8]
-        return [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()][:8]
+            clues = _flat_visual_clues_from_parsed(parsed)
+            if clues:
+                return clues
+        return _flat_visual_clues_from_text(text)
 
 
 class MiniCPMVisionClient:
@@ -400,6 +561,42 @@ class HostedMiniCPMTextClient:
         except (KeyError, TypeError, ValueError):
             return self.fallback.generate_pact(prompt)
 
+    def generate_brief(self, prompt: str) -> DreamBrief:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"anchors":["string"],"emotional_hypothesis":"string",'
+                '"today_bridge":"string","visual_evidence":["string"],'
+                '"safety_flags":["string"],"language":"en"}'
+            ),
+            max_tokens=520,
+        )
+        if not parsed:
+            return self.fallback.generate_brief(prompt)
+        try:
+            return _dream_brief_from_parsed(parsed)
+        except (TypeError, ValueError):
+            return self.fallback.generate_brief(prompt)
+
+    def generate_pact_draft(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
+
+    def critique_pact(self, prompt: str) -> PactCritique:
+        parsed = self._generate_json(
+            prompt,
+            '{"passes":true,"issues":["string"],"rewrite_instruction":"string"}',
+            max_tokens=360,
+        )
+        if not parsed:
+            return self.fallback.critique_pact(prompt)
+        try:
+            return _pact_critique_from_parsed(parsed)
+        except (TypeError, ValueError):
+            return self.fallback.critique_pact(prompt)
+
+    def rewrite_pact(self, prompt: str) -> PactCard:
+        return self.generate_pact(prompt)
+
 
 class HostedMiniCPMVisionClient:
     def __init__(
@@ -418,7 +615,7 @@ class HostedMiniCPMVisionClient:
         self.max_tokens = max(64, min(int(max_tokens), 800))
         self.fallback = fallback or FakeVisionClient()
 
-    def _post_image(self, image_path: str) -> Optional[Dict[str, Any]]:
+    def _post_image(self, image_path: str, prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
         if not self.endpoint:
             return None
         try:
@@ -427,7 +624,7 @@ class HostedMiniCPMVisionClient:
         except OSError:
             return None
         payload = {
-            "prompt": visual_clue_prompt(),
+            "prompt": prompt or visual_clue_prompt(),
             "image": image_b64,
             "images": [image_b64],
             "temperature": self.temperature,
@@ -448,21 +645,42 @@ class HostedMiniCPMVisionClient:
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
             return None
 
+    def extract_witness(self, image_path: Optional[str]) -> VisionWitness:
+        if not image_path:
+            return VisionWitness()
+        try:
+            payload = self._post_image(image_path, visual_witness_prompt())
+        except TypeError:
+            payload = self._post_image(image_path)
+        if not payload:
+            return self.fallback.extract_witness(image_path)
+        text = _hosted_text_from_response(payload)
+        parsed = _extract_json_object(text)
+        if parsed and _has_witness_report_fields(parsed):
+            return _vision_witness_from_parsed(parsed)
+        if not parsed:
+            return _simple_witness_from_text(text)
+        return VisionWitness()
+
     def extract_clues(self, image_path: Optional[str]) -> List[str]:
         if not image_path:
             return []
-        payload = self._post_image(image_path)
+        witness_clues = self.extract_witness(image_path).to_visual_clues()
+        if witness_clues:
+            return witness_clues
+        try:
+            payload = self._post_image(image_path, visual_clue_prompt())
+        except TypeError:
+            payload = self._post_image(image_path)
         if not payload:
             return self.fallback.extract_clues(image_path)
         parsed = _extract_json_object(_hosted_text_from_response(payload))
         if parsed:
-            clues: List[str] = []
-            for key in ("objects", "places", "visible_text", "colors", "mood_cues", "uncertain_details"):
-                clues.extend(_as_string_list(parsed.get(key)))
+            clues = _flat_visual_clues_from_parsed(parsed)
             if clues:
-                return clues[:8]
+                return clues
         text = _hosted_text_from_response(payload)
-        clues = [part.strip() for part in re.split(r"[,，\n]", _strip_markdown_and_thinking(text)) if part.strip()]
+        clues = _flat_visual_clues_from_text(text)
         return clues[:8] or self.fallback.extract_clues(image_path)
 
 

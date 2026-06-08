@@ -14,3 +14,13 @@ def test_visual_witness_prompt_requests_structured_report():
     assert "surprising_detail" in prompt
     assert "strict JSON" in prompt
     assert "Do not diagnose" in prompt
+
+
+from dream_customs.models import FakeVisionClient
+
+
+def test_fake_vision_client_returns_witness_report():
+    witness = FakeVisionClient().extract_witness("demo.png")
+
+    assert witness.scene_summary
+    assert "blue hallway" in " ".join(witness.to_visual_clues()).lower()

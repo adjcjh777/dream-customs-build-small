@@ -128,3 +128,19 @@ def test_pact_rewrite_prompt_uses_critique_instruction():
     assert "safe non-diagnostic" in prompt
     assert "natural English" in prompt
     assert "Do not add objects" in prompt
+
+
+from dream_customs.models import FakeTextClient
+
+
+def test_fake_text_client_supports_model_led_methods():
+    client = FakeTextClient()
+
+    brief = client.generate_brief("brief prompt")
+    card = client.generate_pact_draft("draft prompt")
+    critique = client.critique_pact("critique prompt")
+
+    assert brief.language == "en"
+    assert brief.anchors
+    assert card.visitor_name
+    assert critique.passes

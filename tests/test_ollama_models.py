@@ -1,4 +1,11 @@
-from dream_customs.models import HostedMiniCPMTextClient, OllamaTextClient, OllamaVisionClient, _extract_json_object
+from dream_customs.models import (
+    HostedMiniCPMTextClient,
+    HostedMiniCPMVisionClient,
+    OllamaTextClient,
+    OllamaVisionClient,
+    _extract_json_object,
+)
+from dream_customs.schema import DreamBrief, PactCritique, VisionWitness
 
 
 class StubOllamaTextClient(OllamaTextClient):
@@ -98,3 +105,64 @@ def test_hosted_text_client_parses_common_response_shape():
     negotiation = client.generate_negotiation("dream")
     assert negotiation["visitor_name"] == "Gate 14"
     assert negotiation["questions"] == ["What does it ask?"]
+
+
+def test_hosted_text_client_parses_model_led_brief():
+    class StubHostedBriefClient(HostedMiniCPMTextClient):
+        def _post_json(self, prompt, max_tokens=700):
+            return {
+                "response": (
+                    '{"anchors":["elevator","melted wax","floor 14"],'
+                    '"emotional_hypothesis":"The dream may be protecting a stuck feeling.",'
+                    '"today_bridge":"Name one next movement.",'
+                    '"visual_evidence":["Visible text: 14"],'
+                    '"safety_flags":[],"language":"en"}'
+                )
+            }
+
+    brief = StubHostedBriefClient(endpoint="https://example.test").generate_brief("prompt")
+
+    assert isinstance(brief, DreamBrief)
+    assert brief.anchors == ["elevator", "melted wax", "floor 14"]
+    assert brief.language == "en"
+
+
+def test_hosted_text_client_parses_pact_critique():
+    class StubHostedCritiqueClient(HostedMiniCPMTextClient):
+        def _post_json(self, prompt, max_tokens=700):
+            return {
+                "response": (
+                    '{"passes":false,'
+                    '"issues":["repeated article","missing floor 14"],'
+                    '"rewrite_instruction":"Rewrite with elevator, wax, and floor 14."}'
+                )
+            }
+
+    critique = StubHostedCritiqueClient(endpoint="https://example.test").critique_pact("prompt")
+
+    assert isinstance(critique, PactCritique)
+    assert not critique.passes
+    assert critique.issues == ["repeated article", "missing floor 14"]
+    assert "floor 14" in critique.rewrite_instruction
+
+
+def test_hosted_vision_client_parses_witness_report():
+    class StubHostedVisionWitnessClient(HostedMiniCPMVisionClient):
+        def _post_image(self, image_path):
+            return {
+                "response": (
+                    '{"scene_summary":"A blue hallway ends at a stuck elevator.",'
+                    '"objects":["elevator button","melted wax"],'
+                    '"visible_text":["14"],'
+                    '"spatial_relations":["button below frozen floor number"],'
+                    '"mood_cues":["stuck","cold"],'
+                    '"uncertain_details":["whether the wax is real"],'
+                    '"surprising_detail":"The button looks melted rather than broken."}'
+                )
+            }
+
+    witness = StubHostedVisionWitnessClient(endpoint="https://example.test").extract_witness("demo.png")
+
+    assert isinstance(witness, VisionWitness)
+    assert witness.scene_summary == "A blue hallway ends at a stuck elevator."
+    assert "Visible text: 14" in witness.to_visual_clues()

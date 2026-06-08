@@ -2,6 +2,8 @@
 
 Last updated: 2026-06-05
 
+> Historical note: this V2 brief documents the earlier customs/pact workbench direction. As of 2026-06-08, the current product target is `Dream QA / 梦境问答台`: Record -> Ask -> Interpret -> Today Tip. Use `DESIGN.md`, `docs/handoff.md`, and `docs/superpowers/plans/2026-06-08-dream-qa-refactor.md` for new work.
+
 ## 1. Feature Summary
 
 Redesign Dream Customs from a one-shot Gradio form into a dream customs workbench. The user should be able to declare a dream through text, image, or voice, receive customs questions, add more evidence, continue negotiation, revise the pact draft, or seal the final pact.

@@ -1,24 +1,27 @@
-# Dream Customs V4 Design QA
+# Dream QA Design QA
 
-Date: 2026-06-05
+Date: 2026-06-08
 
-Reference: user-provided Codex-style multimodal composer screenshot.
+Reference: 2026-06-08 Dream QA prototype images and updated source docs.
 
 ## Checks
 
-- First screen uses one rounded multimodal composer instead of separate form blocks.
-- Visible composer tools are limited to Image, Voice, Mood, Add, and Send.
-- Technical Text/Vision routes are collapsed under Model routes.
-- Pact inspector remains visible beside the composer on desktop.
-- Timeline, diagnostics, examples, workflow shortcuts, and refinement controls are secondary.
-- Text-only Chrome flow completed: Send -> Draft pact -> Seal today's pact.
-- Sealed output renders a screenshot-friendly Today's Pact card.
-- No desktop horizontal overflow in Chrome at the inspected viewport.
+- First screen should introduce `梦境问答台 / Dream QA`, with `Dream Customs` only as continuity context if needed.
+- The primary loop is Record -> Ask -> Interpret -> Tip.
+- The main surface is a conversational Q&A timeline, not a permit or pact inspector.
+- The composer supports text, image, voice, mood, and one clear continue action.
+- Follow-up questions are visible and skippable.
+- The final result prioritizes one Today Tip, with optional tiny action and caring note.
+- Interpretation text uses non-certain language and cites concrete dream anchors.
+- Technical text/vision routes remain collapsed under developer/model settings.
+- Text-only flow must remain available as the fallback path.
+- Mobile width should keep buttons, chips, and Today Tip text readable.
 
 ## Notes
 
-- Image and voice use compact upload buttons to avoid large Gradio media drop zones in the first screen.
-- Voice upload remains available as an input to the existing ASR adapter path.
+- The older V4 customs workbench passed its historical design QA, but it is no longer the current target.
+- Do not reintroduce permit, contraband, sealed pact, or bedtime release as required UX fields.
+- Do not replace the new Q&A flow with a generic healing-app result card; the tip must remain dream-grounded.
 - The UI keeps safety copy non-diagnostic.
 
-final result: passed
+Current desired result: pending implementation.

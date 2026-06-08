@@ -1,5 +1,7 @@
 # Model-Led Pact V2 Implementation Plan
 
+> Superseded on 2026-06-08: this plan records the earlier pact/card direction. New work should follow `docs/superpowers/plans/2026-06-08-dream-qa-refactor.md`, where the target is Record -> Ask -> Interpret -> Today Tip.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make Dream Customs generate natural English demo cards by letting MiniCPM5-1B own briefing, drafting, and critique while MiniCPM-V-4.6 contributes richer visual witness evidence.

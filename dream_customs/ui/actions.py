@@ -16,6 +16,7 @@ from dream_customs.pipeline import (
 )
 from dream_customs.render import render_today_tip_card
 from dream_customs.schema import CustomsSession, TodayTipCard
+from dream_customs.ui.copy import copy_for, normalize_language
 
 
 def _state_json(session: CustomsSession) -> str:
@@ -42,60 +43,94 @@ def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) 
     return next_session
 
 
-def _card_plain_text(card: TodayTipCard) -> str:
-    return card.to_plain_text()
+def _card_plain_text(card: TodayTipCard, language: str) -> str:
+    if language == "zh":
+        return card.to_plain_text()
+    lines = [
+        "Today Tip",
+        f"Dream summary: {card.dream_summary}",
+        f"Question: {card.main_question}",
+        f"Dream anchors: {', '.join(card.dream_anchors)}",
+        f"Interpretation: {card.interpretation}",
+        f"Today Tip: {card.today_tip}",
+    ]
+    if card.tiny_action:
+        lines.append(f"Tiny action: {card.tiny_action}")
+    if card.caring_note:
+        lines.append(f"Caring note: {card.caring_note}")
+    if card.safety_note:
+        lines.append(f"Safety note: {card.safety_note}")
+    return "\n".join(lines)
 
 
-def _render_today_pass(card: TodayTipCard) -> str:
-    return render_today_tip_card(card)
+def _render_today_pass(card: TodayTipCard, language: str) -> str:
+    return render_today_tip_card(card, language=language)
 
 
 def _questions(session: CustomsSession) -> List[str]:
     return session.question_history[-1:] if session.question_history else []
 
 
-def _view_payload(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Dict[str, Any]:
+def _view_payload(
+    session: CustomsSession,
+    text_backend: str,
+    vision_backend: str,
+    language: str = "en",
+    **settings,
+) -> Dict[str, Any]:
+    language = normalize_language(language)
+    copy = copy_for(language)
     card = session.sealed_tip or session.draft_tip
     error = _latest_error(session)
     status = "error" if error else "tip" if session.sealed_tip else "ask" if session.question_history else "record"
     return {
         "status": status,
         "phase": session.phase,
+        "language": language,
         "question": _questions(session)[0] if _questions(session) else "",
         "questions": _questions(session),
-        "card_title": "今日小 Tips" if card else "",
-        "card_text": _card_plain_text(card) if card else "",
-        "card_html": _render_today_pass(card) if card else "",
+        "card_title": copy["card_title"] if card else "",
+        "card_text": _card_plain_text(card, language) if card else "",
+        "card_html": _render_today_pass(card, language) if card else "",
         "error": error,
-        "notice": _notice_for_status(status, error),
+        "notice": _notice_for_status(status, error, language),
         "debug": json.loads(_debug_json(session, text_backend, vision_backend, **settings)),
     }
 
 
-def _view(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Tuple[str, str]:
+def _view(
+    session: CustomsSession,
+    text_backend: str,
+    vision_backend: str,
+    language: str = "en",
+    **settings,
+) -> Tuple[str, str]:
     return _state_json(session), json.dumps(
-        _view_payload(session, text_backend, vision_backend, **settings),
+        _view_payload(session, text_backend, vision_backend, language=language, **settings),
         ensure_ascii=False,
         indent=2,
     )
 
 
-def _notice_for_status(status: str, error: str = "") -> str:
+def _notice_for_status(status: str, error: str = "", language: str = "en") -> str:
+    copy = copy_for(language)
     if status == "error":
-        return error or "梦境问答台还没有收到片段。"
+        return error or copy["notice_error"]
     if status == "ask":
-        return "可以回答这个追问，也可以跳过，直接生成今日小 Tips。"
+        return copy["notice_ask"]
     if status == "tip":
-        return "今日小 Tips 已生成。把它当作温和参考，不是诊断或预言。"
-    return "写一句、几行，或上传图片/语音。Text-only 路径始终可用。"
+        return copy["notice_tip"]
+    return copy["notice_record"]
 
 
 def initial_mobile_state(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    return _view(create_session(), text_backend, vision_backend, **settings)
+    language = normalize_language(language)
+    return _view(create_session(language=language), text_backend, vision_backend, language=language, **settings)
 
 
 def submit_dream_action(
@@ -105,33 +140,38 @@ def submit_dream_action(
     mood: str = "",
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
+    language = normalize_language(language)
     text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     session = add_evidence(
-        create_session(),
+        create_session(language=language),
         dream_text=dream_text or "",
         image_path=_file_path(image_value) or None,
         audio_path=_file_path(audio_value) or None,
         mood=mood or "",
         vision_client=vision_client,
         asr_client=asr_client,
+        language=language,
     )
     if session.phase != "error":
         previous_count = len(session.question_history)
-        session = ask_questions(session, text_client)
+        session = ask_questions(session, text_client, language=language)
         session = _trim_to_one_visible_question(session, previous_count)
-    return _view(session, text_backend, vision_backend, **settings)
+    return _view(session, text_backend, vision_backend, language=language, **settings)
 
 
 def skip_to_card_action(
     state: Any,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    session = skip_question(_session_from_state(state))
-    return _seal_view(session, text_backend, vision_backend, **settings)
+    language = normalize_language(language)
+    session = skip_question(_session_from_state(state), language=language)
+    return _seal_view(session, text_backend, vision_backend, language=language, **settings)
 
 
 def answer_to_card_action(
@@ -139,12 +179,14 @@ def answer_to_card_action(
     answer: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    session = answer_question(_session_from_state(state), answer or "")
+    language = normalize_language(language)
+    session = answer_question(_session_from_state(state), answer or "", language=language)
     if session.phase == "error":
-        return _view(session, text_backend, vision_backend, **settings)
-    return _seal_view(session, text_backend, vision_backend, **settings)
+        return _view(session, text_backend, vision_backend, language=language, **settings)
+    return _seal_view(session, text_backend, vision_backend, language=language, **settings)
 
 
 def revise_card_action(
@@ -152,25 +194,34 @@ def revise_card_action(
     revision_request: str,
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
+    language = normalize_language(language)
     session = _session_from_state(state)
     if session.sealed_tip and not session.draft_tip:
         session.draft_tip = session.sealed_tip
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
-    session = ask_questions(session, text_client, force_another=True)
-    return _view(session, text_backend, vision_backend, **settings)
+    session = ask_questions(session, text_client, force_another=True, language=language)
+    return _view(session, text_backend, vision_backend, language=language, **settings)
 
 
 def reset_mobile_action(
     text_backend: str = DEFAULT_TEXT_BACKEND,
     vision_backend: str = DEFAULT_VISION_BACKEND,
+    language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    return initial_mobile_state(text_backend, vision_backend, **settings)
+    return initial_mobile_state(text_backend, vision_backend, language=language, **settings)
 
 
-def _seal_view(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Tuple[str, str]:
+def _seal_view(
+    session: CustomsSession,
+    text_backend: str,
+    vision_backend: str,
+    language: str = "en",
+    **settings,
+) -> Tuple[str, str]:
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
-    session = finish_today_tip(session, text_client)
-    return _view(session, text_backend, vision_backend, **settings)
+    session = finish_today_tip(session, text_client, language=language)
+    return _view(session, text_backend, vision_backend, language=language, **settings)

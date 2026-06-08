@@ -23,8 +23,8 @@ def test_run_customs_once_generates_demo_outputs():
     )
     debug = json.loads(debug_json)
     assert "Visitor:" in negotiation
-    assert "今日小 Tips" in pact_text
-    assert "今日小 Tips" in html
+    assert "Today Tip" in pact_text
+    assert "Today Tip" in html
     assert debug["status"] == "ok"
     assert debug["intake"]["dream_text"] == "I dreamed of a late elevator."
 
@@ -55,7 +55,7 @@ def test_workbench_actions_progress_to_today_tip():
 
     state, _status, _timeline, _inspector, sealed_html, debug_json, _notice = seal_pact_action(state)
     assert json.loads(debug_json)["status"] == "tip"
-    assert "今日小 Tips" in sealed_html
+    assert "Today Tip" in sealed_html
 
 
 def test_workbench_model_route_without_endpoint_falls_back_to_demo():

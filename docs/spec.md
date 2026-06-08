@@ -4,7 +4,9 @@ Last updated: 2026-06-08
 
 ## 1. One-Line Concept
 
-梦境问答台帮用户循序渐进地理解昨晚的梦：用户用文字、图片或语音记录梦境，系统先追问关键细节，再给出一个非诊断、非宿命论的解读草稿，最后生成一个温和的今日小 Tips。
+Dream QA helps users unpack last night's dream step by step: they record a dream with text, image, or voice; the system asks one grounded follow-up question; then it gives a non-diagnostic, non-fatalistic interpretation draft and one gentle Today Tip.
+
+The public hackathon demo is English-first because the event is international. Chinese remains available through the in-app `English / 中文` toggle.
 
 ## 2. Contest Fit
 
@@ -29,6 +31,7 @@ The user wakes up after a vivid or unsettling dream and wants help making sense 
 5. Ground every final answer in concrete dream details.
 6. End with one small today tip, not a pile of advice.
 7. Keep the MVP stable enough for Gradio Space and demo-video recording.
+8. Default to English for public judging; keep Chinese as a first-class toggle.
 
 ## 5. User Inputs
 
@@ -60,6 +63,10 @@ MiniCPM-V-4.6 extracts visual clues and returns structured text.
 The user speaks the dream immediately after waking.
 
 Implementation note: MiniCPM-V-4.6 and MiniCPM5-1B are not raw audio ASR models. Voice input needs a small transcription adapter. The adapter only converts audio to text; dream understanding remains MiniCPM-driven.
+
+### 5.4 Language Input
+
+The app defaults to English. A visible language toggle allows `中文`. The same `DreamQuestionIntake -> DreamQAState -> TodayTipCard` pipeline is used for both languages; only prompt instructions, UI labels, and rendered output labels change.
 
 ## 6. Data Model
 
@@ -124,7 +131,7 @@ Responsibilities:
 
 - Read sketches, notes, screenshots, and photos.
 - Extract objects, locations, visible text, colors, spatial relationships, and emotional cues.
-- Return concise JSON-compatible visual clues.
+- Return concise JSON-compatible visual witness reports.
 
 Non-responsibilities:
 
@@ -141,9 +148,11 @@ Responsibilities:
 - Summarize the dream without overexplaining.
 - Infer or ask the user's main question.
 - Ask 1-3 gentle follow-up questions.
+- Prefer exactly one visible follow-up question in the public MVP, with another-angle actions available after the first result.
 - Draft a non-certain interpretation grounded in dream anchors.
 - Generate exactly one primary today tip, with optional tiny action and caring note.
 - Keep tone playful, gentle, and non-clinical.
+- Follow the selected language: English by default, Chinese when selected.
 
 ## 8. MVP User Flow
 
@@ -177,6 +186,7 @@ The final result must:
 - Avoid diagnosis, prophecy, or frightening certainty.
 - Avoid generic advice that could fit any dream.
 - Keep the today tip small enough to try today.
+- Use English UI/output labels by default and Chinese labels only when `中文` is selected.
 
 ## 10. UX Structure
 
@@ -192,7 +202,7 @@ Inputs:
 
 Primary action:
 
-- "继续解梦" / "Continue"
+- "Continue"
 
 ### Screen 2: Ask
 
@@ -218,6 +228,14 @@ Content:
 - One primary today tip.
 - Optional tiny action.
 - Optional caring note.
+
+### Screen 0: Language
+
+Default: `English`.
+
+Secondary option: `中文`.
+
+The toggle should be visible but not distract from the dream composer.
 - Copy text button.
 - Reset action.
 

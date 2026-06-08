@@ -10,6 +10,8 @@ The repo and Space still use the `Dream Customs` name for continuity, but future
 
 > 输入梦境，回答或跳过几个温和追问，最后得到一个和梦境细节相关的今日小 Tips。
 
+The public hackathon experience is English-first. Keep the visible `English / 中文` toggle so Chinese remains a first-class path, but do not make judges land on a Chinese-only first screen.
+
 ## Deprecated Context
 
 Earlier implementation and smoke docs mention:
@@ -47,7 +49,7 @@ Build a guided dream interpretation app, not a diagnosis app, not a fortune-tell
 
 Final positioning:
 
-> 梦境问答台帮你一步步整理梦境疑惑：先记录梦，回答几个温和追问，再得到一个今天可以参考的小 Tips。
+> Dream QA helps you record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.
 
 ## Model Decision
 
@@ -81,6 +83,13 @@ Voice input is allowed, but current MiniCPM pair does not directly transcribe ra
 8. MiniCPM5-1B drafts a grounded interpretation.
 9. MiniCPM5-1B generates a final `TodayTipCard`.
 10. Gradio renders a mobile-readable result card and plain text.
+
+Language behavior:
+
+- Default: English.
+- Toggle: `中文`.
+- The same intake/state/card pipeline serves both languages.
+- MiniCPM prompts should instruct the selected output language instead of duplicating the product flow.
 
 ## Required Output Fields
 
@@ -142,6 +151,7 @@ Likely code files to change:
 5. Render one clear final tip, not a multi-field customs certificate.
 6. Keep mobile readability.
 7. Run tests and local Gradio smoke before any Space sync.
+8. Run `python scripts/evaluate_today_tip_quality.py` before deployment.
 
 ## Repository Status
 
@@ -168,10 +178,15 @@ The Space defaults to `model` for both text and vision backends, so a configured
 
 The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the lightweight `@spaces.GPU` startup probe. Modal credits still pay for the hidden GPU backend; the ZeroGPU probe is only there to make the HF hardware setting valid for this Gradio frontend.
 
+## Resolved Decisions
+
+- Public UI name: `Dream QA`, with `Dream Customs` retained as project/Space continuity.
+- Language: English-first for the international hackathon, with Chinese available through an in-app toggle.
+- Recommendation quality: deterministic Today Tip eval is required before deployment.
+
 ## Open Questions For User
 
 These do not block document alignment:
 
-- Should the public name remain `Dream Customs`, or should visible UI switch fully to `梦境问答台 / Dream QA`?
-- Should final demo language be Chinese-first, English-first, or bilingual?
 - Which ASR adapter is acceptable for the hackathon submission?
+- Should `refs/pr/*` cleanup be done after HF Space merges, or left for auditability?

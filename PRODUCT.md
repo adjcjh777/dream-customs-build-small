@@ -6,11 +6,13 @@ product
 
 ## Users
 
-Dream QA / 梦境问答台 serves people who wake up with vivid, strange, or unsettling dreams and want a small morning conversation before the day takes over. The primary user may still be half asleep, on a phone, and emotionally sticky from the dream. The secondary user is a hackathon judge or playful AI explorer who needs to understand the loop quickly and see why small multimodal models matter.
+Dream QA / 梦境问答台 serves people who wake up with vivid, strange, or unsettling dreams and want a small morning conversation before the day takes over. The primary user may still be half asleep, on a phone, and emotionally sticky from the dream. The secondary user is an international hackathon judge or playful AI explorer who needs to understand the loop quickly and see why small multimodal models matter.
 
 ## Product Purpose
 
-The product helps a user unpack a dream through a guided, step-by-step Q&A. It accepts text, image, and voice fragments, turns them into one structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one `今日小 Tips`.
+The product helps a user unpack a dream through a guided, step-by-step Q&A. It accepts text, image, and voice fragments, turns them into one structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one Today Tip.
+
+The hackathon-facing experience is English-first. A visible `English / 中文` language control keeps the Chinese experience available without making judges start from a Chinese-only first screen.
 
 Success means the user receives something more useful than a one-shot interpretation: a short summary of the dream, one clear question they were trying to answer, a non-certain explanation grounded in concrete dream details, and a tiny suggestion for today. The tip can be practical, playful, or simply caring, but it must feel connected to the dream.
 
@@ -38,7 +40,9 @@ The voice is a calm dream companion who asks good questions and takes odd detail
 4. Every final output should lead to one small next-day reference or action.
 5. The final tip must cite a concrete dream anchor.
 6. The demo path must survive Space constraints and still have a model-backed route.
+7. English mode is the default public path; Chinese mode is a first-class toggle, not a separate product.
+8. Recommendation quality is tested with a deterministic Today Tip eval set before deployment.
 
 ## Accessibility & Inclusion
 
-Target WCAG AA contrast for body text, controls, and placeholder text. Support mobile-first use, keyboard navigation, visible focus states, reduced motion, and Chinese/English text without layout breakage. Avoid flashing effects, fear-based copy, or overconfident claims about dream meaning. Severe distress, self-harm, harm to others, or inability to function must show a clear support note.
+Target WCAG AA contrast for body text, controls, and placeholder text. Support mobile-first use, keyboard navigation, visible focus states, reduced motion, and English/Chinese text without layout breakage. Avoid flashing effects, fear-based copy, or overconfident claims about dream meaning. Severe distress, self-harm, harm to others, or inability to function must show a clear support note.

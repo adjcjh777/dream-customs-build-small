@@ -229,6 +229,24 @@ def _notice(session: CustomsSession) -> str:
     return "<div class='dc-inline-notice'>File any fragment. Text-only stays available if image or voice fails.</div>"
 
 
+def _today_tip_plain_text(card) -> str:
+    lines = [
+        "Today Tip",
+        f"Dream summary: {card.dream_summary}",
+        f"Question: {card.main_question}",
+        f"Dream anchors: {', '.join(card.dream_anchors)}",
+        f"Interpretation: {card.interpretation}",
+        f"Today Tip: {card.today_tip}",
+    ]
+    if card.tiny_action:
+        lines.append(f"Tiny action: {card.tiny_action}")
+    if card.caring_note:
+        lines.append(f"Caring note: {card.caring_note}")
+    if card.safety_note:
+        lines.append(f"Safety note: {card.safety_note}")
+    return "\n".join(lines)
+
+
 def _view(
     session: CustomsSession,
     text_backend: str = DEFAULT_TEXT_BACKEND,
@@ -437,4 +455,4 @@ def run_customs_once(
         "negotiation": negotiation,
         "today_tip": card.model_dump(),
     }
-    return negotiation_text, card.to_plain_text(), html, json.dumps(debug, ensure_ascii=False, indent=2)
+    return negotiation_text, _today_tip_plain_text(card), html, json.dumps(debug, ensure_ascii=False, indent=2)

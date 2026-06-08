@@ -10,9 +10,11 @@ Users who wake up from vivid dreams may feel unsettled, curious, or mentally clu
 
 ### Proposed Solution
 
-Dream QA is a Gradio app that accepts voice, image, and text dream fragments, normalizes them into a structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one `今日小 Tips`.
+Dream QA is a Gradio app that accepts voice, image, and text dream fragments, normalizes them into a structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one Today Tip.
 
 The repository and Space may continue to use `Dream Customs` as the deployed project name, but the product experience should no longer be built around permits, contraband, or sealed pact cards.
+
+The public demo defaults to English for the international hackathon audience. A visible language toggle preserves the Chinese experience.
 
 ### Success Criteria
 
@@ -22,6 +24,8 @@ The repository and Space may continue to use `Dream Customs` as the deployed pro
 - Final output gives exactly one primary today tip.
 - Ordinary cases contain no diagnostic, prophetic, or frightening language.
 - Distress-edge cases show a support note.
+- English is the default public language; Chinese remains available through one visible toggle.
+- `python scripts/evaluate_today_tip_quality.py` passes before deployment.
 - The app runs with total model parameters <= 32B and is packaged for Gradio/Hugging Face Space.
 
 ## 2. User Experience & Functionality
@@ -39,6 +43,7 @@ The repository and Space may continue to use `Dream Customs` as the deployed pro
 3. Demo viewer / judge.
    - Needs to understand the interaction in under one minute.
    - Looks for clear small-model fit and Gradio polish.
+   - Should land on an English first screen without needing translation.
 
 ### User Stories
 
@@ -98,6 +103,18 @@ Acceptance criteria:
 - Result avoids medical, prophetic, or deterministic framing.
 - Today tip references a concrete dream anchor.
 
+#### Story 6: Bilingual Demo
+
+As an international judge, I want the app to open in English, while Chinese users can still switch to 中文.
+
+Acceptance criteria:
+
+- Default UI title is `Dream QA`.
+- A visible `English / 中文` control exists.
+- English mode renders English labels and card headings.
+- Chinese mode renders `梦境问答台` and Chinese Today Tip labels.
+- Both modes use the same model/pipeline route.
+
 ### Non-Goals
 
 - Medical diagnosis or therapy.
@@ -129,6 +146,7 @@ Prompts must:
 - Include a safety boundary for severe distress.
 - Keep final advice small enough to execute today.
 - Require at least one dream anchor in the final tip.
+- Follow selected language: English by default, Chinese when selected.
 
 ### Evaluation Strategy
 
@@ -147,6 +165,8 @@ Measure:
 - Dream-anchor grounding.
 - Practicality of today tip.
 - Ability to recover from missing modality.
+- Old customs words do not appear in the Dream QA result: permit, contraband, clearance, sealed, pact.
+- English default output does not contain Chinese UI labels.
 
 Pass thresholds:
 
@@ -155,6 +175,14 @@ Pass thresholds:
 - Safety note appears in distress-edge cases: >= 90%.
 - At least one concrete dream anchor in final result: >= 90%.
 - Human usefulness/delight rating on 5 demo cases: average >= 4/5.
+
+Current deterministic gate:
+
+```bash
+python scripts/evaluate_today_tip_quality.py
+```
+
+This gate covers 10 representative cases and should be expanded toward the 12-case target as image/voice remote smoke matures.
 
 ## 4. Technical Specifications
 

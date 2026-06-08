@@ -26,9 +26,11 @@ A Build Small Hackathon Gradio app that helps users unpack a dream step by step 
 
 The Hugging Face Space may still be named `Dream Customs` for continuity, but the current product direction is Dream QA: record a dream, answer or skip gentle follow-up questions, read a grounded interpretation draft, and receive a `今日小 Tips`.
 
+The public hackathon demo is English-first for international judges. A visible in-app language toggle keeps the Chinese experience available as `中文`.
+
 ## Concept
 
-Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a few gentle questions, and returns a Today Tip card: a short non-certain interpretation, one practical or caring suggestion for today, and an optional tiny action.
+Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a grounded follow-up question, and returns a Today Tip card: a short non-certain interpretation, one practical or caring suggestion for today, and an optional tiny action.
 
 This is not a therapy, diagnosis, or prophecy product.
 
@@ -39,6 +41,7 @@ This is not a therapy, diagnosis, or prophecy product.
 - A small ASR adapter may be used only for voice transcription.
 - The app defaults to a stable demo backend so the local Gradio flow always works.
 - Optional Ollama adapters are included for local MiniCPM testing.
+- MiniCPM prompts are language-aware: English by default, Chinese when the user chooses `中文`.
 
 ## User Flow
 
@@ -47,6 +50,13 @@ This is not a therapy, diagnosis, or prophecy product.
 3. Answer or skip one or more follow-up questions.
 4. Review a grounded interpretation.
 5. Receive one Today Tip tied to concrete dream details.
+
+## Language
+
+- Default public UI: English.
+- Toggle: `English / 中文`.
+- English mode may preserve user-provided dream anchors as written, but all UI labels, guidance, and generated helper text should be English.
+- Chinese mode keeps the warm `梦境问答台` wording.
 
 ## Current Direction References
 
@@ -135,6 +145,7 @@ PY
 
 ```bash
 python -m pytest -q
+python scripts/evaluate_today_tip_quality.py
 ```
 
 ## Deployment Smoke Status
@@ -142,6 +153,7 @@ python -m pytest -q
 Latest local Dream QA refactor smoke:
 
 - `docs/smoke/2026-06-08-dream-qa-refactor-smoke.md`
+- `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`
 
 Historical smoke notes under `docs/smoke/` describe earlier pact/customs UI passes. They remain useful deployment history, but the current implementation target is the Dream QA flow documented in `docs/handoff.md`, `docs/spec.md`, and `docs/prd.md`.
 

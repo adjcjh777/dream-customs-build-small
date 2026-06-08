@@ -18,12 +18,21 @@ def visual_witness_prompt() -> str:
     )
 
 
-def dream_qa_state_prompt(intake: DreamIntake) -> str:
+def _language_instruction(language: str = "en") -> str:
+    return (
+        "Write all user-facing fields in English. Keep any user-provided dream anchors as written."
+        if language != "zh"
+        else "所有面向用户的字段都用自然中文书写。可以保留用户原文里的梦境关键词。"
+    )
+
+
+def dream_qa_state_prompt(intake: DreamIntake, language: str = "en") -> str:
     return f"""
 You are MiniCPM5-1B acting as Dream QA / 梦境问答台, a gentle question guide.
 Summarize the dream, infer the user's main question if they did not write one, and ask 1 to 3 warm follow-up questions.
 Do not diagnose, predict fate, frighten the user, or claim one fixed dream meaning.
 Ground every question in a concrete detail from the text, voice transcript, mood, or visual clues.
+{_language_instruction(language)}
 
 Dream intake:
 {intake.merged_text()}
@@ -37,7 +46,7 @@ Return strict JSON with:
 """.strip()
 
 
-def today_tip_prompt(state: DreamQAState) -> str:
+def today_tip_prompt(state: DreamQAState, language: str = "en") -> str:
     return f"""
 You are MiniCPM5-1B writing the final Dream QA result.
 Write a non-diagnostic interpretation draft and exactly one primary 今日小 Tips.
@@ -46,6 +55,7 @@ The today_tip must cite at least one concrete dream anchor.
 Avoid prophecy, frightening certainty, medical advice, therapy framing, and generic wellness filler.
 Keep the tiny_action small enough to try today.
 Use safety_note only for self-harm, harm to others, severe distress, severe insomnia, panic, or inability to function.
+{_language_instruction(language)}
 
 Dream QA state:
 {_json_block(state)}
@@ -152,7 +162,7 @@ def visual_clue_prompt() -> str:
     )
 
 
-def negotiation_prompt(intake: DreamIntake) -> str:
+def negotiation_prompt(intake: DreamIntake, language: str = "en") -> str:
     return f"""
 You are the Dream QA question guide. The user is not asking for diagnosis.
 Help the user record the dream, clarify the main question, and answer one gentle follow-up before the final 今日小 Tips.
@@ -161,18 +171,24 @@ Ask questions that an ordinary person can understand without knowing any app lor
 Prefer questions about the strongest feeling, one confusing scene, or one safe next-day reference.
 Ground every question in a concrete detail from the intake when possible, such as an object,
 place, action, color, or phrase the user actually provided.
+{_language_instruction(language)}
 
 Dream intake:
 {intake.merged_text()}
 
 Return JSON with:
 - visitor_name: short vivid anchor label
-- questions: 2 or 3 gentle, specific, easy-to-understand questions
+- questions: 1 to 3 gentle, specific, easy-to-understand questions
 - tone_note: one sentence explaining why the questions may help without certainty
 """.strip()
 
 
-def followup_question_prompt(intake: DreamIntake, question_history: list[str], answer_history: list[str]) -> str:
+def followup_question_prompt(
+    intake: DreamIntake,
+    question_history: list[str],
+    answer_history: list[str],
+    language: str = "en",
+) -> str:
     return f"""
 You are the Dream QA question guide. Ask one more gentle follow-up question.
 Do not diagnose. Do not repeat previous questions.
@@ -181,6 +197,7 @@ or whether one concrete dream detail connects to today.
 Do not use unclear metaphors about fate, symbols, hidden meanings, stamps, release, or permits.
 Reuse one concrete dream detail from the intake so the user can feel the question belongs
 to this dream rather than to a generic reflection form.
+{_language_instruction(language)}
 
 Dream intake:
 {intake.merged_text()}
@@ -193,7 +210,7 @@ User answers:
 
 Return JSON with:
 - visitor_name: short vivid name
-- questions: one gentle, specific question
+- questions: one gentle, specific question in a single-item list
 - tone_note: one sentence explaining why this question matters today
 """.strip()
 

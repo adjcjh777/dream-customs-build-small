@@ -216,7 +216,10 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
     assert len(session.question_history) == 4
 
     session = skip_question(session)
-    assert "跳过" in session.answer_history[-1]
+    assert "skip" in session.answer_history[-1].lower()
+
+    zh_session = skip_question(session, language="zh")
+    assert "跳过" in zh_session.answer_history[-1]
 
     session = draft_pact(session, FakeTextClient())
     assert session.phase == "drafting"

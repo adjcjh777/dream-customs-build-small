@@ -25,9 +25,9 @@ def test_runtime_settings_are_collapsed_for_public_flow():
 def test_processing_note_is_story_copy_not_backend_jargon():
     lowered = PROCESSING_NOTE.lower()
 
-    assert "追问" in lowered
-    assert "今日小 tips" in lowered
-    assert "模型路线" in PROCESSING_NOTE
+    assert "grounded question" in lowered
+    assert "today tip" in lowered
+    assert "model routes" in lowered
     assert "fallback" in lowered
     assert "token" not in lowered
     assert "endpoint" not in lowered
@@ -85,9 +85,30 @@ def test_mobile_mvp_submit_then_skip_generates_today_tip():
 
     assert view["status"] == "tip"
     assert view["phase"] == "tip"
-    assert "今日小 Tips" in view["card_title"]
+    assert "Today Tip" in view["card_title"]
     assert "电梯" in view["card_text"] or "elevator" in view["card_text"].lower()
     assert "DC-DEMO-014" not in view["card_text"]
+    assert "Today Tip" in view["card_html"]
+
+
+def test_mobile_mvp_zh_language_switch_keeps_chinese_today_tip():
+    state, _view_json = submit_dream_action(
+        dream_text="我梦到电梯按钮融化，楼层数字停在 14。",
+        mood="焦虑",
+        text_backend="demo",
+        vision_backend="demo",
+        language="zh",
+    )
+    _state, view_json = skip_to_card_action(
+        state,
+        text_backend="demo",
+        vision_backend="demo",
+        language="zh",
+    )
+    view = json.loads(view_json)
+
+    assert view["language"] == "zh"
+    assert view["card_title"] == "今日小 Tips"
     assert "今日小 Tips" in view["card_html"]
 
 

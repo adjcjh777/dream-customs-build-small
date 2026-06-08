@@ -28,14 +28,21 @@ from dream_customs.ui.actions import (
 )
 from dream_customs.ui.copy import (
     ANSWER_PLACEHOLDER,
+    APP_COPY,
     APP_SUBTITLE,
     APP_TITLE,
+    DEFAULT_LANGUAGE,
     DREAM_PLACEHOLDER,
-    EXAMPLE_DREAM,
-    EXAMPLE_MOOD,
     DEFAULT_MOOD,
+    LANGUAGE_OPTIONS,
     MOOD_OPTIONS,
     PROCESSING_NOTE,
+    copy_for,
+    default_mood_for,
+    mood_options_for,
+    normalize_language,
+    EXAMPLE_DREAMS,
+    EXAMPLE_MOODS,
 )
 from dream_customs.ui.styles import CSS
 
@@ -87,7 +94,7 @@ VOICE_JS = r"""
     button.addEventListener("click", async () => {
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
-        setStatus("这个浏览器暂时不能直接转写语音，你仍然可以手动输入梦境。", "error");
+        setStatus("This browser cannot transcribe voice here. You can still type the dream.", "error");
         textarea.focus();
         return;
       }
@@ -98,7 +105,7 @@ VOICE_JS = r"""
           stream.getTracks().forEach((track) => track.stop());
         }
       } catch (error) {
-        setStatus("没有获得麦克风权限。允许浏览器录音后可以再试一次。", "error");
+        setStatus("Microphone permission was not granted. Allow recording and try again.", "error");
         return;
       }
 
@@ -111,7 +118,7 @@ VOICE_JS = r"""
       let latestTranscript = "";
 
       recognition.onstart = () => {
-        setStatus("正在听。准备好后说出梦境片段。", "listening");
+        setStatus("Listening. Say the dream fragment when you are ready.", "listening");
       };
 
       recognition.onresult = (event) => {
@@ -120,23 +127,23 @@ VOICE_JS = r"""
           .join("")
           .trim();
         if (latestTranscript) {
-          setStatus(`录音中：${latestTranscript}`, "listening");
+          setStatus(`Listening: ${latestTranscript}`, "listening");
         }
       };
 
       recognition.onerror = (event) => {
         const message = event.error === "not-allowed"
-          ? "麦克风权限被拒绝。允许录音后再试一次。"
-          : "刚才没有听清。想重试的话，再点一次麦克风。";
+          ? "Microphone permission was denied. Allow recording and try again."
+          : "I did not catch that. Tap the microphone again if you want to retry.";
         setStatus(message, "error");
       };
 
       recognition.onend = () => {
         if (latestTranscript) {
           appendTranscript(latestTranscript);
-          setStatus("已加入梦境记录。", "done");
+          setStatus("Added to the dream note.", "done");
         } else if (button.dataset.mode === "listening") {
-          setStatus("没有检测到语音。想重试的话，再点一次麦克风。", "idle");
+          setStatus("No speech detected. Tap again if you want to retry.", "idle");
         }
       };
 
@@ -155,7 +162,7 @@ def _load_view(view_json: str) -> dict:
     try:
         return json.loads(view_json or "{}")
     except json.JSONDecodeError:
-        return {"status": "error", "error": "界面状态读取失败，请重新开始。"}
+        return {"status": "error", "error": copy_for(DEFAULT_LANGUAGE)["error_state"]}
 
 
 def _notice_html(view: dict) -> str:
@@ -164,20 +171,21 @@ def _notice_html(view: dict) -> str:
     return f"<div class='{css}'>{message}</div>" if message else ""
 
 
-def _question_markdown(view: dict) -> str:
+def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
+    copy = copy_for(language)
     question = escape(view.get("question") or "")
     optional_question = (
-        f"<p class='dc-question-original'><span>梦境助手</span>{question}</p>"
+        f"<p class='dc-question-original'><span>{copy['question_speaker']}</span>{question}</p>"
         if question
         else ""
     )
     return f"""
 <div class="dc-question-card">
-  <span class="dc-question-kicker">追问</span>
-  <h2>在这个梦里，你最想理解的是什么呢？</h2>
-  <p>回答一两句就好；也可以跳过，直接得到一个基于现有线索的今日小 Tips。</p>
+  <span class="dc-question-kicker">{copy['question_kicker']}</span>
+  <h2>{copy['question_title']}</h2>
+  <p>{copy['question_body']}</p>
   {optional_question}
-  <p class="dc-question-note">这个步骤是为了让最终建议更贴近你的梦，不是问诊。</p>
+  <p class="dc-question-note">{copy['question_note']}</p>
 </div>
 """.strip()
 
@@ -185,11 +193,12 @@ def _question_markdown(view: dict) -> str:
 def _updates(state: str, view_json: str):
     view = _load_view(view_json)
     status = view.get("status", "declaration")
+    language = normalize_language(view.get("language", DEFAULT_LANGUAGE))
     return (
         state,
         view_json,
         _notice_html(view),
-        _question_markdown(view),
+        _question_markdown(view, language),
         view.get("card_html", ""),
         view.get("card_text", ""),
         gr.update(visible=status in {"record", "error"}),
@@ -241,7 +250,8 @@ def _settings_from_inputs(
     }
 
 
-def _submit(dream_text, image_value, audio_value, mood, text_backend, vision_backend, *settings_values):
+def _submit(dream_text, image_value, audio_value, mood, language, text_backend, vision_backend, *settings_values):
+    language = normalize_language(language)
     settings = _settings_from_inputs(*settings_values)
     state, view_json = submit_dream_action(
         dream_text=dream_text,
@@ -250,148 +260,200 @@ def _submit(dream_text, image_value, audio_value, mood, text_backend, vision_bac
         mood=mood,
         text_backend=text_backend,
         vision_backend=vision_backend,
+        language=language,
         **settings,
     )
     return _updates(state, view_json)
 
 
-def _answer(state, answer, text_backend, vision_backend, *settings_values):
+def _answer(state, answer, language, text_backend, vision_backend, *settings_values):
+    language = normalize_language(language)
     settings = _settings_from_inputs(*settings_values)
     state, view_json = answer_to_card_action(
         state,
         answer=answer,
         text_backend=text_backend,
         vision_backend=vision_backend,
+        language=language,
         **settings,
     )
     return _updates(state, view_json)
 
 
-def _skip(state, text_backend, vision_backend, *settings_values):
+def _skip(state, language, text_backend, vision_backend, *settings_values):
+    language = normalize_language(language)
     settings = _settings_from_inputs(*settings_values)
     state, view_json = skip_to_card_action(
         state,
         text_backend=text_backend,
         vision_backend=vision_backend,
+        language=language,
         **settings,
     )
     return _updates(state, view_json)
 
 
-def _revise(state, revision_request, text_backend, vision_backend, *settings_values):
+def _revise(state, revision_request, language, text_backend, vision_backend, *settings_values):
+    language = normalize_language(language)
     settings = _settings_from_inputs(*settings_values)
     state, view_json = revise_card_action(
         state,
         revision_request=revision_request,
         text_backend=text_backend,
         vision_backend=vision_backend,
+        language=language,
         **settings,
     )
     return _updates(state, view_json)
 
 
-def _reset(text_backend, vision_backend, *settings_values):
+def _reset(language, text_backend, vision_backend, *settings_values):
+    if language not in {"en", "zh"}:
+        settings_values = (vision_backend, *settings_values)
+        vision_backend = text_backend
+        text_backend = language
+        language = DEFAULT_LANGUAGE
+    language = normalize_language(language)
     settings = _settings_from_inputs(*settings_values)
-    state, view_json = reset_mobile_action(text_backend=text_backend, vision_backend=vision_backend, **settings)
-    return (*_updates(state, view_json), "", "", None, None, DEFAULT_MOOD)
+    state, view_json = reset_mobile_action(
+        text_backend=text_backend,
+        vision_backend=vision_backend,
+        language=language,
+        **settings,
+    )
+    return (*_updates(state, view_json), "", "", None, None, default_mood_for(language))
 
 
-def build_demo() -> gr.Blocks:
-    initial_state, initial_view = initial_mobile_state()
-    initial = _load_view(initial_view)
-
-    with gr.Blocks(css=CSS, js=VOICE_JS, title="梦境问答台") as demo:
-        session_state = gr.State(initial_state)
-        view_state = gr.State(initial_view)
-
-        with gr.Column(elem_classes=["dc-shell"]):
-            gr.HTML(
-                f"""
+def _hero_html(language: str = DEFAULT_LANGUAGE) -> str:
+    copy = copy_for(language)
+    steps = copy["steps"]
+    return f"""
 <header class="dc-hero">
   <div class="dc-hero-top">
     <div class="dc-menu-mark" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="dc-brand-lockup">
       <div>
-        <h1>{APP_TITLE}</h1>
-        <p class="dc-brand-subtitle">Dream Customs</p>
+        <h1>{copy['title']}</h1>
+        <p class="dc-brand-subtitle">{copy['brand_subtitle']}</p>
       </div>
     </div>
     <div class="dc-sun-mark" aria-hidden="true">☀</div>
   </div>
   <div class="dc-stepper" aria-label="Dream QA steps">
-    <span class="is-active"><strong>1</strong>记录</span>
-    <span><strong>2</strong>追问</span>
-    <span><strong>3</strong>解读</span>
-    <span><strong>4</strong>今日 Tip</span>
+    <span class="is-active"><strong>1</strong>{steps[0]}</span>
+    <span><strong>2</strong>{steps[1]}</span>
+    <span><strong>3</strong>{steps[2]}</span>
+    <span><strong>4</strong>{steps[3]}</span>
   </div>
 </header>
 """.strip()
-            )
+
+
+def _section_title_html(number: int, text: str) -> str:
+    return f"""
+<div class="dc-section-title">
+  <span class="dc-title-icon">{number}</span>
+  <strong>{escape(text)}</strong>
+</div>
+""".strip()
+
+
+def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
+    copy = copy_for(language)
+    return f"""
+<div class="dc-mic-control">
+  <button type="button" class="dc-mic-button" aria-label="{escape(copy['mic_idle'])}">
+    <span class="dc-mic-glyph" aria-hidden="true"></span>
+  </button>
+  <div class="dc-mic-status" aria-live="polite">{escape(copy['mic_idle'])}</div>
+</div>
+""".strip()
+
+
+def _field_tip_html(language: str = DEFAULT_LANGUAGE) -> str:
+    return f"<p class=\"dc-field-tip\">{escape(copy_for(language)['field_tip'])}</p>"
+
+
+def _processing_html(language: str = DEFAULT_LANGUAGE) -> str:
+    return f"<p class='dc-processing-note'>{escape(copy_for(language)['processing_note'])}</p>"
+
+
+def _side_stamp_html(language: str = DEFAULT_LANGUAGE) -> str:
+    copy = copy_for(language)
+    return f"""
+<div class="dc-side-stamp">
+  <span>{escape(copy['side_stamp_label'])}</span>
+  <strong>{escape(copy['side_stamp_title'])}</strong>
+  <small>{escape(copy['side_stamp_body'])}</small>
+</div>
+""".strip()
+
+
+def _dev_help_html(language: str = DEFAULT_LANGUAGE) -> str:
+    return f"""
+<div class="dc-dev-help">
+  <strong>For debugging only. Most people can leave this alone.</strong>
+  <span>{escape(copy_for(language)['runtime_help'])}</span>
+</div>
+""".strip()
+
+
+def build_demo() -> gr.Blocks:
+    initial_state, initial_view = initial_mobile_state(language=DEFAULT_LANGUAGE)
+    initial = _load_view(initial_view)
+    initial_copy = copy_for(DEFAULT_LANGUAGE)
+
+    with gr.Blocks(css=CSS, js=VOICE_JS, title=APP_TITLE) as demo:
+        session_state = gr.State(initial_state)
+        view_state = gr.State(initial_view)
+
+        with gr.Column(elem_classes=["dc-shell"]):
+            hero_html = gr.HTML(_hero_html(DEFAULT_LANGUAGE))
             notice = gr.HTML(_notice_html(initial))
 
             with gr.Row(elem_classes=["dc-workspace-grid"]):
                 with gr.Column(elem_classes=["dc-flow-column"]):
                     with gr.Group(visible=True, elem_classes=["dc-stage"]) as declaration_group:
                         with gr.Group(elem_classes=["dc-composer"]):
-                            gr.HTML(
-                                """
-<div class="dc-section-title">
-  <span class="dc-title-icon">1</span>
-  <strong>记录你的梦境</strong>
-</div>
-""".strip()
-                            )
+                            dream_section_html = gr.HTML(_section_title_html(1, initial_copy["dream_label"]))
                             dream_text = gr.Textbox(
-                                label="梦境记录",
+                                label=initial_copy["dream_label"],
                                 placeholder=DREAM_PLACEHOLDER,
                                 lines=12,
                                 value="",
                                 elem_classes=["dc-dream-text"],
                             )
-                            gr.HTML(
-                                """
-<div class="dc-mic-control">
-  <button type="button" class="dc-mic-button" aria-label="点击麦克风录音">
-    <span class="dc-mic-glyph" aria-hidden="true"></span>
-  </button>
-  <div class="dc-mic-status" aria-live="polite">点击麦克风录音</div>
-</div>
-""".strip()
-                            )
+                            mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))
                             audio_input = gr.State(None)
-                            gr.HTML(
-                                """
-<p class="dc-field-tip">可以补充人物、地点、情绪、颜色，或醒来后最在意的疑问。</p>
-""".strip()
-                            )
+                            field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
-                            example_button = gr.Button("试试示例", variant="secondary")
-                            submit_button = gr.Button("继续解梦  →", variant="primary")
-                        gr.HTML(f"<p class='dc-processing-note'>{escape(PROCESSING_NOTE)}</p>")
-                        with gr.Accordion("添加图片线索", open=False, elem_classes=["dc-attachment-drawer"]):
-                            image_input = gr.Image(label="上传草图、便签或截图", type="filepath", height=160)
+                            example_button = gr.Button(initial_copy["example_button"], variant="secondary")
+                            submit_button = gr.Button(initial_copy["submit_button"], variant="primary")
+                        processing_html = gr.HTML(_processing_html(DEFAULT_LANGUAGE))
+                        with gr.Accordion(initial_copy["image_accordion"], open=False, elem_classes=["dc-attachment-drawer"]):
+                            image_input = gr.Image(label=initial_copy["image_label"], type="filepath", height=160)
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
-                        question_markdown = gr.HTML(_question_markdown(initial))
+                        question_markdown = gr.HTML(_question_markdown(initial, DEFAULT_LANGUAGE))
                         answer_text = gr.Textbox(
-                            label="你的回答",
+                            label=initial_copy["answer_label"],
                             placeholder=ANSWER_PLACEHOLDER,
                             lines=4,
                             value="",
                         )
                         with gr.Row(elem_classes=["dc-question-actions"]):
-                            answer_button = gr.Button("发送回答", variant="primary")
-                            skip_button = gr.Button("跳过，生成 Tips", variant="secondary")
+                            answer_button = gr.Button(initial_copy["answer_button"], variant="primary")
+                            skip_button = gr.Button(initial_copy["skip_button"], variant="secondary")
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-card"]) as card_group:
                         card_html = gr.HTML("")
                         with gr.Row(elem_classes=["dc-actions"]):
-                            gentle_button = gr.Button("再问一个问题", variant="secondary")
-                            weird_button = gr.Button("换个角度", variant="secondary")
-                            copy_button = gr.Button("复制结果", variant="secondary")
-                            reset_button = gr.Button("重新开始", variant="secondary")
+                            gentle_button = gr.Button(initial_copy["ask_again_button"], variant="secondary")
+                            weird_button = gr.Button(initial_copy["angle_button"], variant="secondary")
+                            copy_button = gr.Button(initial_copy["copy_button"], variant="secondary")
+                            reset_button = gr.Button(initial_copy["reset_button"], variant="secondary")
                         card_text = gr.Textbox(
-                            label="可复制结果",
+                            label=initial_copy["copy_label"],
                             value="",
                             lines=8,
                             show_copy_button=True,
@@ -399,33 +461,16 @@ def build_demo() -> gr.Blocks:
                         )
 
                 with gr.Column(elem_classes=["dc-side-panel"]):
-                    gr.HTML(
-                        """
-<div class="dc-section-title">
-  <span class="dc-title-icon">2</span>
-  <strong>醒来后的心情</strong>
-</div>
-""".strip()
+                    language = gr.Radio(
+                        label=initial_copy["language_label"],
+                        choices=LANGUAGE_OPTIONS,
+                        value=DEFAULT_LANGUAGE,
                     )
-                    mood = gr.Dropdown(label="心情", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
-                    gr.HTML(
-                        """
-<div class="dc-side-stamp">
-  <span>小贴士</span>
-  <strong>尽量回忆更多细节</strong>
-  <small>有助于更准确地理解梦境。</small>
-</div>
-""".strip()
-                    )
+                    mood_section_html = gr.HTML(_section_title_html(2, initial_copy["side_title"]))
+                    mood = gr.Dropdown(label=initial_copy["mood_label"], choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
+                    side_stamp_html = gr.HTML(_side_stamp_html(DEFAULT_LANGUAGE))
                     with gr.Accordion("Runtime settings", open=False, elem_classes=["dc-dev"]):
-                        gr.HTML(
-                            """
-<div class="dc-dev-help">
-  <strong>For debugging only. Most people can leave this alone.</strong>
-                            <span>自动模式会使用 Space 配置的后端；没有端点时会安全回退到 demo 数据。</span>
-</div>
-""".strip()
-                        )
+                        dev_help_html = gr.HTML(_dev_help_html(DEFAULT_LANGUAGE))
                         text_backend = gr.Dropdown(
                             label="Text generation",
                             choices=[
@@ -563,35 +608,100 @@ def build_demo() -> gr.Blocks:
 
         submit_button.click(
             _submit,
-            inputs=[dream_text, image_input, audio_input, mood, text_backend, vision_backend] + settings_inputs,
+            inputs=[dream_text, image_input, audio_input, mood, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
         )
         answer_button.click(
             _answer,
-            inputs=[session_state, answer_text, text_backend, vision_backend] + settings_inputs,
+            inputs=[session_state, answer_text, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
         )
         skip_button.click(
             _skip,
-            inputs=[session_state, text_backend, vision_backend] + settings_inputs,
+            inputs=[session_state, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
         )
         gentle_button.click(
             _revise,
-            inputs=[session_state, gr.State("softer"), text_backend, vision_backend] + settings_inputs,
+            inputs=[session_state, gr.State("softer"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
         )
         weird_button.click(
             _revise,
-            inputs=[session_state, gr.State("stranger"), text_backend, vision_backend] + settings_inputs,
+            inputs=[session_state, gr.State("stranger"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
         )
         copy_button.click(lambda text: text, inputs=card_text, outputs=card_text)
         reset_button.click(
             _reset,
-            inputs=[text_backend, vision_backend] + settings_inputs,
+            inputs=[language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs + [dream_text, answer_text, image_input, audio_input, mood],
         )
-        example_button.click(lambda: (EXAMPLE_DREAM, EXAMPLE_MOOD), outputs=[dream_text, mood])
+
+        def _example(selected_language):
+            selected_language = normalize_language(selected_language)
+            return EXAMPLE_DREAMS[selected_language], EXAMPLE_MOODS[selected_language]
+
+        example_button.click(_example, inputs=language, outputs=[dream_text, mood])
+
+        def _language_ui(selected_language):
+            selected_language = normalize_language(selected_language)
+            copy = copy_for(selected_language)
+            moods = mood_options_for(selected_language)
+            return (
+                _hero_html(selected_language),
+                _notice_html({"notice": copy["notice_record"], "status": "record"}),
+                _section_title_html(1, copy["dream_label"]),
+                gr.update(label=copy["dream_label"], placeholder=copy["dream_placeholder"]),
+                _mic_html(selected_language),
+                _field_tip_html(selected_language),
+                gr.update(value=copy["example_button"]),
+                gr.update(value=copy["submit_button"]),
+                _processing_html(selected_language),
+                _question_markdown({"question": ""}, selected_language),
+                gr.update(label=copy["answer_label"], placeholder=copy["answer_placeholder"]),
+                gr.update(value=copy["answer_button"]),
+                gr.update(value=copy["skip_button"]),
+                gr.update(value=copy["ask_again_button"]),
+                gr.update(value=copy["angle_button"]),
+                gr.update(value=copy["copy_button"]),
+                gr.update(value=copy["reset_button"]),
+                gr.update(label=copy["copy_label"]),
+                gr.update(label=copy["language_label"]),
+                _section_title_html(2, copy["side_title"]),
+                gr.update(label=copy["mood_label"], choices=moods, value=moods[0]),
+                _side_stamp_html(selected_language),
+                _dev_help_html(selected_language),
+            )
+
+        language.change(
+            _language_ui,
+            inputs=language,
+            outputs=[
+                hero_html,
+                notice,
+                dream_section_html,
+                dream_text,
+                mic_html,
+                field_tip_html,
+                example_button,
+                submit_button,
+                processing_html,
+                question_markdown,
+                answer_text,
+                answer_button,
+                skip_button,
+                gentle_button,
+                weird_button,
+                copy_button,
+                reset_button,
+                card_text,
+                language,
+                mood_section_html,
+                mood,
+                side_stamp_html,
+                dev_help_html,
+            ],
+        )
 
     return demo

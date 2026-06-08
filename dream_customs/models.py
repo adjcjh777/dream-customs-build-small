@@ -38,6 +38,9 @@ class FakeASRClient:
 
 
 class FakeTextClient:
+    def _wants_zh(self, prompt: str) -> bool:
+        return "自然中文" in prompt or "所有面向用户的字段都用自然中文" in prompt
+
     def generate_brief(self, prompt: str) -> DreamBrief:
         return DreamBrief(
             anchors=["elevator", "melted buttons", "floor 14"],
@@ -49,6 +52,16 @@ class FakeTextClient:
         )
 
     def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
+        if not self._wants_zh(prompt):
+            return {
+                "visitor_name": "Late elevator",
+                "questions": [
+                    "When you think about the elevator and the melted button, what real thing today feels hard to start?",
+                    "Was the strongest feeling urgency, tiredness, curiosity, or something else?",
+                    "Would a practical suggestion, a tiny action, or a caring sentence help most today?",
+                ],
+                "tone_note": "The dream may be asking you to make the first step smaller, not to finish everything at once.",
+            }
         return {
             "visitor_name": "迟到的电梯",
             "questions": [
@@ -72,6 +85,24 @@ class FakeTextClient:
         )
 
     def generate_today_tip(self, prompt: str) -> TodayTipCard:
+        if not self._wants_zh(prompt):
+            return TodayTipCard(
+                dream_summary="You dreamed that an elevator would not arrive, its button melted like wax, and floor 14 stayed frozen.",
+                main_question="Could this dream connect to feeling stuck before starting?",
+                dream_anchors=["elevator", "melted button", "floor 14"],
+                followup_questions=[
+                    "Was the strongest feeling urgency, fear, or absurdity?",
+                    "Is there one real task that feels late before it has even started?",
+                ],
+                user_answers=[],
+                interpretation=(
+                    "Maybe this dream is not predicting lateness. It turns the feeling of being stuck before "
+                    "starting into an elevator paused at floor 14."
+                ),
+                today_tip="For today, press one very small elevator button: open the task, without asking yourself to arrive yet.",
+                tiny_action="Spend five minutes writing which floor you want to stop at first today.",
+                caring_note="You can move one floor at a time; the whole building does not need to be solved this morning.",
+            )
         return TodayTipCard(
             dream_summary="你梦见电梯迟迟不到，按钮像蜡一样融化，楼层数字停在 14。",
             main_question="这个梦是否和最近卡在开始之前有关？",

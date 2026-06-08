@@ -23,12 +23,29 @@ def _phase_label(phase: str) -> str:
     return labels.get(phase, phase.title())
 
 
-def render_today_tip_card(card: TodayTipCard) -> str:
+def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
+    is_zh = language == "zh"
     anchors = "　".join(escape(anchor) for anchor in card.dream_anchors)
     questions = "".join(f"<li>{escape(question)}</li>" for question in card.followup_questions)
     answers = "".join(f"<li>{escape(answer)}</li>" for answer in card.user_answers)
+    labels = {
+        "page": "今日小 Tips" if is_zh else "Today Tip",
+        "thanks": "谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。"
+        if is_zh
+        else "Thanks for sharing this. Here is one grounded suggestion for today.",
+        "interpretation": "也许这个梦在提醒你" if is_zh else "Maybe this dream is pointing to",
+        "today_tip": "今天的小建议" if is_zh else "Today's small suggestion",
+        "tiny_action": "没试过的小事" if is_zh else "Tiny action",
+        "anchors": "关键词：" if is_zh else "Anchors:",
+        "history": "追问记录" if is_zh else "Question record",
+        "safety_default": "这不是诊断，只是一个温和的今日参考。"
+        if is_zh
+        else "This is not diagnosis, therapy, or prophecy; just a gentle reference for today.",
+        "safety_prefix": "这不是诊断。" if is_zh else "This is not diagnosis. ",
+        "highlight": "梦境细节" if is_zh else "dream detail",
+    }
     tiny_action = (
-        f"<section class='dqa-result-card'><div class='dqa-card-icon'>□</div><div><h3>没试过的小事</h3><p>{escape(card.tiny_action)}</p></div></section>"
+        f"<section class='dqa-result-card'><div class='dqa-card-icon'>□</div><div><h3>{labels['tiny_action']}</h3><p>{escape(card.tiny_action)}</p></div></section>"
         if card.tiny_action
         else ""
     )
@@ -38,38 +55,38 @@ def render_today_tip_card(card: TodayTipCard) -> str:
         else ""
     )
     safety = (
-        f"<div class='dqa-safety-note'>这不是诊断。{escape(card.safety_note)}</div>"
+        f"<div class='dqa-safety-note'>{labels['safety_prefix']}{escape(card.safety_note)}</div>"
         if card.safety_note
-        else "<div class='dqa-safety-note'>这不是诊断，只是一个温和的今日参考。</div>"
+        else f"<div class='dqa-safety-note'>{labels['safety_default']}</div>"
     )
     qa_history = (
-        f"<details class='dqa-qa-history'><summary>追问记录</summary><ol>{questions}</ol><ul>{answers}</ul></details>"
+        f"<details class='dqa-qa-history'><summary>{labels['history']}</summary><ol>{questions}</ol><ul>{answers}</ul></details>"
         if questions or answers
         else ""
     )
     return f"""
-<section class="dqa-tip-page" aria-label="今日小 Tips">
+<section class="dqa-tip-page" aria-label="{labels['page']}">
   <div class="dqa-tip-hero">
     <div>
       <div class="dqa-sun">☼</div>
-      <h2>今日小 Tips</h2>
-      <p>谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。</p>
+      <h2>{labels['page']}</h2>
+      <p>{labels['thanks']}</p>
     </div>
   </div>
   <article class="dqa-result-card is-interpretation">
     <div class="dqa-card-icon">☘</div>
     <div>
-      <h3>也许这个梦在提醒你</h3>
+      <h3>{labels['interpretation']}</h3>
       <p>{escape(card.interpretation)}</p>
-      <div class="dqa-anchor-strip">关键词： {anchors}</div>
+      <div class="dqa-anchor-strip">{labels['anchors']} {anchors}</div>
     </div>
   </article>
   <article class="dqa-result-card is-primary-tip">
     <div class="dqa-card-icon">☼</div>
     <div>
-      <h3>今天的小建议</h3>
+      <h3>{labels['today_tip']}</h3>
       <p>{escape(card.today_tip)}</p>
-      <div class="dqa-tip-highlight">★ {escape(card.dream_anchors[0] if card.dream_anchors else "梦境细节")}</div>
+      <div class="dqa-tip-highlight">★ {escape(card.dream_anchors[0] if card.dream_anchors else labels['highlight'])}</div>
     </div>
   </article>
   {tiny_action}

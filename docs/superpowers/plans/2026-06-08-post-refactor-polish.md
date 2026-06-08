@@ -25,7 +25,7 @@
 - No source edits required.
 - Record result in `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`.
 
-- [ ] **Step 1: Verify branch relationship**
+- [x] **Step 1: Verify branch relationship**
 
 Run:
 
@@ -36,7 +36,7 @@ git log --oneline origin/main..HEAD
 
 Expected: shows the post-merge Dream QA commits that are on `feature/dream-customs-ui-voice-settings` but not `origin/main`.
 
-- [ ] **Step 2: Create or update GitHub PR**
+- [x] **Step 2: Create or update GitHub PR**
 
 Run:
 
@@ -54,7 +54,7 @@ gh pr create \
   --body-file /tmp/dream-qa-post-refactor-pr.md
 ```
 
-- [ ] **Step 3: Merge GitHub PR**
+- [x] **Step 3: Merge GitHub PR**
 
 Use the authenticated browser/CLI path available in the session. Verify with:
 
@@ -70,7 +70,7 @@ Expected: `state` is `MERGED`.
 - Create or update: `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`
 - Test: no new unit test required for this task.
 
-- [ ] **Step 1: Verify deployed config**
+- [x] **Step 1: Verify deployed config**
 
 Run:
 
@@ -227,7 +227,7 @@ Run:
 git diff --check
 ```
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 Run:
 

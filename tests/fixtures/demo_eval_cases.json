@@ -1,0 +1,83 @@
+[
+  {
+    "id": "elevator_wax_floor14",
+    "dream_text": "I kept missing an elevator. The buttons melted like wax, and the floor number froze at 14.",
+    "visual_clues": ["Visible text: 14", "Object: melted elevator button"],
+    "mood": "Uneasy",
+    "required_terms": ["elevator", "14"],
+    "banned_terms": ["the an", "the the", "lever", "diagnosis"]
+  },
+  {
+    "id": "customs_wet_paper",
+    "dream_text": "I was at a customs window carrying a suitcase full of wet paper. The clerk asked me to declare every unfinished promise before sunrise.",
+    "visual_clues": [],
+    "mood": "Foggy",
+    "required_terms": ["customs", "paper"],
+    "banned_terms": ["hydrate", "fruit", "prophecy", "diagnosis"]
+  },
+  {
+    "id": "exam_without_pencil",
+    "dream_text": "I arrived at an exam with no pencil, but everyone else was already writing.",
+    "visual_clues": [],
+    "mood": "Restless",
+    "required_terms": ["exam", "pencil"],
+    "banned_terms": ["medical", "fate", "the an"]
+  },
+  {
+    "id": "locked_green_room",
+    "dream_text": "I found a small green room behind my kitchen, but the door kept locking itself.",
+    "visual_clues": ["Color: green", "Object: small door"],
+    "mood": "Curious",
+    "required_terms": ["green", "door"],
+    "banned_terms": ["diagnosis", "warning sign", "the the"]
+  },
+  {
+    "id": "train_arrives_silent",
+    "dream_text": "A silent train arrived with my name written on a ticket, but I could not read the destination.",
+    "visual_clues": ["Visible text: user name on ticket"],
+    "mood": "Uneasy",
+    "required_terms": ["train", "ticket"],
+    "banned_terms": ["destiny", "prophecy", "the an"]
+  },
+  {
+    "id": "phone_full_of_water",
+    "dream_text": "My phone was full of water, but it kept ringing from inside a drawer.",
+    "visual_clues": [],
+    "mood": "Tired",
+    "required_terms": ["phone", "water"],
+    "banned_terms": ["hydration", "diagnosis", "the the"]
+  },
+  {
+    "id": "missing_shoes_stairwell",
+    "dream_text": "I was in a stairwell without shoes, holding a map that only showed blank squares.",
+    "visual_clues": ["Object: blank map", "Place: stairwell"],
+    "mood": "Foggy",
+    "required_terms": ["stairwell", "map"],
+    "banned_terms": ["fate", "medical", "the an"]
+  },
+  {
+    "id": "bedside_note_rain",
+    "dream_text": "A note on my bedside table said 'bring the rain inside', and the window was already open.",
+    "visual_clues": ["Visible text: bring the rain inside", "Object: open window"],
+    "mood": "Calm",
+    "required_terms": ["rain", "window"],
+    "banned_terms": ["diagnosis", "prophecy", "the the"]
+  },
+  {
+    "id": "voice_fragment_buttons",
+    "dream_text": "",
+    "voice_transcript": "The hallway was blue, and the elevator buttons were warm.",
+    "visual_clues": ["Color: blue"],
+    "mood": "Uneasy",
+    "required_terms": ["hallway", "buttons"],
+    "banned_terms": ["the an", "the the", "diagnosis"]
+  },
+  {
+    "id": "abstract_sketch_moon_key",
+    "dream_text": "I drew the dream because I only remember a moon-shaped key and a red square.",
+    "visual_clues": ["Object: moon-shaped key", "Color: red square"],
+    "mood": "Curious",
+    "required_terms": ["key", "red"],
+    "banned_terms": ["medical", "fate", "the an"]
+  }
+]

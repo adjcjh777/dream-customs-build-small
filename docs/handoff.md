@@ -1,53 +1,62 @@
-# Dream Customs / 梦境海关 Handoff
+# Dream QA / 梦境问答台 Handoff
 
-Last updated: 2026-06-05
+Last updated: 2026-06-08
 
-## Current State
+## Current Product Direction
 
-The project has shipped a working Gradio MVP and a V4 local UI pass. The current interface centers a warm Codex-like multimodal composer: text, image upload, voice upload, mood, add-material, and send live inside one rounded input surface. Model routes, workflow shortcuts, diagnostics, and examples are collapsed by default.
+The project is pivoting from a customs/pact-centered ritual into a step-by-step dream Q&A Gradio app.
 
-Current V4 UX decisions:
+The repo and Space still use the `Dream Customs` name for continuity, but future product work should use the `Dream QA / 梦境问答台` direction:
 
-- The first screen prioritizes the dream declaration composer and pact inspector.
-- Image and voice use compact upload buttons to avoid large Gradio media drop zones in the main composer.
-- `Draft pact` and `Seal today's pact` sit beside the live pact inspector.
-- The timeline is a supporting "Story so far" section below the first-screen workflow.
-- Technical model route controls are available but not first-level visual chrome.
+> 输入梦境，回答或跳过几个温和追问，最后得到一个和梦境细节相关的今日小 Tips。
 
-The original visual HTML concept note remains useful background:
+The public hackathon experience is English-first. Keep the visible `English / 中文` toggle so Chinese remains a first-class path, but do not make judges land on a Chinese-only first screen.
 
-- `docs/dream-customs-concept/index.html`
+## Deprecated Context
 
-Supporting images:
+Earlier implementation and smoke docs mention:
 
-- `docs/dream-customs-concept/assets/dream-passport.svg`
-- `docs/dream-customs-concept/assets/multimodal-intake.svg`
-- `docs/dream-customs-concept/assets/alliance-card.svg`
+- dream visitor
+- customs negotiation
+- permit ID
+- contraband
+- sealed pact
+- bedtime release
 
-Project context documents:
+Those are historical context, not the new target. Do not build new work around permit/contraband/sealed-pact unless the user explicitly reverses this pivot.
 
-- `docs/spec.md`
-- `docs/prd.md`
-- `docs/handoff.md`
-- `docs/superpowers/plans/2026-06-05-dream-customs-mvp.md`
-- `docs/superpowers/plans/2026-06-05-dream-customs-uiux-v2.md`
-- `docs/superpowers/plans/2026-06-05-dream-customs-uiux-v3.md`
-- `AGENTS.md`
+## Current Source Documents
+
+Read in this order:
+
+1. `AGENTS.md`
+2. `docs/spec.md`
+3. `docs/prd.md`
+4. `PRODUCT.md`
+5. `DESIGN.md`
+6. `docs/superpowers/plans/2026-06-08-dream-qa-refactor.md`
+7. `docs/superpowers/plans/2026-06-08-dream-qa-refactor-doc-plan.md`
+
+Prototype references:
+
+- `docs/prototypes/2026-06-08-dream-qa-mobile-flow.png`
+- `docs/prototypes/2026-06-08-dream-qa-desktop-workbench.png`
+- `docs/prototypes/2026-06-08-dream-qa-tips-card.png`
 
 ## Product Decision
 
-Build Dream Customs as a "dream alliance" app, not a dream diagnosis app.
+Build a guided dream interpretation app, not a diagnosis app, not a fortune-telling app, and not a one-shot pact generator.
 
 Final positioning:
 
-> 梦境海关帮你和昨晚的梦结盟：把不安转成明天的小建议，把怪梦转成一件有趣的小事。
+> Dream QA helps you record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.
 
 ## Model Decision
 
 Use:
 
 - `openbmb/MiniCPM-V-4.6` for image/sketch/note understanding.
-- `openbmb/MiniCPM5-1B` for text reasoning, negotiation, and final output.
+- `openbmb/MiniCPM5-1B` for text reasoning, follow-up questions, interpretation, and final Today Tip.
 
 Do not broaden to arbitrary small models unless MiniCPM paths fail.
 
@@ -67,31 +76,43 @@ Voice input is allowed, but current MiniCPM pair does not directly transcribe ra
 1. User submits dream using text, image, voice, or a combination.
 2. Audio is transcribed by a small adapter.
 3. Image is converted into visual clues by MiniCPM-V-4.6.
-4. App builds a `DreamIntake` object.
-5. MiniCPM5-1B generates dream visitor and 2-3 negotiation questions.
-6. User answers or skips.
-7. MiniCPM5-1B generates final "Today's Pact" card.
-8. Gradio renders a screenshot-friendly HTML card.
+4. App builds a `DreamQuestionIntake`.
+5. MiniCPM5-1B creates a short dream summary and identifies the user's likely main question.
+6. MiniCPM5-1B asks 1-3 gentle follow-up questions.
+7. User answers, skips, adds detail, or asks for another angle.
+8. MiniCPM5-1B drafts a grounded interpretation.
+9. MiniCPM5-1B generates a final `TodayTipCard`.
+10. Gradio renders a mobile-readable result card and plain text.
+
+Language behavior:
+
+- Default: English.
+- Toggle: `中文`.
+- The same intake/state/card pipeline serves both languages.
+- MiniCPM prompts should instruct the selected output language instead of duplicating the product flow.
 
 ## Required Output Fields
 
-- `visitor_name`
-- `permit_id`
-- `contraband`
-- `risk_level`
-- `alliance_reading`
-- `practical_suggestion`
-- `weird_task`
-- `bedtime_release`
+- `dream_summary`
+- `main_question`
+- `dream_anchors`
+- `followup_questions`
+- `user_answers`
+- `interpretation`
+- `today_tip`
+- `tiny_action`
+- `caring_note`
 - `safety_note`
+
+The final `today_tip` must reference at least one concrete dream anchor. Generic wellness advice is a regression.
 
 ## Safety Boundary
 
 The product must never present itself as therapy, medical advice, or diagnosis. It should use playful, non-certain language. Severe distress should trigger a professional-help suggestion.
 
-## Recommended First Implementation
+## Recommended Implementation Scope
 
-The minimal Python package already exists:
+The existing package should be refactored rather than replaced from scratch:
 
 ```text
 app.py
@@ -105,37 +126,46 @@ dream_customs/
   render.py
   pipeline.py
   models.py
+  ui/
 tests/
-  test_schema.py
-  test_safety.py
-  test_render.py
-  test_pipeline.py
 ```
 
-The current implementation keeps deterministic demo clients as the default and exposes optional model routes. For V3, do not rebuild the pipeline from scratch. Fix the app shell, control hierarchy, phase actions, and visual polish while preserving the existing `CustomsSession` state flow.
+Likely code files to change:
+
+- `dream_customs/schema.py`
+- `dream_customs/prompts.py`
+- `dream_customs/pipeline.py`
+- `dream_customs/render.py`
+- `dream_customs/ui/actions.py`
+- `dream_customs/ui/app.py`
+- `dream_customs/ui/copy.py`
+- `dream_customs/ui/styles.py`
+- tests covering schema, prompts, pipeline, render, UI actions, and safety
 
 ## Implementation Priorities
 
-1. First-screen trust and immediate declaration controls.
-2. Clickable phase actions.
-3. Mobile-readable composer and inspector.
-4. Removal of long blank page regions.
-5. Tests and local browser verification.
-6. Branch commit/push and Space update when credentials allow.
+1. Preserve text-only demo fallback.
+2. Replace pact schema with Q&A state and Today Tip output.
+3. Preserve image and voice as optional evidence in the same intake.
+4. Make follow-up questions a first-class user action.
+5. Render one clear final tip, not a multi-field customs certificate.
+6. Keep mobile readability.
+7. Run tests and local Gradio smoke before any Space sync.
+8. Run `python scripts/evaluate_today_tip_quality.py` before deployment.
 
 ## Repository Status
 
-This directory is now a dedicated Dream Customs repository:
+This directory is a dedicated Dream Customs/Dream QA repository:
 
 - Local path: `/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon`
 - GitHub remote: `https://github.com/adjcjh777/dream-customs-build-small.git`
 - Hugging Face Space remote: `https://huggingface.co/spaces/build-small-hackathon/dream-customs`
 
-Continue to confirm `git remote -v` before pushing, but the earlier VLA remote warning is no longer the active state.
+Continue to confirm `git remote -v` before pushing.
 
 ## Modal Backend Route
 
-The intended production-quality route is:
+The intended production-quality route remains:
 
 ```text
 Hugging Face Space Gradio UI
@@ -146,13 +176,17 @@ Hugging Face Space Gradio UI
 
 The Space defaults to `model` for both text and vision backends, so a configured Space calls Modal immediately. The `demo` backend remains available in developer settings as the deterministic fallback path.
 
-The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the lightweight `@spaces.GPU` startup probe. Modal credits still pay for the hidden L4 GPU backend; the ZeroGPU probe is only there to make the HF hardware setting valid for this Gradio frontend.
+The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the lightweight `@spaces.GPU` startup probe. Modal credits still pay for the hidden GPU backend; the ZeroGPU probe is only there to make the HF hardware setting valid for this Gradio frontend.
+
+## Resolved Decisions
+
+- Public UI name: `Dream QA`, with `Dream Customs` retained as project/Space continuity.
+- Language: English-first for the international hackathon, with Chinese available through an in-app toggle.
+- Recommendation quality: deterministic Today Tip eval is required before deployment.
 
 ## Open Questions For User
 
-These do not block initial scaffolding:
+These do not block document alignment:
 
-- Should the demo language be Chinese-only or bilingual?
-- Which Hugging Face Space name should be used?
-- Should we reuse any previous `build-small-relics` assets, or keep Dream Customs separate?
 - Which ASR adapter is acceptable for the hackathon submission?
+- Should `refs/pr/*` cleanup be done after HF Space merges, or left for auditability?

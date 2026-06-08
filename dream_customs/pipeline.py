@@ -4,6 +4,7 @@ from typing import Dict, List, Optional, Tuple
 
 from dream_customs.prompts import (
     dream_brief_prompt,
+    dream_qa_state_prompt,
     followup_question_prompt,
     negotiation_prompt,
     pact_critique_prompt,
@@ -11,10 +12,19 @@ from dream_customs.prompts import (
     pact_prompt,
     pact_revision_prompt,
     pact_rewrite_prompt,
+    today_tip_prompt,
 )
-from dream_customs.render import render_pact_card
+from dream_customs.render import render_pact_card, render_today_tip_card
 from dream_customs.safety import needs_escalation, safety_note
-from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard, TimelineEvent
+from dream_customs.schema import CustomsSession, DreamIntake, DreamQAState, EvidenceItem, PactCard, TimelineEvent, TodayTipCard
+
+
+def _normalize_language(language: str = "en") -> str:
+    return "zh" if language == "zh" else "en"
+
+
+def _is_zh(language: str = "en") -> bool:
+    return _normalize_language(language) == "zh"
 
 
 def build_intake(
@@ -22,6 +32,7 @@ def build_intake(
     voice_transcript: str = "",
     visual_clues: Optional[List[str]] = None,
     mood: str = "",
+    main_question: str = "",
     recurring_symbols: Optional[List[str]] = None,
     uncertainty: str = "",
     user_context: str = "",
@@ -31,6 +42,7 @@ def build_intake(
         voice_transcript=voice_transcript,
         visual_clues=visual_clues or [],
         mood=mood,
+        main_question=main_question,
         recurring_symbols=recurring_symbols or [],
         uncertainty=uncertainty,
         user_context=user_context,
@@ -87,6 +99,24 @@ _ANCHOR_STOPWORDS = {
     "with",
 }
 
+_ZH_ANCHOR_MARKERS = [
+    "电梯按钮",
+    "融化的按钮",
+    "按钮融化",
+    "数字 14",
+    "数字14",
+    "老楼",
+    "桥",
+    "水",
+    "被追赶",
+    "找不到路",
+    "呼救",
+    "蓝色楼道",
+    "电梯",
+    "按钮",
+    "楼层",
+]
+
 
 def _dedupe_preserve_order(items: List[str]) -> List[str]:
     seen = set()
@@ -100,20 +130,29 @@ def _dedupe_preserve_order(items: List[str]) -> List[str]:
 
 
 def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
-    text = " ".join(
+    raw_text = " ".join(
         [
             intake.dream_text,
             intake.voice_transcript,
             " ".join(intake.visual_clues),
             " ".join(intake.recurring_symbols),
         ]
-    ).lower()
+    )
+    text = raw_text.lower()
     candidates: List[str] = []
+    for marker in _ZH_ANCHOR_MARKERS:
+        if marker in raw_text:
+            candidates.append(marker)
+    for number in re.findall(r"\b\d{1,3}\b", raw_text):
+        if number == "14":
+            candidates.append("数字 14")
     pair_pattern = re.compile(
         r"\b([a-z][a-z'-]+)\s+("
         r"paper|papers|promise|promises|window|windows|suitcase|suitcases|"
         r"clerk|clerks|sunrise|elevator|elevators|button|buttons|hallway|"
-        r"gate|gates|floor|floors|stamp|stamps|number|numbers"
+        r"gate|gates|floor|floors|stamp|stamps|number|numbers|exam|exams|"
+        r"pencil|pencils|train|trains|door|doors|phone|phones|water|shoe|shoes|"
+        r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains"
         r")\b"
     )
     for match in pair_pattern.finditer(text):
@@ -123,26 +162,84 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
             candidates.append(phrase)
 
     noun_pattern = re.compile(
-        r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor)\b"
+        r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor|"
+        r"exam|pencil|train|door|phone|water|shoe|stairwell|room|key|note|rain|moon|curtain|sleep|dream)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
     candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
 
-    return _dedupe_preserve_order(candidates)[:3]
+    return _dedupe_preserve_order(candidates)[:5]
 
 
-def _primary_anchor(intake: DreamIntake) -> str:
+def _primary_anchor(intake: DreamIntake, language: str = "en") -> str:
     anchors = _extract_dream_anchors(intake)
-    return anchors[0] if anchors else "night visitor"
+    if anchors:
+        return anchors[0]
+    return "梦里的那个细节" if _is_zh(language) else "that dream detail"
 
 
-def _secondary_anchor(intake: DreamIntake) -> str:
+def _secondary_anchor(intake: DreamIntake, language: str = "en") -> str:
     anchors = _extract_dream_anchors(intake)
-    return anchors[1] if len(anchors) > 1 else _primary_anchor(intake)
+    return anchors[1] if len(anchors) > 1 else _primary_anchor(intake, language)
 
 
 def _title_anchor(text: str) -> str:
     return " ".join(part.capitalize() for part in text.split())
+
+
+def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
+    merged = intake.dream_text.strip() or intake.voice_transcript.strip()
+    if not merged and intake.visual_clues:
+        merged = "、".join(intake.visual_clues[:3]) if _is_zh(language) else ", ".join(intake.visual_clues[:3])
+    if not merged:
+        return "你记录了一个还在整理中的梦。" if _is_zh(language) else "You recorded a dream that is still taking shape."
+    clean = re.sub(r"\s+", " ", merged).strip()
+    if len(clean) > 72:
+        clean = clean[:69].rstrip() + "..."
+    if not _is_zh(language):
+        return clean if clean.lower().startswith(("i ", "you ")) else f"You dreamed about {clean}"
+    return f"你梦见{clean}" if not clean.startswith(("你", "我", "I ", "i ")) else clean
+
+
+def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str:
+    if intake.main_question.strip():
+        return intake.main_question.strip()
+    primary = _primary_anchor(intake, language)
+    if not _is_zh(language):
+        return f"What might the {primary} be asking me to notice today?"
+    return f"这个梦里的「{primary}」可能在提醒我什么？"
+
+
+def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
+    primary = _primary_anchor(intake, language)
+    secondary = _secondary_anchor(intake, language)
+    if not _is_zh(language):
+        return (
+            f"Maybe this dream is not giving you a fixed answer. It is placing the {primary} "
+            f"beside the {secondary} so you can notice one small stuck point today."
+        )
+    return (
+        f"也许这个梦不是在给你一个确定答案，而是把「{primary}」和「{secondary}」放到一起，"
+        "提醒你先看见今天最卡住的一小处。"
+    )
+
+
+def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
+    primary = _primary_anchor(intake, language)
+    if not _is_zh(language):
+        return f"For today, borrow one action from the {primary}: open the smallest first step and stop there."
+    return f"今天先从「{primary}」借一个动作：只做最小的第一步，不急着把整件事完成。"
+
+
+def _anchor_in_text(text: str, anchors: List[str]) -> bool:
+    clean = (text or "").lower()
+    for anchor in anchors:
+        item = anchor.lower().strip()
+        if item and item in clean:
+            return True
+        if any(marker in item and marker in clean for marker in ["电梯", "按钮", "14", "桥", "水", "elevator", "button"]):
+            return True
+    return False
 
 
 def _text_uses_anchor(text: str, anchors: List[str]) -> bool:
@@ -279,21 +376,28 @@ def _grounded_alliance_reading(intake: DreamIntake) -> str:
     )
 
 
-def _grounded_question(intake: DreamIntake, question: str) -> str:
+def _grounded_question(intake: DreamIntake, question: str, language: str = "en") -> str:
     anchors = _extract_dream_anchors(intake)
     if not anchors or _text_uses_anchor(question, anchors):
         return question
-    primary = _primary_anchor(intake)
-    secondary = _secondary_anchor(intake)
+    primary = _primary_anchor(intake, language)
+    secondary = _secondary_anchor(intake, language)
+    if not _is_zh(language):
+        return (
+            f"When you think about the {primary} and the {secondary}, is there one real thing today "
+            "that you want to make easier to start?"
+        )
     return (
-        f"When you picture the {primary} and the {secondary}, what is one real-life promise "
-        "or task you want to make easier today?"
+        f"当你想到「{primary}」和「{secondary}」时，今天有没有一件真实的小事，"
+        "你希望它变得更容易开始？"
     )
 
 
-def _grounded_followup_question(intake: DreamIntake) -> str:
-    primary = _primary_anchor(intake)
-    return f"If the {primary} could hand you one smaller first step for today, what would that step be?"
+def _grounded_followup_question(intake: DreamIntake, language: str = "en") -> str:
+    primary = _primary_anchor(intake, language)
+    if not _is_zh(language):
+        return f"If the {primary} could hand you one smaller first step today, what would that step be?"
+    return f"如果「{primary}」能递给你一个更小的第一步，今天那一步会是什么？"
 
 
 def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str) -> PactCard:
@@ -373,6 +477,97 @@ def intake_from_modalities(
     )
 
 
+def build_qa_state(
+    intake: DreamIntake,
+    questions: Optional[List[str]] = None,
+    answers: Optional[List[str]] = None,
+    language: str = "en",
+) -> DreamQAState:
+    anchors = _extract_dream_anchors(intake)
+    return DreamQAState(
+        dream_summary=_summary_from_intake(intake, language),
+        main_question=_main_question_from_intake(intake, language),
+        dream_anchors=anchors,
+        followup_questions=questions or [],
+        user_answers=answers or [],
+        current_step="ask" if questions else "record",
+    )
+
+
+def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
+    polished = card.model_copy(deep=True)
+    intake_anchors = _extract_dream_anchors(intake)
+    card_anchors = polished.dream_anchors
+    if intake_anchors and not any(_text_uses_anchor(anchor, intake_anchors) for anchor in card_anchors):
+        anchors = intake_anchors
+    else:
+        anchors = card_anchors or intake_anchors
+    if not anchors:
+        anchors = [_primary_anchor(intake, language)]
+    polished.dream_anchors = anchors
+    if not polished.dream_summary.strip():
+        polished.dream_summary = _summary_from_intake(intake, language)
+    if not polished.main_question.strip():
+        polished.main_question = _main_question_from_intake(intake, language)
+    if not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
+        polished.interpretation = _fallback_interpretation(intake, language)
+    generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
+    if (
+        not polished.today_tip.strip()
+        or any(marker in polished.today_tip.lower() for marker in generic_tip_markers)
+        or not _anchor_in_text(polished.today_tip, anchors)
+    ):
+        polished.today_tip = _grounded_today_tip(intake, language)
+    if not polished.tiny_action.strip():
+        if _is_zh(language):
+            polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
+        else:
+            polished.tiny_action = f"Spend five minutes writing the first small step connected to the {anchors[0]}."
+    if not polished.caring_note.strip():
+        polished.caring_note = (
+            "你不需要一醒来就解决整个梦，先把一个细节照亮就很好。"
+            if _is_zh(language)
+            else "You do not have to solve the whole dream this morning; noticing one detail is enough."
+        )
+    merged = "\n".join([intake.merged_text(), answers or ""])
+    polished.safety_note = safety_note() if needs_escalation(merged) else ""
+    return polished
+
+
+def generate_today_tip(intake: DreamIntake, answers: str, text_client, language: str = "en") -> TodayTipCard:
+    language = _normalize_language(language)
+    qa_state = build_qa_state(intake, answers=[answer for answer in [answers] if answer], language=language)
+    prompt = today_tip_prompt(qa_state, language=language)
+    try:
+        if hasattr(text_client, "generate_today_tip"):
+            card = text_client.generate_today_tip(prompt)
+        else:
+            legacy, _html = generate_pact(intake, answers, text_client)
+            card = TodayTipCard(
+                dream_summary=qa_state.dream_summary,
+                main_question=qa_state.main_question,
+                dream_anchors=qa_state.dream_anchors,
+                followup_questions=qa_state.followup_questions,
+                user_answers=qa_state.user_answers,
+                interpretation=legacy.alliance_reading,
+                today_tip=legacy.practical_suggestion,
+                tiny_action=legacy.weird_task,
+                caring_note=legacy.bedtime_release,
+                safety_note=legacy.safety_note,
+            )
+    except Exception:
+        card = TodayTipCard(
+            dream_summary=qa_state.dream_summary,
+            main_question=qa_state.main_question,
+            dream_anchors=qa_state.dream_anchors,
+            followup_questions=qa_state.followup_questions,
+            user_answers=qa_state.user_answers,
+                interpretation=_fallback_interpretation(intake, language),
+                today_tip=_grounded_today_tip(intake, language),
+            )
+    return _polish_today_tip(card, intake, answers, language)
+
+
 def generate_negotiation(intake: DreamIntake, text_client) -> Dict:
     prompt = negotiation_prompt(intake)
     return text_client.generate_negotiation(prompt)
@@ -433,13 +628,18 @@ def _supports_model_led_pact(text_client) -> bool:
     )
 
 
-def create_session() -> CustomsSession:
+def create_session(language: str = "en") -> CustomsSession:
+    language = _normalize_language(language)
     return CustomsSession(
         events=[
             TimelineEvent(
                 role="system",
-                title="Dream Customs desk opened",
-                body="Start with any fragment: a sentence, a sketch, a voice note, or just the mood left behind.",
+                title="梦境问答台已打开" if _is_zh(language) else "Dream QA is open",
+                body=(
+                    "先记录一个梦境片段。文字永远可用，图片和语音会变成同一个梦境 intake 的线索。"
+                    if _is_zh(language)
+                    else "Record a dream fragment first. Text always works; image and voice become clues in the same intake."
+                ),
                 status="ready",
             )
         ]
@@ -494,18 +694,34 @@ def add_evidence(
     mood: str = "",
     vision_client=None,
     asr_client=None,
+    language: str = "en",
 ) -> CustomsSession:
+    language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
     added_items: List[EvidenceItem] = []
 
     if dream_text and dream_text.strip():
         clean_text = dream_text.strip()
         next_session.intake.dream_text = _append_text(next_session.intake.dream_text, clean_text)
-        added_items.append(EvidenceItem(type="text", label="Dream note", status="selected", content=clean_text))
+        added_items.append(
+            EvidenceItem(
+                type="text",
+                label="Dream note" if not _is_zh(language) else "梦境记录",
+                status="selected",
+                content=clean_text,
+            )
+        )
 
     if mood and mood.strip() and mood.strip() != next_session.intake.mood:
         next_session.intake.mood = mood.strip()
-        added_items.append(EvidenceItem(type="mood", label=f"Mood: {mood.strip()}", status="selected", content=mood.strip()))
+        added_items.append(
+            EvidenceItem(
+                type="mood",
+                label=f"Mood: {mood.strip()}" if not _is_zh(language) else f"心情：{mood.strip()}",
+                status="selected",
+                content=mood.strip(),
+            )
+        )
 
     if image_path:
         clues: List[str] = []
@@ -520,7 +736,7 @@ def add_evidence(
             added_items.append(
                 EvidenceItem(
                     type="image",
-                    label=f"Image clues ({len(clues)})",
+                    label=f"Image clues ({len(clues)})" if not _is_zh(language) else f"图片线索（{len(clues)}）",
                     status="extracted",
                     content=", ".join(clues),
                     source_path=image_path,
@@ -530,10 +746,15 @@ def add_evidence(
             added_items.append(
                 EvidenceItem(
                     type="image",
-                    label="Image evidence",
+                    label="Image evidence" if not _is_zh(language) else "图片证据",
                     status="failed",
                     source_path=image_path,
-                    error=error or "No visual clues extracted. Continue with text or voice.",
+                    error=error
+                    or (
+                        "No visual clues extracted. Continue with text or voice."
+                        if not _is_zh(language)
+                        else "没有提取到视觉线索，可以继续使用文字或语音。"
+                    ),
                 )
             )
 
@@ -550,7 +771,7 @@ def add_evidence(
             added_items.append(
                 EvidenceItem(
                     type="audio",
-                    label="Voice transcript",
+                    label="Voice transcript" if not _is_zh(language) else "语音转写",
                     status="extracted",
                     content=clean_transcript,
                     source_path=audio_path,
@@ -560,51 +781,78 @@ def add_evidence(
             added_items.append(
                 EvidenceItem(
                     type="audio",
-                    label="Voice evidence",
+                    label="Voice evidence" if not _is_zh(language) else "语音证据",
                     status="failed",
                     source_path=audio_path,
-                    error=error or "No transcript returned. Continue by typing the fragment.",
+                    error=error
+                    or (
+                        "No transcript returned. Continue by typing the fragment."
+                        if not _is_zh(language)
+                        else "没有返回转写结果，可以继续手动输入片段。"
+                    ),
                 )
             )
 
     if not added_items:
         next_session.phase = "error"
         next_session.events.append(
-            _event("error", "No material added", "Add text, image, or voice before asking the clerk.", status="empty")
+            _event(
+                "error",
+                "还没有梦境材料" if _is_zh(language) else "No dream material yet",
+                "请先添加文字、图片或语音；text-only 路径始终可用。"
+                if _is_zh(language)
+                else "Add text, image, or voice first; the text-only path always works.",
+                status="empty",
+            )
         )
         return next_session
 
     next_session.evidence_items.extend(added_items)
-    next_session.phase = "declaring"
+    next_session.phase = "record"
+    next_session.qa_state = build_qa_state(next_session.intake, language=language)
     summary = "\n".join(f"{item.label}: {item.content or item.error}" for item in added_items)
-    next_session.events.append(_event("user", "Material added", summary, status="filed"))
+    next_session.events.append(
+        _event("user", "梦境已记录" if _is_zh(language) else "Dream recorded", summary, status="record")
+    )
     _record_safety(next_session)
     return next_session
 
 
-def ask_questions(session: CustomsSession, text_client, force_another: bool = False) -> CustomsSession:
+def ask_questions(session: CustomsSession, text_client, force_another: bool = False, language: str = "en") -> CustomsSession:
+    language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
     if not next_session.intake.merged_text():
         next_session.phase = "error"
         next_session.events.append(
-            _event("error", "Customs has no declaration yet", "Add one dream fragment before asking a question.", status="empty")
+            _event(
+                "error",
+                "还没有梦境记录" if _is_zh(language) else "No dream note yet",
+                "请先添加一个梦境片段，再进入追问。"
+                if _is_zh(language)
+                else "Add a dream fragment before the follow-up question.",
+                status="empty",
+            )
         )
         return next_session
 
     prompt = (
-        followup_question_prompt(next_session.intake, next_session.question_history, next_session.answer_history)
+        followup_question_prompt(next_session.intake, next_session.question_history, next_session.answer_history, language)
         if force_another
-        else negotiation_prompt(next_session.intake)
+        else negotiation_prompt(next_session.intake, language)
     )
     negotiation = text_client.generate_negotiation(prompt)
     questions = [question for question in negotiation.get("questions", []) if question]
     fresh_questions = [question for question in questions if question not in next_session.question_history]
     if force_another and not fresh_questions:
-        fresh_questions = ["If today only needs one smaller first step, what should that step be?"]
+        fresh_questions = [
+            "如果今天只需要一个更小的第一步，它会是什么？"
+            if _is_zh(language)
+            else "If today only needed one smaller first step, what would it be?"
+        ]
     if not fresh_questions:
         fresh_questions = questions[:3]
     if fresh_questions:
-        fresh_questions = [_grounded_question(next_session.intake, fresh_questions[0])] + fresh_questions[1:]
+        fresh_questions = [_grounded_question(next_session.intake, fresh_questions[0], language)] + fresh_questions[1:]
     seen_questions = set(next_session.question_history)
     deduped_questions: List[str] = []
     for question in fresh_questions:
@@ -612,15 +860,24 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
             deduped_questions.append(question)
             seen_questions.add(question)
     if force_another and not deduped_questions:
-        deduped_questions = [_grounded_followup_question(next_session.intake)]
+        deduped_questions = [_grounded_followup_question(next_session.intake, language)]
     fresh_questions = deduped_questions
 
     next_session.question_history.extend(fresh_questions[:3])
-    next_session.phase = "negotiating"
+    next_session.phase = "ask"
+    next_session.qa_state = build_qa_state(
+        next_session.intake,
+        questions=next_session.question_history,
+        answers=next_session.answer_history,
+        language=language,
+    )
+    next_session.qa_state.current_step = "ask"
     next_session.events.append(
         _event(
-            "customs",
-            "Customs question filed" if len(fresh_questions) == 1 else "Customs questions filed",
+            "assistant",
+            ("梦境助手追问" if len(fresh_questions) == 1 else "梦境助手追问清单")
+            if _is_zh(language)
+            else ("Dream QA question" if len(fresh_questions) == 1 else "Dream QA questions"),
             "\n".join(fresh_questions[:3]),
             meta=str(negotiation.get("visitor_name", "")),
             status="question",
@@ -629,7 +886,8 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
     return next_session
 
 
-def answer_question(session: CustomsSession, answer: str) -> CustomsSession:
+def answer_question(session: CustomsSession, answer: str, language: str = "en") -> CustomsSession:
+    language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
     if not answer or not answer.strip():
         next_session.phase = "error"
@@ -638,18 +896,67 @@ def answer_question(session: CustomsSession, answer: str) -> CustomsSession:
         )
         return next_session
     next_session.answer_history.append(answer.strip())
-    next_session.phase = "negotiating"
-    next_session.events.append(_event("user", "Answer filed", answer.strip(), status="answered"))
+    next_session.phase = "ask"
+    next_session.qa_state = build_qa_state(
+        next_session.intake, next_session.question_history, next_session.answer_history, language=language
+    )
+    next_session.events.append(_event("user", "追问回答" if _is_zh(language) else "Question answered", answer.strip(), status="answered"))
     _record_safety(next_session)
     return next_session
 
 
-def skip_question(session: CustomsSession) -> CustomsSession:
+def skip_question(session: CustomsSession, language: str = "en") -> CustomsSession:
+    language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
-    skip_text = "The user chose to skip this question."
+    skip_text = "用户选择跳过这个追问。" if _is_zh(language) else "The user chose to skip this question."
     next_session.answer_history.append(skip_text)
-    next_session.phase = "negotiating"
-    next_session.events.append(_event("user", "Question skipped", skip_text, status="skipped"))
+    next_session.phase = "ask"
+    next_session.qa_state = build_qa_state(
+        next_session.intake, next_session.question_history, next_session.answer_history, language=language
+    )
+    next_session.events.append(_event("user", "跳过追问" if _is_zh(language) else "Question skipped", skip_text, status="skipped"))
+    return next_session
+
+
+def finish_today_tip(session: CustomsSession, text_client, language: str = "en") -> CustomsSession:
+    language = _normalize_language(language)
+    next_session = session.model_copy(deep=True)
+    if not next_session.intake.merged_text():
+        next_session.phase = "error"
+        next_session.events.append(
+            _event(
+                "error",
+                "今日小 Tips 需要梦境材料" if _is_zh(language) else "Today Tip needs dream material",
+                "请先添加至少一个梦境片段。"
+                if _is_zh(language)
+                else "Add at least one dream fragment first.",
+                status="empty",
+            )
+        )
+        return next_session
+    answers = next_session.answers_text()
+    card = generate_today_tip(next_session.intake, answers, text_client, language=language)
+    next_session.qa_state = build_qa_state(
+        next_session.intake, next_session.question_history, next_session.answer_history, language=language
+    )
+    next_session.qa_state.dream_summary = card.dream_summary
+    next_session.qa_state.main_question = card.main_question
+    next_session.qa_state.dream_anchors = card.dream_anchors
+    next_session.qa_state.current_step = "tip"
+    next_session.draft_tip = card
+    next_session.sealed_tip = card
+    next_session.draft_pact = None
+    next_session.sealed_pact = None
+    next_session.phase = "tip"
+    next_session.events.append(
+        _event(
+            "tip",
+            "今日小 Tips 已生成" if _is_zh(language) else "Today Tip generated",
+            f"{card.interpretation}\n{card.today_tip}",
+            status="tip",
+        )
+    )
+    _record_safety(next_session)
     return next_session
 
 

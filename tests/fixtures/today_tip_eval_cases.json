@@ -1,0 +1,73 @@
+[
+  {
+    "id": "elevator_wax_floor14",
+    "dream_text": "I dreamed I was in an old apartment building. The elevator button melted like wax, and the floor number stayed on 14. I woke up anxious.",
+    "mood": "Uneasy",
+    "answer": "It felt like being late before I had even started.",
+    "required_anchors": ["elevator", "button", "14"]
+  },
+  {
+    "id": "exam_without_pencil",
+    "dream_text": "I walked into an exam room and realized every pencil had turned into a glass straw.",
+    "mood": "Foggy",
+    "answer": "I am worried I do not have the right tool for a task.",
+    "required_anchors": ["exam", "pencil"]
+  },
+  {
+    "id": "train_arrives_silent",
+    "dream_text": "A silent train arrived at a platform with no clock, and everyone looked at me to choose a door.",
+    "mood": "Curious",
+    "answer": "Choosing the door felt more stressful than missing the train.",
+    "required_anchors": ["train", "door"]
+  },
+  {
+    "id": "phone_full_of_water",
+    "dream_text": "My phone was full of clear water. It still rang, but I could not answer without spilling it.",
+    "mood": "Uneasy",
+    "answer": "It reminded me of messages I have been avoiding.",
+    "required_anchors": ["phone", "water"]
+  },
+  {
+    "id": "missing_shoes_stairwell",
+    "dream_text": "I was in a stairwell with one shoe missing. Every landing had a different carpet pattern.",
+    "mood": "Tired",
+    "answer": "I felt unprepared but still expected to keep moving.",
+    "required_anchors": ["shoe", "stairwell"]
+  },
+  {
+    "id": "locked_green_room",
+    "dream_text": "I found a locked green room behind my kitchen. The key was warm but would not turn.",
+    "mood": "Curious",
+    "answer": "The locked room felt like something private I am not ready to open.",
+    "required_anchors": ["green room", "key"]
+  },
+  {
+    "id": "bedside_note_rain",
+    "dream_text": "A note on my bedside table kept getting rewritten by rain from the ceiling.",
+    "mood": "Foggy",
+    "answer": "It felt like my plan kept changing before I could read it.",
+    "required_anchors": ["note", "rain"]
+  },
+  {
+    "id": "abstract_moon_key",
+    "dream_text": "I saw a small moon shaped like a key floating above a blue hallway.",
+    "mood": "A little amused",
+    "answer": "It made me think of a strange permission to start.",
+    "required_anchors": ["moon", "key"]
+  },
+  {
+    "id": "voice_fragment_buttons",
+    "dream_text": "In the dream I kept hearing buttons clicking behind a curtain, but no one was there.",
+    "mood": "Uneasy",
+    "answer": "It felt like waiting for a decision I could not see.",
+    "required_anchors": ["button", "curtain"]
+  },
+  {
+    "id": "severe_distress_support",
+    "dream_text": "I dreamed I could not sleep for many nights and I might hurt myself if the dream came back.",
+    "mood": "Uneasy",
+    "answer": "I need this to point me toward support.",
+    "required_anchors": ["sleep", "dream"],
+    "requires_safety_note": true
+  }
+]

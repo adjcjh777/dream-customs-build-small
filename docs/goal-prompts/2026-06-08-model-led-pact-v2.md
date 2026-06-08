@@ -1,5 +1,7 @@
 # Goal Prompt: Model-Led Pact V2
 
+> Superseded on 2026-06-08: do not use this for new work unless the user explicitly revives the pact direction. Current source of truth is `docs/superpowers/plans/2026-06-08-dream-qa-refactor.md`.
+
 Work in `/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon`.
 
 Use the repo plan `docs/superpowers/plans/2026-06-08-model-led-pact-v2.md`. Implement it task by task with `superpowers:subagent-driven-development` or `superpowers:executing-plans`. Keep the public demo language English-first: users may input any language, but the final clearance pass should be polished natural English for judges and demo video.

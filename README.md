@@ -1,15 +1,15 @@
 ---
 title: Dream Customs
-emoji: ⚡
-colorFrom: blue
-colorTo: pink
+emoji: 🌤️
+colorFrom: green
+colorTo: yellow
 sdk: gradio
 sdk_version: 4.44.1
 python_version: "3.10"
 app_file: app.py
 pinned: false
 license: mit
-short_description: Turn dream declarations into a playful next-day pact.
+short_description: Guided dream Q&A with one gentle today tip.
 models:
   - openbmb/MiniCPM5-1B
   - openbmb/MiniCPM-V-4.6
@@ -20,21 +20,54 @@ tags:
   - dream-journal
 ---
 
-# Dream Customs
+# Dream QA / 梦境问答台
 
-A Build Small Hackathon Gradio app that helps users form a playful alliance with last night's dream.
+A Build Small Hackathon Gradio app that helps users unpack a dream step by step and leave with one grounded tip for today.
+
+The Hugging Face Space may still be named `Dream Customs` for continuity, but the current product direction is Dream QA: record a dream, answer or skip gentle follow-up questions, read a grounded interpretation draft, and receive a `今日小 Tips`.
+
+The public hackathon demo is English-first for international judges. A visible in-app language toggle keeps the Chinese experience available as `中文`.
 
 ## Concept
 
-Dream Customs accepts dream declarations by text, image, or voice. It turns the dream into a gentle "customs negotiation" and returns a Today's Pact card: one practical suggestion, one weird 5-minute task, and one bedtime release phrase.
+Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a grounded follow-up question, and returns a Today Tip card: a short non-certain interpretation, one practical or caring suggestion for today, and an optional tiny action.
+
+This is not a therapy, diagnosis, or prophecy product.
 
 ## Models
 
 - `openbmb/MiniCPM-V-4.6` for image/sketch/note understanding.
-- `openbmb/MiniCPM5-1B` for dream negotiation and pact generation.
+- `openbmb/MiniCPM5-1B` for dream summary, follow-up questions, interpretation, and Today Tip generation.
 - A small ASR adapter may be used only for voice transcription.
 - The app defaults to a stable demo backend so the local Gradio flow always works.
 - Optional Ollama adapters are included for local MiniCPM testing.
+- MiniCPM prompts are language-aware: English by default, Chinese when the user chooses `中文`.
+
+## User Flow
+
+1. Enter a dream by text, image, voice, or a mix.
+2. State or let the app infer the main question.
+3. Answer or skip one or more follow-up questions.
+4. Review a grounded interpretation.
+5. Receive one Today Tip tied to concrete dream details.
+
+## Language
+
+- Default public UI: English.
+- Toggle: `English / 中文`.
+- English mode may preserve user-provided dream anchors as written, but all UI labels, guidance, and generated helper text should be English.
+- Chinese mode keeps the warm `梦境问答台` wording.
+
+## Current Direction References
+
+- Product spec: `docs/spec.md`
+- PRD: `docs/prd.md`
+- Handoff: `docs/handoff.md`
+- Design system: `DESIGN.md`
+- Prototype images:
+  - `docs/prototypes/2026-06-08-dream-qa-mobile-flow.png`
+  - `docs/prototypes/2026-06-08-dream-qa-desktop-workbench.png`
+  - `docs/prototypes/2026-06-08-dream-qa-tips-card.png`
 
 ## Run
 
@@ -89,7 +122,7 @@ client = HostedMiniCPMTextClient(
     token=os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", ""),
 )
 result = client.generate_negotiation("I missed an elevator in a foggy dream.")
-print(result["visitor_name"])
+print(result)
 PY
 ```
 
@@ -112,16 +145,18 @@ PY
 
 ```bash
 python -m pytest -q
+python scripts/evaluate_today_tip_quality.py
 ```
 
 ## Deployment Smoke Status
 
-2026-06-05 local V2 verification passed: tests were green and the workbench flow reached a sealed pact through `Send to customs`, `Ask another question`, `Add material`, `Draft pact`, `Revise pact`, and `Seal today's pact`.
+Latest local Dream QA refactor smoke:
 
-The public Space now serves the V2 workbench from Space `main` commit `8ad6f00628f800abc2dbefab05163aba94a5723f`. Public browser smoke, mobile readability, diagnostics, raw remote queue prediction, and a hosted text route smoke all reached a sealed pact on 2026-06-05. The current Modal backend pass requires a real `openbmb/MiniCPM-V-4.6` vision route smoke before delivery; demo vision fallback is runtime resilience, not a substitute for that smoke.
+- `docs/smoke/2026-06-08-dream-qa-refactor-smoke.md`
+- `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`
 
-Current smoke details are tracked in `docs/smoke/2026-06-05-space-deployment-smoke.md`.
+Historical smoke notes under `docs/smoke/` describe earlier pact/customs UI passes. They remain useful deployment history, but the current implementation target is the Dream QA flow documented in `docs/handoff.md`, `docs/spec.md`, and `docs/prd.md`.
 
 ## Safety
 
-This is not a therapy or diagnosis product. It gives playful reflection, small actions, and escalation copy for severe distress.
+This is not a therapy or diagnosis product. It gives playful reflection, one small today tip, and escalation copy for severe distress.

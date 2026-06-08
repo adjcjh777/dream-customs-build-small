@@ -19,7 +19,7 @@ from dream_customs.pipeline import (
     skip_question,
 )
 from dream_customs.prompts import pact_prompt
-from dream_customs.schema import PactCard
+from dream_customs.schema import PactCard, VisionWitness
 
 
 def test_dated_permit_id_uses_runtime_date_and_preserves_serial():
@@ -191,7 +191,7 @@ def test_add_evidence_updates_session_with_text_image_audio_and_mood():
     )
     assert session.phase == "declaring"
     assert "elevator" in session.intake.dream_text
-    assert "blue hallway" in session.intake.visual_clues
+    assert any("blue hallway" in clue for clue in session.intake.visual_clues)
     assert "The buttons melted" in session.intake.voice_transcript
     assert session.intake.mood == "anxious"
     assert {item.type for item in session.evidence_items} == {"text", "image", "audio", "mood"}
@@ -322,6 +322,33 @@ def test_image_audio_failures_keep_text_path_alive():
     assert session.draft_pact is not None
     assert any(item.status == "failed" for item in session.evidence_items)
     assert "Text still works." in session.intake.dream_text
+
+
+def test_add_evidence_prefers_vision_witness_report():
+    class WitnessPreferredVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="Witness scene",
+                visible_text=["14"],
+                surprising_detail="Witness detail",
+            )
+
+        def extract_clues(self, image_path):
+            return ["flat clue should not win"]
+
+    session = add_evidence(
+        create_session(),
+        dream_text="I saw an elevator.",
+        image_path="demo.png",
+        mood="Uneasy",
+        vision_client=WitnessPreferredVision(),
+        asr_client=FakeASRClient(),
+    )
+
+    assert "Scene: Witness scene" in session.intake.visual_clues
+    assert "Visible text: 14" in session.intake.visual_clues
+    assert "Surprising detail: Witness detail" in session.intake.visual_clues
+    assert "flat clue should not win" not in session.intake.visual_clues
 
 
 def test_witness_failure_keeps_text_path_alive():

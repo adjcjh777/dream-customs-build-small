@@ -511,7 +511,7 @@ def add_evidence(
         clues: List[str] = []
         error = ""
         try:
-            clues = vision_client.extract_clues(image_path) if vision_client else []
+            clues = _extract_visual_clues(vision_client, image_path) if vision_client else []
         except Exception:
             clues = []
             error = "Image clue extraction failed. Text-only path remains available."

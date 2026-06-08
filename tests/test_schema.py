@@ -52,3 +52,52 @@ def test_evidence_item_tracks_failure_state():
     assert item.type == "image"
     assert item.status == "failed"
     assert "No clues" in item.error
+
+
+from dream_customs.schema import DreamBrief, PactCritique, VisionWitness
+
+
+def test_vision_witness_flattens_report_into_demo_clues():
+    witness = VisionWitness(
+        scene_summary="A hand-drawn elevator panel is stuck on floor 14.",
+        objects=["elevator button", "wax"],
+        visible_text=["14"],
+        spatial_relations=["button below the frozen number"],
+        mood_cues=["stuck", "cold"],
+        uncertain_details=["whether the floor is a basement"],
+        surprising_detail="The buttons look melted rather than broken.",
+    )
+
+    clues = witness.to_visual_clues()
+
+    assert clues[0] == "Scene: A hand-drawn elevator panel is stuck on floor 14."
+    assert "Object: elevator button" in clues
+    assert "Visible text: 14" in clues
+    assert "Surprising detail: The buttons look melted rather than broken." in clues
+
+
+def test_dream_brief_carries_evidence_and_demo_language():
+    brief = DreamBrief(
+        anchors=["elevator", "melted wax", "floor 14"],
+        emotional_hypothesis="The dream may be protecting a fear of getting stuck.",
+        today_bridge="Choose one stalled task and name the next small movement.",
+        visual_evidence=["Visible text: 14"],
+        safety_flags=[],
+        language="en",
+    )
+
+    assert brief.language == "en"
+    assert "floor 14" in brief.anchors
+    assert brief.visual_evidence == ["Visible text: 14"]
+
+
+def test_pact_critique_flags_template_and_grammar_failures():
+    critique = PactCritique(
+        passes=False,
+        issues=["repeated article", "template fallback"],
+        rewrite_instruction="Rewrite in natural English using elevator, wax, and floor 14.",
+    )
+
+    assert not critique.passes
+    assert "repeated article" in critique.issues
+    assert "natural English" in critique.rewrite_instruction

@@ -25,6 +25,47 @@ class DreamIntake(BaseModel):
         return "\n".join(part for part in parts if part)
 
 
+class VisionWitness(BaseModel):
+    scene_summary: str = ""
+    objects: list[str] = Field(default_factory=list)
+    visible_text: list[str] = Field(default_factory=list)
+    spatial_relations: list[str] = Field(default_factory=list)
+    mood_cues: list[str] = Field(default_factory=list)
+    uncertain_details: list[str] = Field(default_factory=list)
+    surprising_detail: str = ""
+
+    def to_visual_clues(self) -> list[str]:
+        clues: list[str] = []
+        if self.scene_summary.strip():
+            clues.append(f"Scene: {self.scene_summary.strip()}")
+        for label, values in [
+            ("Object", self.objects),
+            ("Visible text", self.visible_text),
+            ("Spatial relation", self.spatial_relations),
+            ("Mood cue", self.mood_cues),
+            ("Uncertain detail", self.uncertain_details),
+        ]:
+            clues.extend(f"{label}: {value.strip()}" for value in values if value.strip())
+        if self.surprising_detail.strip():
+            clues.append(f"Surprising detail: {self.surprising_detail.strip()}")
+        return clues[:12]
+
+
+class DreamBrief(BaseModel):
+    anchors: list[str] = Field(default_factory=list)
+    emotional_hypothesis: str = ""
+    today_bridge: str = ""
+    visual_evidence: list[str] = Field(default_factory=list)
+    safety_flags: list[str] = Field(default_factory=list)
+    language: str = "en"
+
+
+class PactCritique(BaseModel):
+    passes: bool = True
+    issues: list[str] = Field(default_factory=list)
+    rewrite_instruction: str = ""
+
+
 class PactCard(BaseModel):
     visitor_name: str
     permit_id: str

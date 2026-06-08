@@ -87,6 +87,30 @@ def test_ollama_vision_client_parses_visual_clues(tmp_path):
     assert clues == ["passport stamp", "customs desk", "blue", "foggy"]
 
 
+def test_ollama_vision_client_preserves_flat_text_clues(tmp_path):
+    image_path = tmp_path / "dream.png"
+    image_path.write_bytes(b"not a real png but enough for adapter encoding")
+    client = StubOllamaVisionClient("passport stamp, customs desk, blue")
+
+    clues = client.extract_clues(str(image_path))
+
+    assert clues == ["passport stamp", "customs desk", "blue"]
+
+
+def test_ollama_vision_client_accepts_partial_witness_json(tmp_path):
+    image_path = tmp_path / "dream.png"
+    image_path.write_bytes(b"not a real png but enough for adapter encoding")
+    client = StubOllamaVisionClient(
+        '{"objects":["elevator button"],"visible_text":["14"],"mood_cues":["cold"]}'
+    )
+
+    clues = client.extract_witness(str(image_path)).to_visual_clues()
+
+    assert "Object: elevator button" in clues
+    assert "Visible text: 14" in clues
+    assert "Mood cue: cold" in clues
+
+
 def test_hosted_text_client_parses_common_response_shape():
     client = StubHostedTextClient(
         {
@@ -166,3 +190,27 @@ def test_hosted_vision_client_parses_witness_report():
     assert isinstance(witness, VisionWitness)
     assert witness.scene_summary == "A blue hallway ends at a stuck elevator."
     assert "Visible text: 14" in witness.to_visual_clues()
+
+
+def test_hosted_vision_client_preserves_flat_text_clues():
+    class StubHostedFlatTextVisionClient(HostedMiniCPMVisionClient):
+        def _post_image(self, image_path):
+            return {"response": "passport stamp, customs desk, blue"}
+
+    clues = StubHostedFlatTextVisionClient(endpoint="https://example.test").extract_clues("demo.png")
+
+    assert clues == ["passport stamp", "customs desk", "blue"]
+
+
+def test_hosted_vision_client_accepts_partial_witness_json():
+    class StubHostedPartialWitnessClient(HostedMiniCPMVisionClient):
+        def _post_image(self, image_path):
+            return {
+                "response": '{"objects":["elevator button"],"visible_text":["14"],"mood_cues":["cold"]}'
+            }
+
+    clues = StubHostedPartialWitnessClient(endpoint="https://example.test").extract_witness("demo.png").to_visual_clues()
+
+    assert "Object: elevator button" in clues
+    assert "Visible text: 14" in clues
+    assert "Mood cue: cold" in clues

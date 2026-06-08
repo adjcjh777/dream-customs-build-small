@@ -174,9 +174,17 @@ def _pact_critique_from_parsed(parsed: Dict[str, Any]) -> PactCritique:
 def _has_witness_report_fields(parsed: Dict[str, Any]) -> bool:
     return bool(
         str(parsed.get("scene_summary", "")).strip()
+        or _as_string_list(parsed.get("objects"))
+        or _as_string_list(parsed.get("visible_text"))
         or _as_string_list(parsed.get("spatial_relations"))
+        or _as_string_list(parsed.get("mood_cues"))
+        or _as_string_list(parsed.get("uncertain_details"))
         or str(parsed.get("surprising_detail", "")).strip()
     )
+
+
+def _has_legacy_flat_clue_fields(parsed: Dict[str, Any]) -> bool:
+    return bool(_as_string_list(parsed.get("places")) or _as_string_list(parsed.get("colors")))
 
 
 def _vision_witness_from_parsed(parsed: Dict[str, Any]) -> VisionWitness:
@@ -207,6 +215,15 @@ def _simple_witness_from_text(text: str) -> VisionWitness:
     if not clues:
         return VisionWitness()
     return VisionWitness(scene_summary="; ".join(clues[:2]), objects=clues[2:6])
+
+
+def _visual_clues_from_model_text(text: str) -> List[str]:
+    parsed = _extract_json_object(text)
+    if parsed:
+        if _has_witness_report_fields(parsed) and not _has_legacy_flat_clue_fields(parsed):
+            return _vision_witness_from_parsed(parsed).to_visual_clues()
+        return _flat_visual_clues_from_parsed(parsed)
+    return _flat_visual_clues_from_text(text)
 
 
 class OllamaTextClient:
@@ -389,23 +406,25 @@ class OllamaVisionClient:
     def extract_clues(self, image_path: Optional[str]) -> List[str]:
         if not image_path:
             return []
-        witness_clues = self.extract_witness(image_path).to_visual_clues()
-        if witness_clues:
-            return witness_clues
         try:
             with open(image_path, "rb") as image_file:
                 image_b64 = base64.b64encode(image_file.read()).decode("ascii")
-            response = self._post_generate(visual_clue_prompt(), image_b64)
+            response = self._post_generate(visual_witness_prompt(), image_b64, num_predict=320)
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
             return self.fallback.extract_clues(image_path)
 
         text = str(response.get("response", ""))
-        parsed = _extract_json_object(text)
-        if parsed:
-            clues = _flat_visual_clues_from_parsed(parsed)
-            if clues:
-                return clues
-        return _flat_visual_clues_from_text(text)
+        clues = _visual_clues_from_model_text(text)
+        if clues:
+            return clues
+
+        try:
+            response = self._post_generate(visual_clue_prompt(), image_b64)
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
+            return self.fallback.extract_clues(image_path)
+
+        clues = _visual_clues_from_model_text(str(response.get("response", "")))
+        return clues or self.fallback.extract_clues(image_path)
 
 
 class MiniCPMVisionClient:
@@ -665,23 +684,25 @@ class HostedMiniCPMVisionClient:
     def extract_clues(self, image_path: Optional[str]) -> List[str]:
         if not image_path:
             return []
-        witness_clues = self.extract_witness(image_path).to_visual_clues()
-        if witness_clues:
-            return witness_clues
+        try:
+            payload = self._post_image(image_path, visual_witness_prompt())
+        except TypeError:
+            payload = self._post_image(image_path)
+        if not payload:
+            return self.fallback.extract_clues(image_path)
+        text = _hosted_text_from_response(payload)
+        clues = _visual_clues_from_model_text(text)
+        if clues:
+            return clues
+
         try:
             payload = self._post_image(image_path, visual_clue_prompt())
         except TypeError:
             payload = self._post_image(image_path)
         if not payload:
             return self.fallback.extract_clues(image_path)
-        parsed = _extract_json_object(_hosted_text_from_response(payload))
-        if parsed:
-            clues = _flat_visual_clues_from_parsed(parsed)
-            if clues:
-                return clues
-        text = _hosted_text_from_response(payload)
-        clues = _flat_visual_clues_from_text(text)
-        return clues[:8] or self.fallback.extract_clues(image_path)
+        clues = _visual_clues_from_model_text(_hosted_text_from_response(payload))
+        return clues or self.fallback.extract_clues(image_path)
 
 
 def _hosted_transcript_from_response(payload: Dict[str, Any]) -> str:

@@ -1,3 +1,4 @@
+from dream_customs.models import FakeTextClient
 from dream_customs.pipeline import build_intake
 from dream_customs.prompts import (
     dream_brief_prompt,
@@ -128,9 +129,6 @@ def test_pact_rewrite_prompt_uses_critique_instruction():
     assert "safe non-diagnostic" in prompt
     assert "natural English" in prompt
     assert "Do not add objects" in prompt
-
-
-from dream_customs.models import FakeTextClient
 
 
 def test_fake_text_client_supports_model_led_methods():

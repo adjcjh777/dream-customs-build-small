@@ -16,6 +16,7 @@ from dream_customs.pipeline import (
     seal_pact,
     skip_question,
 )
+from dream_customs.prompts import pact_prompt
 from dream_customs.schema import PactCard
 
 
@@ -57,6 +58,23 @@ def test_generate_negotiation_returns_questions():
     assert len(negotiation["questions"]) == 3
 
 
+def test_ask_questions_grounds_generic_question_in_dream_detail():
+    session = add_evidence(
+        create_session(),
+        dream_text=(
+            "I dreamed I was at a customs window carrying a suitcase full of wet paper. "
+            "The clerk asked me to declare every unfinished promise before sunrise."
+        ),
+        mood="Uneasy",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+    )
+
+    session = ask_questions(session, FakeTextClient())
+
+    assert "customs window" in session.question_history[0].lower() or "wet paper" in session.question_history[0].lower()
+
+
 def test_generate_pact_returns_card_and_html():
     intake = build_intake(dream_text="I missed an elevator.", mood="anxious")
     card, html = generate_pact(intake, "I want a small start.", FakeTextClient())
@@ -93,6 +111,70 @@ def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
     assert "电梯运行" not in card.practical_suggestion
     assert card.safety_note == ""
     assert "Life tip" in html
+
+
+def test_generate_pact_repairs_generic_hosted_output_with_dream_details():
+    class GenericHostedTextClient:
+        def generate_pact(self, prompt):
+            return PactCard(
+                visitor_name="Elena",
+                permit_id="DC-015",
+                contraband=["unfiled worry", "one stamp asking to be noticed"],
+                risk_level="medium",
+                alliance_reading=(
+                    "You can treat this as a small signal from last night's feelings, not a prophecy. "
+                    "Today, protect a realistic pace."
+                ),
+                practical_suggestion=(
+                    "Hydrate and eat a piece of fruit to support your morning routine, as dehydration "
+                    "can affect cognitive function."
+                ),
+                weird_task=(
+                    "Count the number of birds in the sky before bed, as it is a harmless and playful "
+                    "activity that requires no special skills."
+                ),
+                bedtime_release="7:00 PM",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text=(
+            "I dreamed I was at a customs window carrying a suitcase full of wet paper. "
+            "The clerk asked me to declare every unfinished promise before sunrise."
+        ),
+        mood="Uneasy",
+    )
+
+    card, html = generate_pact(intake, "", GenericHostedTextClient())
+    joined = "\n".join(
+        [
+            card.visitor_name,
+            card.alliance_reading,
+            card.practical_suggestion,
+            card.weird_task,
+            card.bedtime_release,
+        ]
+    ).lower()
+
+    assert "wet paper" in joined or "unfinished promise" in joined
+    assert "customs window" in card.alliance_reading.lower() or "wet paper" in card.alliance_reading.lower()
+    assert "promise" in card.practical_suggestion.lower() or "first step" in card.practical_suggestion.lower()
+    assert any(anchor in card.weird_task.lower() for anchor in ["paper", "promise", "suitcase", "customs"])
+    assert card.bedtime_release != "7:00 PM"
+    assert "Hydrate and eat a piece of fruit" not in html
+
+
+def test_pact_prompt_requires_dream_grounded_card():
+    intake = build_intake(
+        dream_text="I carried wet paper through a customs window before sunrise.",
+        mood="Uneasy",
+    )
+    prompt = pact_prompt(intake, "I want to keep one promise small today.")
+
+    assert "reuse at least two concrete dream details" in prompt
+    assert "avoid generic wellness filler" in prompt
+    assert "bedtime_release must be a sentence" in prompt
+    assert "not a human name unless a person appears" in prompt
 
 
 def test_add_evidence_updates_session_with_text_image_audio_and_mood():

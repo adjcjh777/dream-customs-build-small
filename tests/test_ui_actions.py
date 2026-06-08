@@ -1,9 +1,11 @@
 import json
+import inspect
 from datetime import date
 
 from dream_customs.ui.actions import answer_to_card_action, initial_mobile_state, skip_to_card_action, submit_dream_action
+import dream_customs.ui.app as ui_app
 from dream_customs.ui.app import _reset
-from dream_customs.ui.copy import DEFAULT_MOOD
+from dream_customs.ui.copy import DEFAULT_MOOD, PROCESSING_NOTE
 
 
 def test_mobile_defaults_to_model_backends():
@@ -12,6 +14,22 @@ def test_mobile_defaults_to_model_backends():
 
     assert view["debug"]["text_backend"] == "model"
     assert view["debug"]["vision_backend"] == "model"
+
+
+def test_runtime_settings_are_collapsed_for_public_flow():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert 'gr.Accordion("Runtime settings", open=False' in source
+
+
+def test_processing_note_is_story_copy_not_backend_jargon():
+    lowered = PROCESSING_NOTE.lower()
+
+    assert "clerk" in lowered
+    assert "model" in lowered
+    assert "token" not in lowered
+    assert "endpoint" not in lowered
+    assert "debug" not in lowered
 
 
 def test_mobile_reset_restores_calm_mood():

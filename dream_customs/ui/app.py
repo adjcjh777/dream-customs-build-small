@@ -35,6 +35,7 @@ from dream_customs.ui.copy import (
     EXAMPLE_MOOD,
     DEFAULT_MOOD,
     MOOD_OPTIONS,
+    PROCESSING_NOTE,
 )
 from dream_customs.ui.styles import CSS
 
@@ -371,6 +372,7 @@ def build_demo() -> gr.Blocks:
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button("Try the sample  →", variant="secondary")
                             submit_button = gr.Button("Issue today's pass  →", variant="primary")
+                        gr.HTML(f"<p class='dc-processing-note'>{escape(PROCESSING_NOTE)}</p>")
                         with gr.Accordion("Additional material", open=False, elem_classes=["dc-attachment-drawer"]):
                             image_input = gr.Image(label="Image clue", type="filepath", height=160)
 
@@ -420,7 +422,7 @@ def build_demo() -> gr.Blocks:
 </div>
 """.strip()
                     )
-                    with gr.Accordion("Runtime settings", open=True, elem_classes=["dc-dev"]):
+                    with gr.Accordion("Runtime settings", open=False, elem_classes=["dc-dev"]):
                         gr.HTML(
                             """
 <div class="dc-dev-help">

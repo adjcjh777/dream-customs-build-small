@@ -18,6 +18,9 @@ The tone should be gentle, plain, and specific. Do not make medical claims.
 Ask questions that an ordinary person can understand without knowing the app lore.
 Prefer questions about today's mood, one small real-life concern, or one safe action.
 Do not ask vague symbolic questions such as what a stamp wants to release.
+Ground every question in a concrete detail from the intake when possible, such as an object,
+place, action, color, or phrase the user actually provided.
+Do not invent a human name unless the user mentioned a person.
 
 Dream intake:
 {intake.merged_text()}
@@ -36,6 +39,8 @@ Do not diagnose. Do not repeat previous questions.
 The question must be plain and useful: ask what the user wants to make easier today,
 or whether there is one realistic thing they want help starting.
 Do not use unclear metaphors about stamps, release, fate, symbols, or hidden meanings.
+Reuse one concrete dream detail from the intake so the user can feel the question belongs
+to this dream rather than to a generic reflection form.
 
 Dream intake:
 {intake.merged_text()}
@@ -59,11 +64,16 @@ You are the Dream Customs diplomat. Generate a final Today's Pact card.
 Do not diagnose. Do not claim the dream has one certain meaning.
 The card must be useful for the user's real day, not only poetic.
 Give:
-- practical_suggestion: one safe, concrete life tip for today, such as hydration, eating, writing one task down, taking a short walk, reducing one task, checking the calendar, or asking for help. It must not be mystical or dream-literal.
-- weird_task: one harmless, playful, slightly odd thing doable in 5 minutes. It can be imaginative, but it must be understandable.
+- visitor_name: a short object/event phrase from the dream, not a human name unless a person appears.
+- alliance_reading: reuse at least two concrete dream details from the intake and say what the dream may be trying to protect today.
+- practical_suggestion: one safe, concrete next step for today. Tie it to the user's dream details or answers. avoid generic wellness filler such as hydration, fruit, exercise, or sleep hygiene unless the user explicitly asked for that.
+- weird_task: one harmless, playful, slightly odd thing doable in 5 minutes. It must reuse at least one concrete dream detail and be understandable.
+- bedtime_release: bedtime_release must be a sentence-length release phrase, not a time, schedule, diagnosis, or command.
 - safety_note: empty string unless the user mentions self-harm, harming others, severe distress, severe insomnia, panic, or inability to function.
 Use warm, non-clinical language.
-Avoid generic names like "Dreamer"; name the dream visitor with a short, vivid phrase.
+Avoid generic names like "Dreamer"; name the dream visitor with a short, vivid phrase from the user's own dream.
+The final card must reuse at least two concrete dream details across visitor_name,
+alliance_reading, practical_suggestion, weird_task, and bedtime_release.
 Write the final card in polished English for an English-language demo, even if the dream fragment contains another language.
 
 Dream intake:
@@ -85,6 +95,10 @@ Keep the same dream visitor unless the user's new material clearly changes it.
 Do not diagnose. Do not make the dream sound certain or frightening.
 Keep practical_suggestion safe, concrete, and useful for daily life.
 Keep weird_task playful but understandable and separate from the practical suggestion.
+The revised card must reuse at least two concrete dream details from the intake.
+visitor_name should be an object or event from the dream, not a human name unless a person appears.
+bedtime_release must be a sentence, not a time or schedule.
+Avoid generic wellness filler unless the user explicitly requested it.
 Use safety_note only for severe distress or safety risk; otherwise return an empty string.
 Write the revised card in polished English for an English-language demo, even if the dream fragment contains another language.
 

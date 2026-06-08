@@ -591,6 +591,20 @@ button.secondary {
   font-size: 1.05rem !important;
 }
 
+.dc-processing-note {
+  color: var(--dc-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  margin: 12px 2px 0;
+  max-width: 44rem;
+}
+
+.dc-processing-note::before {
+  color: var(--dc-coral-dark);
+  content: "While the stamp dries: ";
+  font-weight: 850;
+}
+
 .dc-attachment-drawer {
   background: rgba(230, 221, 208, 0.52) !important;
   border: 1px solid var(--dc-line) !important;
@@ -810,12 +824,18 @@ a.built-with[href*="gradio.app"] {
 }
 
 .dc-dev {
-  background: rgba(255, 249, 238, 0.7) !important;
-  border: 1px solid rgba(189, 168, 143, 0.58) !important;
+  background: rgba(255, 249, 238, 0.46) !important;
+  border: 1px dashed rgba(189, 168, 143, 0.55) !important;
   border-radius: var(--dc-radius-md) !important;
   box-shadow: none;
   margin-top: 0;
-  padding: 12px !important;
+  padding: 10px !important;
+}
+
+.dc-dev > button {
+  color: rgba(19, 41, 47, 0.74) !important;
+  font-size: 0.84rem !important;
+  min-height: 42px !important;
 }
 
 .dc-dev-help {

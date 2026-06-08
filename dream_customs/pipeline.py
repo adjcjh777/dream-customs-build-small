@@ -45,6 +45,114 @@ def _stamp_card_for_today(card: PactCard) -> PactCard:
     return stamped
 
 
+_ANCHOR_STOPWORDS = {
+    "about",
+    "after",
+    "again",
+    "asked",
+    "before",
+    "behind",
+    "being",
+    "carrying",
+    "declare",
+    "dream",
+    "dreamed",
+    "dreamt",
+    "every",
+    "feeling",
+    "fragment",
+    "from",
+    "full",
+    "into",
+    "last",
+    "left",
+    "night",
+    "paper",
+    "promise",
+    "through",
+    "today",
+    "window",
+    "with",
+}
+
+
+def _dedupe_preserve_order(items: List[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for item in items:
+        clean = re.sub(r"\s+", " ", item.strip(" .,:;!?\"'()[]{}")).lower()
+        if clean and clean not in seen:
+            result.append(clean)
+            seen.add(clean)
+    return result
+
+
+def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
+    text = " ".join(
+        [
+            intake.dream_text,
+            intake.voice_transcript,
+            " ".join(intake.visual_clues),
+            " ".join(intake.recurring_symbols),
+        ]
+    ).lower()
+    candidates: List[str] = []
+    pair_pattern = re.compile(
+        r"\b([a-z][a-z'-]+)\s+("
+        r"paper|papers|promise|promises|window|windows|suitcase|suitcases|"
+        r"clerk|clerks|sunrise|elevator|elevators|button|buttons|hallway|"
+        r"gate|gates|floor|floors|stamp|stamps|number|numbers"
+        r")\b"
+    )
+    for match in pair_pattern.finditer(text):
+        modifier, noun = match.groups()
+        phrase = f"{modifier} {noun.rstrip('s')}"
+        if modifier not in _ANCHOR_STOPWORDS:
+            candidates.append(phrase)
+
+    noun_pattern = re.compile(
+        r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor)\b"
+    )
+    candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
+    candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
+
+    return _dedupe_preserve_order(candidates)[:3]
+
+
+def _primary_anchor(intake: DreamIntake) -> str:
+    anchors = _extract_dream_anchors(intake)
+    return anchors[0] if anchors else "night visitor"
+
+
+def _secondary_anchor(intake: DreamIntake) -> str:
+    anchors = _extract_dream_anchors(intake)
+    return anchors[1] if len(anchors) > 1 else _primary_anchor(intake)
+
+
+def _title_anchor(text: str) -> str:
+    return " ".join(part.capitalize() for part in text.split())
+
+
+def _text_uses_anchor(text: str, anchors: List[str]) -> bool:
+    clean = (text or "").lower()
+    return any(anchor in clean for anchor in anchors)
+
+
+def _is_generic_visitor_name(text: str, intake: DreamIntake) -> bool:
+    clean = (text or "").strip()
+    if not clean:
+        return True
+    lowered = clean.lower()
+    merged = intake.merged_text().lower()
+    generic_names = {"dreamer", "night visitor", "elena", "visitor", "the visitor"}
+    if lowered in generic_names:
+        return True
+    anchors = _extract_dream_anchors(intake)
+    if anchors and not _text_uses_anchor(lowered, anchors) and lowered not in merged and len(clean.split()) <= 2:
+        return True
+    return False
+
+
 def _looks_unclear_or_dream_literal(text: str) -> bool:
     clean = (text or "").strip()
     if len(clean) < 12:
@@ -72,6 +180,41 @@ def _looks_unclear_or_dream_literal(text: str) -> bool:
     return any(term in clean for term in dream_literals)
 
 
+def _is_generic_daily_tip(text: str, anchors: List[str]) -> bool:
+    clean = (text or "").lower()
+    generic_markers = [
+        "hydrate",
+        "dehydration",
+        "piece of fruit",
+        "cognitive function",
+        "morning routine",
+        "take a short walk",
+        "eat something",
+        "drink water",
+    ]
+    return any(marker in clean for marker in generic_markers) and not _text_uses_anchor(clean, anchors)
+
+
+def _is_generic_weird_task(text: str, anchors: List[str]) -> bool:
+    clean = (text or "").lower()
+    generic_markers = [
+        "count the number of birds",
+        "requires no special skills",
+        "harmless and playful activity",
+        "salute the kettle",
+    ]
+    return any(marker in clean for marker in generic_markers) and not _text_uses_anchor(clean, anchors)
+
+
+def _is_bare_time_or_generic_release(text: str) -> bool:
+    clean = (text or "").strip()
+    if re.fullmatch(r"\d{1,2}:\d{2}\s*(?:am|pm|AM|PM)?", clean):
+        return True
+    if len(clean.split()) <= 3:
+        return True
+    return False
+
+
 def _safe_practical_suggestion(intake: DreamIntake) -> str:
     mood = intake.mood.strip().lower()
     if mood in {"uneasy", "foggy", "tired", "焦虑", "迷雾", "累"}:
@@ -86,27 +229,96 @@ def _safe_weird_task(intake: DreamIntake) -> str:
     return "Write your smallest task on paper, draw a tiny clearance stamp beside it, and work on it for just five minutes."
 
 
+def _grounded_practical_suggestion(intake: DreamIntake) -> str:
+    primary = _primary_anchor(intake)
+    secondary = _secondary_anchor(intake)
+    if "promise" in primary or "promise" in secondary:
+        return (
+            "Choose one unfinished promise and shrink it into a first step small enough to finish in "
+            "10 minutes."
+        )
+    return (
+        f"Pick one real task that feels like the {primary}, then define only its first step for the next 10 minutes."
+    )
+
+
+def _grounded_weird_task(intake: DreamIntake) -> str:
+    primary = _primary_anchor(intake)
+    secondary = _secondary_anchor(intake)
+    if "paper" in primary or "paper" in secondary:
+        return "Write one unfinished promise on a scrap of paper, fold it like a tiny suitcase, and stamp it cleared."
+    if "customs" in primary or "customs" in secondary:
+        return "Make a one-line customs form for today's smallest task and mark it cleared after five minutes."
+    return f"Draw the {primary} as a tiny customs stamp, press it once, and work for five minutes."
+
+
+def _grounded_bedtime_release(intake: DreamIntake) -> str:
+    primary = _primary_anchor(intake)
+    secondary = _secondary_anchor(intake)
+    return f"Tonight, the {primary} and the {secondary} are logged, cleared, and allowed to rest until morning."
+
+
+def _grounded_alliance_reading(intake: DreamIntake) -> str:
+    primary = _primary_anchor(intake)
+    secondary = _secondary_anchor(intake)
+    return (
+        f"You can treat the {primary} and the {secondary} as last night's way of asking for one promise "
+        "to become smaller and easier to carry today."
+    )
+
+
+def _grounded_question(intake: DreamIntake, question: str) -> str:
+    anchors = _extract_dream_anchors(intake)
+    if not anchors or _text_uses_anchor(question, anchors):
+        return question
+    primary = _primary_anchor(intake)
+    secondary = _secondary_anchor(intake)
+    return (
+        f"When you picture the {primary} and the {secondary}, what is one real-life promise "
+        "or task you want to make easier today?"
+    )
+
+
+def _grounded_followup_question(intake: DreamIntake) -> str:
+    primary = _primary_anchor(intake)
+    return f"If the {primary} could hand you one smaller first step for today, what would that step be?"
+
+
 def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str) -> PactCard:
     polished = card.model_copy(deep=True)
     merged = "\n".join([intake.merged_text(), answers or ""])
-    if not polished.visitor_name.strip() or polished.visitor_name.strip().lower() == "dreamer":
-        polished.visitor_name = "Night Visitor"
+    anchors = _extract_dream_anchors(intake)
+    if _is_generic_visitor_name(polished.visitor_name, intake):
+        polished.visitor_name = _title_anchor(_primary_anchor(intake))
 
     if _looks_unclear_or_dream_literal(polished.practical_suggestion):
         polished.practical_suggestion = _safe_practical_suggestion(intake)
+    elif _is_generic_daily_tip(polished.practical_suggestion, anchors):
+        polished.practical_suggestion = _grounded_practical_suggestion(intake)
+    elif anchors and not _text_uses_anchor(polished.practical_suggestion, anchors):
+        polished.practical_suggestion = _grounded_practical_suggestion(intake)
 
     if _looks_unclear_or_dream_literal(polished.weird_task) and polished.weird_task.strip() == polished.practical_suggestion.strip():
         polished.weird_task = _safe_weird_task(intake)
     elif len((polished.weird_task or "").strip()) < 8:
         polished.weird_task = _safe_weird_task(intake)
+    elif _is_generic_weird_task(polished.weird_task, anchors):
+        polished.weird_task = _grounded_weird_task(intake)
+    elif anchors and not _text_uses_anchor(polished.weird_task, anchors):
+        polished.weird_task = _grounded_weird_task(intake)
 
-    if len((polished.alliance_reading or "").strip()) < 12 or "联盟成员" in polished.alliance_reading:
-        polished.alliance_reading = (
-            "You can treat this as a small signal from last night's feelings, not a prophecy. "
-            "Today, protect a realistic pace."
-        )
+    if (
+        len((polished.alliance_reading or "").strip()) < 12
+        or "联盟成员" in polished.alliance_reading
+        or (anchors and not _text_uses_anchor(polished.alliance_reading, anchors))
+    ):
+        polished.alliance_reading = _grounded_alliance_reading(intake)
     if polished.risk_level.strip() in {"低", "中", "高", "low", "medium", "high"}:
         polished.risk_level = "medium: handle gently, without treating it as a warning sign"
+    if _is_bare_time_or_generic_release(polished.bedtime_release) or (
+        anchors and not _text_uses_anchor(polished.bedtime_release, anchors)
+    ):
+        polished.bedtime_release = _grounded_bedtime_release(intake)
 
     if not needs_escalation(merged):
         polished.safety_note = ""
@@ -318,6 +530,17 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
         fresh_questions = ["If today only needs one smaller first step, what should that step be?"]
     if not fresh_questions:
         fresh_questions = questions[:3]
+    if fresh_questions:
+        fresh_questions = [_grounded_question(next_session.intake, fresh_questions[0])] + fresh_questions[1:]
+    seen_questions = set(next_session.question_history)
+    deduped_questions: List[str] = []
+    for question in fresh_questions:
+        if question and question not in seen_questions:
+            deduped_questions.append(question)
+            seen_questions.add(question)
+    if force_another and not deduped_questions:
+        deduped_questions = [_grounded_followup_question(next_session.intake)]
+    fresh_questions = deduped_questions
 
     next_session.question_history.extend(fresh_questions[:3])
     next_session.phase = "negotiating"

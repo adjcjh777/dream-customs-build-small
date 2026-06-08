@@ -61,9 +61,9 @@ def test_render_timeline_and_inspector_show_session_state():
     session = add_evidence(create_session(), dream_text="A blue gate opened.", mood="foggy")
     timeline = render_timeline(session)
     inspector = render_pact_inspector(session)
-    assert "Customs timeline" in timeline
+    assert "梦境问答流程" in timeline
     assert "Dream note" in timeline
-    assert "No pact drafted yet" in inspector
+    assert "还没有生成今日小 Tips" in inspector
     assert "2 filed" in inspector
 
 

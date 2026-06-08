@@ -7,7 +7,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 from dream_customs.prompts import visual_clue_prompt, visual_witness_prompt
-from dream_customs.schema import DreamBrief, PactCard, PactCritique, VisionWitness
+from dream_customs.schema import DreamBrief, DreamQAState, PactCard, PactCritique, TodayTipCard, VisionWitness
 
 
 class FakeVisionClient:
@@ -50,13 +50,13 @@ class FakeTextClient:
 
     def generate_negotiation(self, prompt: str) -> Dict[str, Any]:
         return {
-            "visitor_name": "Late Elevator",
+            "visitor_name": "迟到的电梯",
             "questions": [
-                "What feeling was strongest when you woke up: pressure, tiredness, curiosity, or something else?",
-                "Is there one real-life thing you would like to make easier today?",
-                "Would you rather receive a practical life tip, a tiny odd task, or both?",
+                "醒来时最强烈的感受是什么：着急、疲惫、好奇，还是别的？",
+                "最近有没有一件真实的小事，让你还没开始就觉得有点来不及？",
+                "你更想得到一个认真建议、一个没试过的小行动，还是一句被照顾到的话？",
             ],
-            "tone_note": "This visitor may be asking for a smaller start, not a perfect finish.",
+            "tone_note": "这个梦也许是在提醒你先把开始变小，而不是马上要求完成。",
         }
 
     def generate_pact(self, prompt: str) -> PactCard:
@@ -69,6 +69,25 @@ class FakeTextClient:
             practical_suggestion="Choose one task and define only its first 10 minutes. Open it, then pause for water.",
             weird_task="Draw a tiny elevator button on paper, press it once, and work for five minutes.",
             bedtime_release="The elevator has docked for tonight. Unfinished floors can report tomorrow.",
+        )
+
+    def generate_today_tip(self, prompt: str) -> TodayTipCard:
+        return TodayTipCard(
+            dream_summary="你梦见电梯迟迟不到，按钮像蜡一样融化，楼层数字停在 14。",
+            main_question="这个梦是否和最近卡在开始之前有关？",
+            dream_anchors=["电梯", "融化的按钮", "数字 14"],
+            followup_questions=[
+                "梦里最强烈的是着急、害怕，还是荒诞？",
+                "最近有没有一件事让你还没开始就觉得迟到？",
+            ],
+            user_answers=[],
+            interpretation=(
+                "也许这个梦不是在预言你会迟到，而是在把“还没开始就担心来不及”的感觉，"
+                "演成了一部停在 14 层的电梯。"
+            ),
+            today_tip="今天先按下一个很小的电梯按钮：只打开那件事，不要求自己马上抵达。",
+            tiny_action="用 5 分钟写下：如果今天只停一层，我先停在哪一层？",
+            caring_note="你可以慢慢前进，不需要一醒来就解决所有楼层。",
         )
 
     def generate_pact_draft(self, prompt: str) -> PactCard:
@@ -168,6 +187,22 @@ def _pact_critique_from_parsed(parsed: Dict[str, Any]) -> PactCritique:
         passes=_as_bool(parsed.get("passes"), default=True),
         issues=_as_string_list(parsed.get("issues")),
         rewrite_instruction=str(parsed.get("rewrite_instruction", "")).strip(),
+    )
+
+
+def _today_tip_from_parsed(parsed: Dict[str, Any], fallback_state: Optional[DreamQAState] = None) -> TodayTipCard:
+    fallback_state = fallback_state or DreamQAState()
+    return TodayTipCard(
+        dream_summary=str(parsed.get("dream_summary") or fallback_state.dream_summary or "").strip(),
+        main_question=str(parsed.get("main_question") or fallback_state.main_question or "").strip(),
+        dream_anchors=_as_string_list(parsed.get("dream_anchors")) or list(fallback_state.dream_anchors),
+        followup_questions=_as_string_list(parsed.get("followup_questions")) or list(fallback_state.followup_questions),
+        user_answers=_as_string_list(parsed.get("user_answers")) or list(fallback_state.user_answers),
+        interpretation=str(parsed["interpretation"]).strip(),
+        today_tip=str(parsed["today_tip"]).strip(),
+        tiny_action=str(parsed.get("tiny_action", "")).strip(),
+        caring_note=str(parsed.get("caring_note", "")).strip(),
+        safety_note=str(parsed.get("safety_note", "")).strip(),
     )
 
 
@@ -317,6 +352,22 @@ class OllamaTextClient:
         except (KeyError, TypeError, ValueError):
             return self.fallback.generate_pact(prompt)
 
+    def generate_today_tip(self, prompt: str) -> TodayTipCard:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"dream_summary":"string","main_question":"string","dream_anchors":["string"],'
+                '"followup_questions":["string"],"user_answers":["string"],"interpretation":"string",'
+                '"today_tip":"string","tiny_action":"string","caring_note":"string","safety_note":"string"}'
+            ),
+            num_predict=780,
+        )
+        if not parsed:
+            return self.fallback.generate_today_tip(prompt)
+        try:
+            return _today_tip_from_parsed(parsed)
+        except (KeyError, TypeError, ValueError):
+            return self.fallback.generate_today_tip(prompt)
     def generate_brief(self, prompt: str) -> DreamBrief:
         parsed = self._generate_json(
             prompt,
@@ -580,6 +631,22 @@ class HostedMiniCPMTextClient:
         except (KeyError, TypeError, ValueError):
             return self.fallback.generate_pact(prompt)
 
+    def generate_today_tip(self, prompt: str) -> TodayTipCard:
+        parsed = self._generate_json(
+            prompt,
+            (
+                '{"dream_summary":"string","main_question":"string","dream_anchors":["string"],'
+                '"followup_questions":["string"],"user_answers":["string"],"interpretation":"string",'
+                '"today_tip":"string","tiny_action":"string","caring_note":"string","safety_note":"string"}'
+            ),
+            max_tokens=780,
+        )
+        if not parsed:
+            return self.fallback.generate_today_tip(prompt)
+        try:
+            return _today_tip_from_parsed(parsed)
+        except (KeyError, TypeError, ValueError):
+            return self.fallback.generate_today_tip(prompt)
     def generate_brief(self, prompt: str) -> DreamBrief:
         parsed = self._generate_json(
             prompt,

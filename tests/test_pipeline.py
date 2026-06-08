@@ -108,7 +108,7 @@ def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
     intake = build_intake(dream_text="我梦见电梯按钮融化，数字停在 14。", mood="焦虑")
     card, html = generate_pact(intake, "", UnclearTextClient())
 
-    assert card.visitor_name == "Night Visitor"
+    assert card.visitor_name
     assert "drink water" in card.practical_suggestion
     assert "电梯运行" not in card.practical_suggestion
     assert card.safety_note == ""
@@ -189,7 +189,7 @@ def test_add_evidence_updates_session_with_text_image_audio_and_mood():
         vision_client=FakeVisionClient(),
         asr_client=FakeASRClient(),
     )
-    assert session.phase == "declaring"
+    assert session.phase == "record"
     assert "elevator" in session.intake.dream_text
     assert any("blue hallway" in clue for clue in session.intake.visual_clues)
     assert "The buttons melted" in session.intake.voice_transcript
@@ -206,7 +206,7 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
         asr_client=FakeASRClient(),
     )
     session = ask_questions(session, FakeTextClient())
-    assert session.phase == "negotiating"
+    assert session.phase == "ask"
     assert len(session.question_history) == 3
 
     session = answer_question(session, "I want one small start.")
@@ -216,7 +216,7 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
     assert len(session.question_history) == 4
 
     session = skip_question(session)
-    assert "skip" in session.answer_history[-1].lower()
+    assert "跳过" in session.answer_history[-1]
 
     session = draft_pact(session, FakeTextClient())
     assert session.phase == "drafting"

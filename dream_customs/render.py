@@ -1,6 +1,6 @@
 from html import escape
 
-from dream_customs.schema import CustomsSession, EvidenceItem, PactCard, TimelineEvent
+from dream_customs.schema import CustomsSession, EvidenceItem, PactCard, TimelineEvent, TodayTipCard
 
 
 def _nl2br(text: str) -> str:
@@ -10,6 +10,10 @@ def _nl2br(text: str) -> str:
 def _phase_label(phase: str) -> str:
     labels = {
         "empty": "Empty desk",
+        "record": "Record",
+        "ask": "Ask",
+        "interpret": "Interpret",
+        "tip": "Today Tip",
         "declaring": "Declare",
         "negotiating": "Negotiate",
         "drafting": "Draft",
@@ -17,6 +21,63 @@ def _phase_label(phase: str) -> str:
         "error": "Needs attention",
     }
     return labels.get(phase, phase.title())
+
+
+def render_today_tip_card(card: TodayTipCard) -> str:
+    anchors = "　".join(escape(anchor) for anchor in card.dream_anchors)
+    questions = "".join(f"<li>{escape(question)}</li>" for question in card.followup_questions)
+    answers = "".join(f"<li>{escape(answer)}</li>" for answer in card.user_answers)
+    tiny_action = (
+        f"<section class='dqa-result-card'><div class='dqa-card-icon'>□</div><div><h3>没试过的小事</h3><p>{escape(card.tiny_action)}</p></div></section>"
+        if card.tiny_action
+        else ""
+    )
+    caring_note = (
+        f"<div class='dqa-care-note'>♡ {escape(card.caring_note)}</div>"
+        if card.caring_note
+        else ""
+    )
+    safety = (
+        f"<div class='dqa-safety-note'>这不是诊断。{escape(card.safety_note)}</div>"
+        if card.safety_note
+        else "<div class='dqa-safety-note'>这不是诊断，只是一个温和的今日参考。</div>"
+    )
+    qa_history = (
+        f"<details class='dqa-qa-history'><summary>追问记录</summary><ol>{questions}</ol><ul>{answers}</ul></details>"
+        if questions or answers
+        else ""
+    )
+    return f"""
+<section class="dqa-tip-page" aria-label="今日小 Tips">
+  <div class="dqa-tip-hero">
+    <div>
+      <div class="dqa-sun">☼</div>
+      <h2>今日小 Tips</h2>
+      <p>谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。</p>
+    </div>
+  </div>
+  <article class="dqa-result-card is-interpretation">
+    <div class="dqa-card-icon">☘</div>
+    <div>
+      <h3>也许这个梦在提醒你</h3>
+      <p>{escape(card.interpretation)}</p>
+      <div class="dqa-anchor-strip">关键词： {anchors}</div>
+    </div>
+  </article>
+  <article class="dqa-result-card is-primary-tip">
+    <div class="dqa-card-icon">☼</div>
+    <div>
+      <h3>今天的小建议</h3>
+      <p>{escape(card.today_tip)}</p>
+      <div class="dqa-tip-highlight">★ {escape(card.dream_anchors[0] if card.dream_anchors else "梦境细节")}</div>
+    </div>
+  </article>
+  {tiny_action}
+  {qa_history}
+  {safety}
+  {caring_note}
+</section>
+""".strip()
 
 
 def _evidence_chip(item: EvidenceItem) -> str:
@@ -31,10 +92,10 @@ def render_status_bar(session: CustomsSession, text_backend: str = "demo", visio
     return f"""
 <header class="dc-statusbar">
   <div class="dc-brand-lockup">
-    <span class="dc-brand-mark">DC</span>
+    <span class="dc-brand-mark">叶</span>
     <div>
-      <h1>Dream Customs</h1>
-  <p>Turn last night's strange visitor into one gentle pact for the day: a safe life tip, a small weird task, and a bedtime release.</p>
+      <h1>梦境问答台</h1>
+  <p>记录梦境，回答或跳过温和追问，得到一个引用梦境细节的今日小 Tips。</p>
     </div>
   </div>
   <div class="dc-system-status">
@@ -65,8 +126,8 @@ def render_timeline(session: CustomsSession) -> str:
         events = [
             TimelineEvent(
                 role="system",
-                title="The night desk is open",
-                body="Start with one fragment. The clerk can work from text, image, voice, or only the mood.",
+                title="梦境问答台已打开",
+                body="先写下一个梦境片段。文字、图片、语音都会进入同一个 intake。",
                 status="ready",
             )
         ]
@@ -87,12 +148,12 @@ def render_timeline(session: CustomsSession) -> str:
         )
     )
     return f"""
-<section class="dc-timeline-shell" aria-label="Dream Customs timeline">
+<section class="dc-timeline-shell" aria-label="Dream QA timeline">
   <div class="dc-timeline-head">
     <div>
-      <span class="dc-section-kicker">Customs timeline</span>
-      <h2>Story so far</h2>
-      <p>Dream fragments, clerk questions, and pact drafts stay together so the ritual feels easy to follow.</p>
+      <span class="dc-section-kicker">梦境问答流程</span>
+      <h2>目前记录</h2>
+      <p>梦境片段、追问、回答和解读草稿会按时间线留在这里。</p>
     </div>
     <span>{session.evidence_count()} filed</span>
   </div>
@@ -105,14 +166,16 @@ def render_timeline(session: CustomsSession) -> str:
 
 
 def render_pact_inspector(session: CustomsSession) -> str:
+    if session.sealed_tip or session.draft_tip:
+        return render_today_tip_card(session.sealed_tip or session.draft_tip)
     card = session.sealed_pact or session.draft_pact
     state = "sealed" if session.sealed_pact else "draft" if session.draft_pact else "waiting"
     if not card:
         return f"""
-<aside class="dc-inspector is-waiting" aria-label="Pact inspector">
-  <div class="dc-inspector-kicker">Pact inspector</div>
-  <h2>No pact drafted yet</h2>
-  <p>Your alliance card will appear here after the clerk has enough dream material. Text-only is enough to begin.</p>
+<aside class="dc-inspector is-waiting" aria-label="Today Tip preview">
+  <div class="dc-inspector-kicker">解读草稿</div>
+  <h2>还没有生成今日小 Tips</h2>
+  <p>记录梦境并回答或跳过追问后，解读草稿和今日小 Tips 会出现在这里。Text-only 已足够开始。</p>
   <dl>
     <div><dt>Evidence</dt><dd>{session.evidence_count()} filed</dd></div>
     <div><dt>Phase</dt><dd>{escape(_phase_label(session.phase))}</dd></div>
@@ -128,8 +191,8 @@ def render_pact_inspector(session: CustomsSession) -> str:
         else ""
     )
     return f"""
-<aside class="dc-inspector is-{state}" aria-label="Pact inspector">
-  <div class="dc-inspector-kicker">Pact inspector</div>
+<aside class="dc-inspector is-{state}" aria-label="Today Tip preview">
+  <div class="dc-inspector-kicker">解读草稿</div>
   <div class="dc-permit-row">
     <span>{escape(card.permit_id)}</span>
     <span>{escape(state.title())}</span>

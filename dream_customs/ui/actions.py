@@ -9,12 +9,13 @@ from dream_customs.pipeline import (
     answer_question,
     ask_questions,
     create_session,
-    draft_pact,
+    finish_today_tip,
     revise_pact,
     seal_pact,
     skip_question,
 )
-from dream_customs.schema import CustomsSession, PactCard
+from dream_customs.render import render_today_tip_card
+from dream_customs.schema import CustomsSession, TodayTipCard
 
 
 def _state_json(session: CustomsSession) -> str:
@@ -34,73 +35,19 @@ def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) 
     visible_question = next_session.question_history[previous_count]
     next_session.question_history = next_session.question_history[:previous_count] + [visible_question]
     for event in reversed(next_session.events):
-        if event.role == "customs" and event.status == "question":
-            event.title = "Customs question filed"
+        if event.role in {"assistant", "customs"} and event.status == "question":
+            event.title = "梦境助手追问"
             event.body = visible_question
             break
     return next_session
 
 
-def _card_plain_text(card: PactCard) -> str:
-    contraband = ", ".join(card.contraband)
-    parts = [
-        "Today's Clearance Pass",
-        f"Visitor: {card.visitor_name}",
-        f"Permit ID: {card.permit_id}",
-        f"Emotional contraband: {contraband}",
-        f"Risk level: {card.risk_level}",
-        f"Alliance reading: {card.alliance_reading}",
-        f"Life tip for today: {card.practical_suggestion}",
-        f"5-minute odd task: {card.weird_task}",
-        f"Bedtime release: {card.bedtime_release}",
-    ]
-    if card.safety_note:
-        parts.append(f"Support note: {card.safety_note}")
-    return "\n".join(parts)
+def _card_plain_text(card: TodayTipCard) -> str:
+    return card.to_plain_text()
 
 
-def _render_today_pass(card: PactCard) -> str:
-    contraband = "".join(f"<li>{escape(item)}</li>" for item in card.contraband)
-    safety = (
-        "<section class='dc-pass-safety'>"
-        "<strong>Support note, if needed</strong>"
-        f"<p>{escape(card.safety_note)}</p>"
-        "</section>"
-        if card.safety_note
-        else ""
-    )
-    return f"""
-<article class="dc-pass-card">
-  <div class="dc-pass-topline">
-    <span>Today's Clearance Pass</span>
-    <span>{escape(card.permit_id)}</span>
-  </div>
-  <h2>{escape(card.visitor_name)}</h2>
-  <p class="dc-pass-risk">{escape(card.risk_level)}</p>
-  <section>
-    <h3>What it may be carrying</h3>
-    <p>{escape(card.alliance_reading)}</p>
-  </section>
-  <section>
-    <h3>Life tip for today</h3>
-    <p>{escape(card.practical_suggestion)}</p>
-  </section>
-  <section>
-    <h3>5-minute odd task</h3>
-    <p>{escape(card.weird_task)}</p>
-  </section>
-  <section>
-    <h3>Emotional contraband</h3>
-    <ul>{contraband}</ul>
-  </section>
-  <section>
-    <h3>Bedtime release</h3>
-    <p>{escape(card.bedtime_release)}</p>
-  </section>
-  {safety}
-  <div class="dc-pass-seal">SEALED / CLEARED</div>
-</article>
-""".strip()
+def _render_today_pass(card: TodayTipCard) -> str:
+    return render_today_tip_card(card)
 
 
 def _questions(session: CustomsSession) -> List[str]:
@@ -108,15 +55,15 @@ def _questions(session: CustomsSession) -> List[str]:
 
 
 def _view_payload(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Dict[str, Any]:
-    card = session.sealed_pact or session.draft_pact
+    card = session.sealed_tip or session.draft_tip
     error = _latest_error(session)
-    status = "error" if error else "card" if session.sealed_pact else "question" if session.question_history else "declaration"
+    status = "error" if error else "tip" if session.sealed_tip else "ask" if session.question_history else "record"
     return {
         "status": status,
         "phase": session.phase,
         "question": _questions(session)[0] if _questions(session) else "",
         "questions": _questions(session),
-        "card_title": "Today's Clearance Pass" if card else "",
+        "card_title": "今日小 Tips" if card else "",
         "card_text": _card_plain_text(card) if card else "",
         "card_html": _render_today_pass(card) if card else "",
         "error": error,
@@ -135,12 +82,12 @@ def _view(session: CustomsSession, text_backend: str, vision_backend: str, **set
 
 def _notice_for_status(status: str, error: str = "") -> str:
     if status == "error":
-        return error or "Dream Customs has not received a fragment yet."
-    if status == "question":
-        return "Optional check-in: add one grounded detail, or skip straight to the pass."
-    if status == "card":
-        return "Today's pass is sealed. Treat it as a gentle action cue, not a diagnosis."
-    return "Write a sentence, a few lines, or paste a dream fragment. Text always works."
+        return error or "梦境问答台还没有收到片段。"
+    if status == "ask":
+        return "可以回答这个追问，也可以跳过，直接生成今日小 Tips。"
+    if status == "tip":
+        return "今日小 Tips 已生成。把它当作温和参考，不是诊断或预言。"
+    return "写一句、几行，或上传图片/语音。Text-only 路径始终可用。"
 
 
 def initial_mobile_state(
@@ -208,13 +155,10 @@ def revise_card_action(
     **settings,
 ) -> Tuple[str, str]:
     session = _session_from_state(state)
-    if session.sealed_pact and not session.draft_pact:
-        session.draft_pact = session.sealed_pact
+    if session.sealed_tip and not session.draft_tip:
+        session.draft_tip = session.sealed_tip
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
-    session = revise_pact(session, revision_request or "", text_client)
-    if session.phase == "error":
-        return _view(session, text_backend, vision_backend, **settings)
-    session = seal_pact(session)
+    session = ask_questions(session, text_client, force_another=True)
     return _view(session, text_backend, vision_backend, **settings)
 
 
@@ -228,7 +172,5 @@ def reset_mobile_action(
 
 def _seal_view(session: CustomsSession, text_backend: str, vision_backend: str, **settings) -> Tuple[str, str]:
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
-    session = draft_pact(session, text_client)
-    if session.phase != "error":
-        session = seal_pact(session)
+    session = finish_today_tip(session, text_client)
     return _view(session, text_backend, vision_backend, **settings)

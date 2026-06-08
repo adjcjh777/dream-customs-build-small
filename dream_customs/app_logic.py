@@ -19,14 +19,16 @@ from dream_customs.pipeline import (
     ask_questions,
     create_session,
     draft_pact,
+    finish_today_tip,
     generate_negotiation,
     generate_pact,
+    generate_today_tip,
     intake_from_modalities,
     revise_pact,
     seal_pact,
     skip_question,
 )
-from dream_customs.render import render_pact_card, render_pact_inspector, render_status_bar, render_timeline
+from dream_customs.render import render_pact_card, render_pact_inspector, render_status_bar, render_timeline, render_today_tip_card
 from dream_customs.schema import CustomsSession
 
 
@@ -218,12 +220,12 @@ def _notice(session: CustomsSession) -> str:
     latest_error = next((event for event in reversed(session.events) if event.role == "error"), None)
     if latest_error:
         return f"<div class='dc-inline-notice is-error'>{latest_error.body}</div>"
-    if session.phase == "sealed":
-        return "<div class='dc-inline-notice is-sealed'>Today's pact is sealed. The card below is ready for a screenshot.</div>"
+    if session.phase == "tip":
+        return "<div class='dc-inline-notice is-sealed'>今日小 Tips 已生成。可以截图或复制。</div>"
     if session.phase == "drafting":
-        return "<div class='dc-inline-notice'>Draft ready. Revise it, ask another question, add material, or seal today's pact.</div>"
-    if session.phase == "negotiating":
-        return "<div class='dc-inline-notice'>The clerk has questions. Answer, skip, add material, or draft a pact.</div>"
+        return "<div class='dc-inline-notice'>解读草稿已准备好。可以补充细节、再问一个问题，或生成今日小 Tips。</div>"
+    if session.phase in {"ask", "negotiating"}:
+        return "<div class='dc-inline-notice'>梦境助手有一个追问。你可以回答、跳过、补充材料，或生成今日小 Tips。</div>"
     return "<div class='dc-inline-notice'>File any fragment. Text-only stays available if image or voice fails.</div>"
 
 
@@ -233,7 +235,7 @@ def _view(
     vision_backend: str = DEFAULT_VISION_BACKEND,
     **settings,
 ):
-    sealed_html = render_pact_card(session.sealed_pact) if session.sealed_pact else ""
+    sealed_html = render_today_tip_card(session.sealed_tip) if session.sealed_tip else ""
     return (
         json.dumps(session.model_dump(mode="json"), ensure_ascii=False),
         render_status_bar(session, text_backend, vision_backend),
@@ -369,9 +371,7 @@ def seal_pact_action(
 ):
     session = _session_from_state(state)
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
-    if not session.draft_pact and session.intake.merged_text():
-        session = draft_pact(session, text_client)
-    session = seal_pact(session)
+    session = finish_today_tip(session, text_client)
     return _view(session, text_backend, vision_backend, **settings)
 
 
@@ -397,8 +397,8 @@ def run_customs_once(
     audio_path = _file_path(audio_value)
     if not any([dream_text and dream_text.strip(), image_path, audio_path]):
         return (
-            "No declaration received.",
-            "Please add text, an image, or a voice note before requesting clearance.",
+            "还没有收到梦境记录。",
+            "请先添加文字、图片或语音，再生成今日小 Tips。",
             "",
             json.dumps({"status": "empty"}, ensure_ascii=False, indent=2),
         )
@@ -413,8 +413,9 @@ def run_customs_once(
         asr_client=asr_client,
     )
     negotiation = generate_negotiation(intake, text_client)
-    answer_text = answers or "The user has not answered yet; infer a gentle pact from the declaration."
-    card, html = generate_pact(intake, answer_text, text_client)
+    answer_text = answers or "用户还没有回答追问，请根据已有记录生成温和今日小 Tips。"
+    card = generate_today_tip(intake, answer_text, text_client)
+    html = render_today_tip_card(card)
     questions = "\n".join(f"{index}. {question}" for index, question in enumerate(negotiation["questions"], start=1))
     negotiation_text = "\n".join(
         part
@@ -434,6 +435,6 @@ def run_customs_once(
         ],
         "intake": intake.model_dump(),
         "negotiation": negotiation,
-        "pact": card.model_dump(),
+        "today_tip": card.model_dump(),
     }
     return negotiation_text, card.to_plain_text(), html, json.dumps(debug, ensure_ascii=False, indent=2)

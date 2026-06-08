@@ -3,11 +3,12 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class DreamIntake(BaseModel):
+class DreamQuestionIntake(BaseModel):
     dream_text: str = ""
     voice_transcript: str = ""
     visual_clues: list[str] = Field(default_factory=list)
     mood: str = ""
+    main_question: str = ""
     recurring_symbols: list[str] = Field(default_factory=list)
     uncertainty: str = ""
     user_context: str = ""
@@ -18,11 +19,99 @@ class DreamIntake(BaseModel):
             self.voice_transcript.strip(),
             "Visual clues: " + ", ".join(self.visual_clues) if self.visual_clues else "",
             "Mood: " + self.mood.strip() if self.mood else "",
+            "Main question: " + self.main_question.strip() if self.main_question else "",
             "Recurring symbols: " + ", ".join(self.recurring_symbols) if self.recurring_symbols else "",
             "Uncertainty: " + self.uncertainty.strip() if self.uncertainty else "",
             "Context: " + self.user_context.strip() if self.user_context else "",
         ]
         return "\n".join(part for part in parts if part)
+
+
+class DreamIntake(DreamQuestionIntake):
+    """Backward-compatible name for older integration code."""
+
+
+class DreamQAState(BaseModel):
+    dream_summary: str = ""
+    main_question: str = ""
+    dream_anchors: list[str] = Field(default_factory=list)
+    followup_questions: list[str] = Field(default_factory=list)
+    user_answers: list[str] = Field(default_factory=list)
+    current_step: Literal["record", "ask", "interpret", "tip"] = "record"
+
+    @classmethod
+    def from_intake(
+        cls,
+        intake: DreamQuestionIntake,
+        dream_summary: str = "",
+        dream_anchors: Optional[list[str]] = None,
+        followup_questions: Optional[list[str]] = None,
+    ) -> "DreamQAState":
+        return cls(
+            dream_summary=dream_summary,
+            main_question=intake.main_question,
+            dream_anchors=dream_anchors or [],
+            followup_questions=followup_questions or [],
+            current_step="ask" if followup_questions else "record",
+        )
+
+
+class TodayTipCard(BaseModel):
+    dream_summary: str
+    main_question: str = ""
+    dream_anchors: list[str] = Field(default_factory=list)
+    followup_questions: list[str] = Field(default_factory=list)
+    user_answers: list[str] = Field(default_factory=list)
+    interpretation: str
+    today_tip: str
+    tiny_action: str = ""
+    caring_note: str = ""
+    safety_note: str = ""
+
+    def _combined_public_text(self) -> str:
+        return "\n".join(
+            [
+                self.dream_summary,
+                self.main_question,
+                self.interpretation,
+                self.today_tip,
+                self.tiny_action,
+                self.caring_note,
+            ]
+        ).lower()
+
+    def references_dream_anchor(self) -> bool:
+        text = self._combined_public_text()
+        for anchor in self.dream_anchors:
+            clean = anchor.strip().lower()
+            if not clean:
+                continue
+            if clean in text:
+                return True
+            tokens = [part for part in clean.replace("：", " ").replace(":", " ").split() if len(part) >= 2]
+            if any(token in text for token in tokens):
+                return True
+            for marker in ("电梯", "按钮", "楼", "桥", "水", "14", "melted", "elevator", "button", "floor"):
+                if marker in clean and marker in text:
+                    return True
+        return False
+
+    def to_plain_text(self) -> str:
+        lines = [
+            "今日小 Tips",
+            f"梦境摘要: {self.dream_summary}",
+            f"想理解的问题: {self.main_question}",
+            f"梦境线索: {', '.join(self.dream_anchors)}",
+            f"解读草稿: {self.interpretation}",
+            f"今日小 Tips: {self.today_tip}",
+        ]
+        if self.tiny_action:
+            lines.append(f"没试过的小事: {self.tiny_action}")
+        if self.caring_note:
+            lines.append(f"关心一句: {self.caring_note}")
+        if self.safety_note:
+            lines.append(f"安全提示: {self.safety_note}")
+        return "\n".join(lines)
 
 
 class VisionWitness(BaseModel):
@@ -94,10 +183,21 @@ class PactCard(BaseModel):
         return "\n".join(lines)
 
 
-SessionPhase = Literal["empty", "declaring", "negotiating", "drafting", "sealed", "error"]
+SessionPhase = Literal[
+    "empty",
+    "record",
+    "ask",
+    "interpret",
+    "tip",
+    "declaring",
+    "negotiating",
+    "drafting",
+    "sealed",
+    "error",
+]
 EvidenceType = Literal["text", "image", "audio", "mood"]
 EvidenceStatus = Literal["queued", "extracting", "extracted", "failed", "selected"]
-TimelineRole = Literal["system", "user", "customs", "pact", "error"]
+TimelineRole = Literal["system", "user", "assistant", "interpretation", "tip", "customs", "pact", "error"]
 
 
 class EvidenceItem(BaseModel):
@@ -119,10 +219,13 @@ class TimelineEvent(BaseModel):
 
 class CustomsSession(BaseModel):
     phase: SessionPhase = "empty"
-    intake: DreamIntake = Field(default_factory=DreamIntake)
+    intake: DreamQuestionIntake = Field(default_factory=DreamQuestionIntake)
+    qa_state: DreamQAState = Field(default_factory=DreamQAState)
     evidence_items: list[EvidenceItem] = Field(default_factory=list)
     question_history: list[str] = Field(default_factory=list)
     answer_history: list[str] = Field(default_factory=list)
+    draft_tip: Optional[TodayTipCard] = None
+    sealed_tip: Optional[TodayTipCard] = None
     draft_pact: Optional[PactCard] = None
     sealed_pact: Optional[PactCard] = None
     safety_flags: list[str] = Field(default_factory=list)
@@ -133,3 +236,7 @@ class CustomsSession(BaseModel):
 
     def evidence_count(self) -> int:
         return len([item for item in self.evidence_items if item.status != "failed"])
+
+    def model_dump(self, *args, **kwargs):
+        kwargs.setdefault("exclude_none", True)
+        return super().model_dump(*args, **kwargs)

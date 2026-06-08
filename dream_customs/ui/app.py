@@ -87,7 +87,7 @@ VOICE_JS = r"""
     button.addEventListener("click", async () => {
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
-        setStatus("This browser cannot transcribe speech directly yet. You can still type the dream fragment.", "error");
+        setStatus("这个浏览器暂时不能直接转写语音，你仍然可以手动输入梦境。", "error");
         textarea.focus();
         return;
       }
@@ -98,7 +98,7 @@ VOICE_JS = r"""
           stream.getTracks().forEach((track) => track.stop());
         }
       } catch (error) {
-        setStatus("Microphone permission was not granted. Allow recording in the browser, then try again.", "error");
+        setStatus("没有获得麦克风权限。允许浏览器录音后可以再试一次。", "error");
         return;
       }
 
@@ -111,7 +111,7 @@ VOICE_JS = r"""
       let latestTranscript = "";
 
       recognition.onstart = () => {
-        setStatus("Listening. Speak the dream fragment when you are ready.", "listening");
+        setStatus("正在听。准备好后说出梦境片段。", "listening");
       };
 
       recognition.onresult = (event) => {
@@ -120,23 +120,23 @@ VOICE_JS = r"""
           .join("")
           .trim();
         if (latestTranscript) {
-          setStatus(`Recording: ${latestTranscript}`, "listening");
+          setStatus(`录音中：${latestTranscript}`, "listening");
         }
       };
 
       recognition.onerror = (event) => {
         const message = event.error === "not-allowed"
-          ? "Microphone permission was denied. Allow recording, then try again."
-          : "I did not catch that clearly. Tap the mic once more if you want to retry.";
+          ? "麦克风权限被拒绝。允许录音后再试一次。"
+          : "刚才没有听清。想重试的话，再点一次麦克风。";
         setStatus(message, "error");
       };
 
       recognition.onend = () => {
         if (latestTranscript) {
           appendTranscript(latestTranscript);
-          setStatus("Added to the dream fragment.", "done");
+          setStatus("已加入梦境记录。", "done");
         } else if (button.dataset.mode === "listening") {
-          setStatus("No speech detected. Tap the mic once more if you want to retry.", "idle");
+          setStatus("没有检测到语音。想重试的话，再点一次麦克风。", "idle");
         }
       };
 
@@ -155,7 +155,7 @@ def _load_view(view_json: str) -> dict:
     try:
         return json.loads(view_json or "{}")
     except json.JSONDecodeError:
-        return {"status": "error", "error": "The interface state could not be read. Please start a new declaration."}
+        return {"status": "error", "error": "界面状态读取失败，请重新开始。"}
 
 
 def _notice_html(view: dict) -> str:
@@ -167,17 +167,17 @@ def _notice_html(view: dict) -> str:
 def _question_markdown(view: dict) -> str:
     question = escape(view.get("question") or "")
     optional_question = (
-        f"<p class='dc-question-original'><span>Optional question</span>{question}</p>"
+        f"<p class='dc-question-original'><span>梦境助手</span>{question}</p>"
         if question
         else ""
     )
     return f"""
 <div class="dc-question-card">
-  <span class="dc-question-kicker">Optional check-in</span>
-  <h2>Anything worth adding?</h2>
-  <p>If it helps, name one real-world thing you want to make easier today, or describe how the dream left your body feeling.</p>
+  <span class="dc-question-kicker">追问</span>
+  <h2>在这个梦里，你最想理解的是什么呢？</h2>
+  <p>回答一两句就好；也可以跳过，直接得到一个基于现有线索的今日小 Tips。</p>
   {optional_question}
-  <p class="dc-question-note">This step is optional. You can skip it and create the pass now.</p>
+  <p class="dc-question-note">这个步骤是为了让最终建议更贴近你的梦，不是问诊。</p>
 </div>
 """.strip()
 
@@ -192,9 +192,9 @@ def _updates(state: str, view_json: str):
         _question_markdown(view),
         view.get("card_html", ""),
         view.get("card_text", ""),
-        gr.update(visible=status in {"declaration", "error"}),
-        gr.update(visible=status == "question"),
-        gr.update(visible=status == "card"),
+        gr.update(visible=status in {"record", "error"}),
+        gr.update(visible=status == "ask"),
+        gr.update(visible=status == "tip"),
         json.dumps(view.get("debug", {}), ensure_ascii=False, indent=2),
     )
 
@@ -300,7 +300,7 @@ def build_demo() -> gr.Blocks:
     initial_state, initial_view = initial_mobile_state()
     initial = _load_view(initial_view)
 
-    with gr.Blocks(css=CSS, js=VOICE_JS, title="Dream Customs") as demo:
+    with gr.Blocks(css=CSS, js=VOICE_JS, title="梦境问答台") as demo:
         session_state = gr.State(initial_state)
         view_state = gr.State(initial_view)
 
@@ -311,24 +311,19 @@ def build_demo() -> gr.Blocks:
   <div class="dc-hero-top">
     <div class="dc-menu-mark" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="dc-brand-lockup">
-      <div class="dc-passport-icon" aria-hidden="true">
-        <span class="dc-cloud-dot one"></span>
-        <span class="dc-cloud-dot two"></span>
-        <span class="dc-cloud-dot three"></span>
-      </div>
       <div>
-        <p class="dc-brand-kicker">DREAM CUSTOMS</p>
         <h1>{APP_TITLE}</h1>
-        <p class="dc-brand-subtitle">A gentle dream declaration desk</p>
+        <p class="dc-brand-subtitle">Dream Customs</p>
       </div>
     </div>
-    <div class="dc-clearance-badge" aria-hidden="true">
-      <span>Dream Clearance</span>
-      <strong>DC-2026-0606</strong>
-      <small>Status: Ready</small>
-    </div>
+    <div class="dc-sun-mark" aria-hidden="true">☀</div>
   </div>
-  <p class="dc-hero-copy">{APP_SUBTITLE}</p>
+  <div class="dc-stepper" aria-label="Dream QA steps">
+    <span class="is-active"><strong>1</strong>记录</span>
+    <span><strong>2</strong>追问</span>
+    <span><strong>3</strong>解读</span>
+    <span><strong>4</strong>今日 Tip</span>
+  </div>
 </header>
 """.strip()
             )
@@ -342,12 +337,12 @@ def build_demo() -> gr.Blocks:
                                 """
 <div class="dc-section-title">
   <span class="dc-title-icon">1</span>
-  <strong>Describe your dream</strong>
+  <strong>记录你的梦境</strong>
 </div>
 """.strip()
                             )
                             dream_text = gr.Textbox(
-                                label="Dream declaration",
+                                label="梦境记录",
                                 placeholder=DREAM_PLACEHOLDER,
                                 lines=12,
                                 value="",
@@ -356,47 +351,47 @@ def build_demo() -> gr.Blocks:
                             gr.HTML(
                                 """
 <div class="dc-mic-control">
-  <button type="button" class="dc-mic-button" aria-label="Tap the microphone to dictate">
+  <button type="button" class="dc-mic-button" aria-label="点击麦克风录音">
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>
-  <div class="dc-mic-status" aria-live="polite">Tap the microphone to dictate</div>
+  <div class="dc-mic-status" aria-live="polite">点击麦克风录音</div>
 </div>
 """.strip()
                             )
                             audio_input = gr.State(None)
                             gr.HTML(
                                 """
-<p class="dc-field-tip">Tips: include people, places, emotions, colors, and anything that stood out.</p>
+<p class="dc-field-tip">可以补充人物、地点、情绪、颜色，或醒来后最在意的疑问。</p>
 """.strip()
                             )
                         with gr.Row(elem_classes=["dc-submit-row"]):
-                            example_button = gr.Button("Try the sample  →", variant="secondary")
-                            submit_button = gr.Button("Issue today's pass  →", variant="primary")
+                            example_button = gr.Button("试试示例", variant="secondary")
+                            submit_button = gr.Button("继续解梦  →", variant="primary")
                         gr.HTML(f"<p class='dc-processing-note'>{escape(PROCESSING_NOTE)}</p>")
-                        with gr.Accordion("Additional material", open=False, elem_classes=["dc-attachment-drawer"]):
-                            image_input = gr.Image(label="Image clue", type="filepath", height=160)
+                        with gr.Accordion("添加图片线索", open=False, elem_classes=["dc-attachment-drawer"]):
+                            image_input = gr.Image(label="上传草图、便签或截图", type="filepath", height=160)
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
                         question_markdown = gr.HTML(_question_markdown(initial))
                         answer_text = gr.Textbox(
-                            label="Your optional note",
+                            label="你的回答",
                             placeholder=ANSWER_PLACEHOLDER,
                             lines=4,
                             value="",
                         )
                         with gr.Row(elem_classes=["dc-question-actions"]):
-                            answer_button = gr.Button("Use this note", variant="primary")
-                            skip_button = gr.Button("Skip and create pass", variant="secondary")
+                            answer_button = gr.Button("发送回答", variant="primary")
+                            skip_button = gr.Button("跳过，生成 Tips", variant="secondary")
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-card"]) as card_group:
                         card_html = gr.HTML("")
                         with gr.Row(elem_classes=["dc-actions"]):
-                            gentle_button = gr.Button("Softer", variant="secondary")
-                            weird_button = gr.Button("Stranger", variant="secondary")
-                            copy_button = gr.Button("Copy text", variant="secondary")
-                            reset_button = gr.Button("New declaration", variant="secondary")
+                            gentle_button = gr.Button("再问一个问题", variant="secondary")
+                            weird_button = gr.Button("换个角度", variant="secondary")
+                            copy_button = gr.Button("复制结果", variant="secondary")
+                            reset_button = gr.Button("重新开始", variant="secondary")
                         card_text = gr.Textbox(
-                            label="Copy-ready text",
+                            label="可复制结果",
                             value="",
                             lines=8,
                             show_copy_button=True,
@@ -408,17 +403,17 @@ def build_demo() -> gr.Blocks:
                         """
 <div class="dc-section-title">
   <span class="dc-title-icon">2</span>
-  <strong>After waking feeling</strong>
+  <strong>醒来后的心情</strong>
 </div>
 """.strip()
                     )
-                    mood = gr.Dropdown(label="After-waking feeling", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
+                    mood = gr.Dropdown(label="心情", choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
                     gr.HTML(
                         """
 <div class="dc-side-stamp">
-  <span>Dream Customs</span>
-  <strong>Calm clearance</strong>
-  <small>Gentle declarations</small>
+  <span>小贴士</span>
+  <strong>尽量回忆更多细节</strong>
+  <small>有助于更准确地理解梦境。</small>
 </div>
 """.strip()
                     )
@@ -427,7 +422,7 @@ def build_demo() -> gr.Blocks:
                             """
 <div class="dc-dev-help">
   <strong>For debugging only. Most people can leave this alone.</strong>
-  <span>Auto mode uses the backend configured for this Space, then safely falls back to demo data when no endpoint is available.</span>
+                            <span>自动模式会使用 Space 配置的后端；没有端点时会安全回退到 demo 数据。</span>
 </div>
 """.strip()
                         )

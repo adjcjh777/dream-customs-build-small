@@ -139,6 +139,10 @@ python -m pytest -q
 
 ## Deployment Smoke Status
 
+Latest local Dream QA refactor smoke:
+
+- `docs/smoke/2026-06-08-dream-qa-refactor-smoke.md`
+
 Historical smoke notes under `docs/smoke/` describe earlier pact/customs UI passes. They remain useful deployment history, but the current implementation target is the Dream QA flow documented in `docs/handoff.md`, `docs/spec.md`, and `docs/prd.md`.
 
 ## Safety

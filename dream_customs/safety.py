@@ -24,7 +24,7 @@ def needs_escalation(text: str) -> bool:
 
 def safety_note() -> str:
     return (
-        "This dream sounds heavier than a playful customs ritual should handle. "
+        "This dream sounds heavier than a playful reflection tool should handle. "
         "If you feel unsafe, cannot sleep for many nights, or worry you may hurt "
         "yourself or someone else, please reach out to a trusted person or professional support now."
     )

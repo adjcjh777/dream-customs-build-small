@@ -247,6 +247,8 @@ git ls-remote space refs/heads/main
 
 Expected: Space `main` advances to the deployment commit.
 
+Observed 2026-06-09: HF Space PR #17 is open and ready, but merge is blocked because Chrome extension tab control fails with `native pipe is closed`, HF API merge returns `HfHubHTTPError`, and a direct git fast-forward safety check cannot complete because `git fetch space main` fails with `fatal: expected 'acknowledgments'`.
+
 ## Self-Review
 
 - Spec coverage: covers GitHub main alignment, deployed smoke, English-first toggle, quality evaluation, MiniCPM follow-up quality, docs, tests, commit, push, and HF Space sync.

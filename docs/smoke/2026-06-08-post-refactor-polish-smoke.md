@@ -180,5 +180,12 @@ Blockers observed:
 
 - Chrome extension automation could list browser sessions but failed to control Chrome tabs with `native pipe is closed`.
 - HF Hub API `merge_pull_request(... discussion_num=17)` returned an `HfHubHTTPError`; this matches the previous pattern where API merge rights are not available from the cached token.
+- Follow-up Chrome diagnostics on 2026-06-09 showed:
+  - Google Chrome is installed and running.
+  - Codex Chrome Extension is installed and enabled in the selected `Default` profile.
+  - Native host manifest exists and has the expected extension origin.
+  - Despite those checks, Chrome automation still fails at tab control with `native pipe is closed`.
+- A follow-up API merge retry still returned `HfHubHTTPError`.
+- A safety check for direct Space git sync could not prove fast-forward safety because `git fetch space main` failed at the HF git/LFS negotiation layer with `fatal: expected 'acknowledgments'`.
 
 Result: HF Space PR #17 is ready but not merged. Public Space `main` is still `19c54925...` until a logged-in browser merge succeeds or the HF token gains merge permission.

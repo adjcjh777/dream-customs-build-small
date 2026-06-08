@@ -6,11 +6,11 @@ Branch: feature/dream-customs-ui-voice-settings
 ## Local
 
 - Command: `.venv/bin/python -m pytest -q`
-- Result: PASS, `83 passed, 2 warnings`
+- Result: PASS, `86 passed, 2 warnings`
 - Command: `git diff --check`
 - Result: PASS
 - Command: `.venv/bin/python scripts/evaluate_demo_quality.py`
-- Result: PASS, `case_count` is `10`
+- Result: PASS, `case_count` is `10`, `passes` is `true`, `failures` is empty
 - Command: `GRADIO_SERVER_PORT=7862 .venv/bin/python app.py`
 - Result: PASS, local URL served at `http://0.0.0.0:7862`
 
@@ -46,6 +46,15 @@ Bedtime release: The elevator has docked for tonight. Unfinished floors can repo
 ## Hugging Face Space
 
 - Push target checked: `space https://huggingface.co/spaces/build-small-hackathon/dream-customs`
-- Live Space config checked:
-- Live Space manual case checked:
-- Notes: pending final Space sync attempt for this implementation branch.
+- Space sync command: `git push space feature/dream-customs-ui-voice-settings`
+- Space sync result: BLOCKED
+- Blocker:
+
+```text
+You are not authorized to push to this repo.
+Make sure that you are properly logged in.
+```
+
+- Live Space config checked: not re-checked for this implementation SHA because Space sync is blocked by push authorization.
+- Live Space manual case checked: not re-checked for this implementation SHA because the implementation branch is not deployed to the Space.
+- Notes: GitHub branch `feature/dream-customs-ui-voice-settings` is pushed through commit `19e6e5c`. Do not force-push public Space `main` or handle tokens in chat; Space sync needs an authenticated HF credential or manual PR/merge by someone with access.

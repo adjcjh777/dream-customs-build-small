@@ -157,3 +157,6 @@ def test_english_today_tip_has_no_chinese_anchor_leakage():
 
     for leaked in ["数字", "电梯", "按钮", "楼层", "融化"]:
         assert leaked not in combined
+    assert "overdue email" in combined.lower()
+    assert "first sentence" in combined.lower()
+    assert "immediately" not in combined.lower()

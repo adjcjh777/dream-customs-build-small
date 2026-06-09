@@ -40,8 +40,8 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
         "history": "追问记录" if is_zh else "Question record",
         "safety_default": "这不是诊断，只是一个温和的今日参考。"
         if is_zh
-        else "This is not diagnosis, therapy, or prophecy; just a gentle reference for today.",
-        "safety_prefix": "这不是诊断。" if is_zh else "This is not diagnosis. ",
+        else "A gentle reflection for today, not a diagnosis or prophecy.",
+        "safety_prefix": "这不是诊断。" if is_zh else "This is not a diagnosis. ",
         "highlight": "梦境细节" if is_zh else "dream detail",
     }
     tiny_action = (

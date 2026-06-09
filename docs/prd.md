@@ -102,6 +102,7 @@ Acceptance criteria:
 - Result is readable on mobile and desktop.
 - Result avoids medical, prophetic, or deterministic framing.
 - Today tip references a concrete dream anchor.
+- Optional tiny action is a five-minute first step, not a command to solve the whole issue immediately.
 
 #### Story 6: Bilingual Demo
 
@@ -112,6 +113,7 @@ Acceptance criteria:
 - Default UI title is `Dream QA`.
 - A visible `English / 中文` control exists.
 - English mode renders English labels and card headings.
+- English mode translates or paraphrases non-English anchors into English unless preserving a deliberate user quote.
 - Chinese mode renders `梦境问答台` and Chinese Today Tip labels.
 - Both modes use the same model/pipeline route.
 
@@ -147,6 +149,8 @@ Prompts must:
 - Keep final advice small enough to execute today.
 - Require at least one dream anchor in the final tip.
 - Follow selected language: English by default, Chinese when selected.
+- Avoid mixed-language leakage in English output.
+- Avoid hard commands such as "address it immediately"; prefer optional first-step language.
 
 ### Evaluation Strategy
 

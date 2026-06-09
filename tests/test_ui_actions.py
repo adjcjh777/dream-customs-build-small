@@ -19,7 +19,7 @@ def test_mobile_defaults_to_model_backends():
 def test_runtime_settings_are_collapsed_for_public_flow():
     source = inspect.getsource(ui_app.build_demo)
 
-    assert 'gr.Accordion("Runtime settings", open=False' in source
+    assert 'gr.Accordion("Advanced", open=False' in source
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():
@@ -27,8 +27,8 @@ def test_processing_note_is_story_copy_not_backend_jargon():
 
     assert "grounded question" in lowered
     assert "today tip" in lowered
-    assert "model routes" in lowered
-    assert "fallback" in lowered
+    assert "model routes" not in lowered
+    assert "fallback" not in lowered
     assert "token" not in lowered
     assert "endpoint" not in lowered
     assert "debug" not in lowered
@@ -131,3 +131,29 @@ def test_mobile_mvp_answer_to_card_generates_today_tip():
     assert view["status"] == "tip"
     assert view["phase"] == "tip"
     assert "It may be asking me to slow down." in view["debug"]["session"]["answer_history"]
+
+
+def test_english_today_tip_has_no_chinese_anchor_leakage():
+    state, _view_json = submit_dream_action(
+        dream_text=(
+            "I dreamed I was in an elevator where the floor buttons melted like wax. "
+            "The number 14 kept blinking, and I felt late but strangely calm."
+        ),
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+
+    _state, view_json = answer_to_card_action(
+        state,
+        "I want to make starting my overdue email easier without feeling trapped by it.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    combined = "\n".join([view["card_text"], view["card_html"]])
+
+    for leaked in ["数字", "电梯", "按钮", "楼层", "融化"]:
+        assert leaked not in combined

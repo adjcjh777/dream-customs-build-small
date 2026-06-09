@@ -27,8 +27,7 @@ APP_COPY = {
         "example_button": "Try example",
         "submit_button": "Continue",
         "processing_note": (
-            "After submission, Dream QA asks one grounded question before generating a Today Tip. "
-            "Model routes may take a few seconds; the text-only demo fallback always works."
+            "After submission, Dream QA asks one grounded question, then turns the dream into a small Today Tip."
         ),
         "image_accordion": "Add image clue",
         "image_label": "Upload a sketch, note, or screenshot",
@@ -52,7 +51,7 @@ APP_COPY = {
         "side_stamp_title": "Add one concrete detail",
         "side_stamp_body": "It helps the final suggestion stay grounded in your dream.",
         "language_label": "Language",
-        "runtime_help": "The automatic route uses the Space configuration. If no endpoint is available, it safely falls back to demo data.",
+        "runtime_help": "Advanced controls for demos and development. Most visitors can leave these unchanged.",
         "card_title": "Today Tip",
         "error_state": "The interface state could not be read. Please start over.",
     },
@@ -77,8 +76,7 @@ APP_COPY = {
         "example_button": "试试示例",
         "submit_button": "继续解梦  →",
         "processing_note": (
-            "提交后，梦境助手会先追问关键细节，再生成今日小 Tips。"
-            "模型路线可能需要几秒；text-only demo fallback 始终可用。"
+            "提交后，梦境助手会先追问一个关键细节，再把梦境整理成一个今日小 Tips。"
         ),
         "image_accordion": "添加图片线索",
         "image_label": "上传草图、便签或截图",
@@ -102,7 +100,7 @@ APP_COPY = {
         "side_stamp_title": "尽量回忆更多细节",
         "side_stamp_body": "有助于更准确地理解梦境。",
         "language_label": "语言",
-        "runtime_help": "自动模式会使用 Space 配置的后端；没有端点时会安全回退到 demo 数据。",
+        "runtime_help": "高级演示与开发控制。普通体验保持默认即可。",
         "card_title": "今日小 Tips",
         "error_state": "界面状态读取失败，请重新开始。",
     },

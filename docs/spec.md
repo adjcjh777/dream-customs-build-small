@@ -32,6 +32,8 @@ The user wakes up after a vivid or unsettling dream and wants help making sense 
 6. End with one small today tip, not a pile of advice.
 7. Keep the MVP stable enough for Gradio Space and demo-video recording.
 8. Default to English for public judging; keep Chinese as a first-class toggle.
+9. In English mode, translate or paraphrase non-English dream anchors into natural English instead of leaking mixed-language helper text.
+10. Treat tiny actions as optional first steps; avoid urgent commands such as "fix it immediately" or "address it immediately."
 
 ## 5. User Inputs
 
@@ -187,6 +189,8 @@ The final result must:
 - Avoid generic advice that could fit any dream.
 - Keep the today tip small enough to try today.
 - Use English UI/output labels by default and Chinese labels only when `中文` is selected.
+- Keep English mode fully English unless preserving a deliberate short user quote.
+- Make the optional tiny action a five-minute first step, not a demand to complete the whole waking-life problem.
 
 ## 10. UX Structure
 

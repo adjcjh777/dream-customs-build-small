@@ -469,7 +469,7 @@ def build_demo() -> gr.Blocks:
                     mood_section_html = gr.HTML(_section_title_html(2, initial_copy["side_title"]))
                     mood = gr.Dropdown(label=initial_copy["mood_label"], choices=MOOD_OPTIONS, value=DEFAULT_MOOD)
                     side_stamp_html = gr.HTML(_side_stamp_html(DEFAULT_LANGUAGE))
-                    with gr.Accordion("Runtime settings", open=False, elem_classes=["dc-dev"]):
+                    with gr.Accordion("Advanced", open=False, elem_classes=["dc-dev"]):
                         dev_help_html = gr.HTML(_dev_help_html(DEFAULT_LANGUAGE))
                         text_backend = gr.Dropdown(
                             label="Text generation",

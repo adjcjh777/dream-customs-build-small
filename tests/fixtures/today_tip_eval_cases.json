@@ -7,6 +7,13 @@
     "required_anchors": ["elevator", "button", "14"]
   },
   {
+    "id": "elevator_email_first_sentence",
+    "dream_text": "I dreamed I was in an elevator where the floor buttons melted like wax. The number 14 kept blinking, and I felt late but strangely calm.",
+    "mood": "Uneasy",
+    "answer": "I want to make starting my overdue email easier without feeling trapped by it.",
+    "required_anchors": ["elevator", "button", "14"]
+  },
+  {
     "id": "exam_without_pencil",
     "dream_text": "I walked into an exam room and realized every pencil had turned into a glass straw.",
     "mood": "Foggy",

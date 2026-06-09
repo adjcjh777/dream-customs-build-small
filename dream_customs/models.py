@@ -99,8 +99,8 @@ class FakeTextClient:
                     "Maybe this dream is not predicting lateness. It turns the feeling of being stuck before "
                     "starting into an elevator paused at floor 14."
                 ),
-                today_tip="For today, press one very small elevator button: open the task, without asking yourself to arrive yet.",
-                tiny_action="Spend five minutes writing which floor you want to stop at first today.",
+                today_tip="For today, press one very small elevator button: open the task and write only the first line.",
+                tiny_action="Set a five-minute timer, open the task, and stop after the first line.",
                 caring_note="You can move one floor at a time; the whole building does not need to be solved this morning.",
             )
         return TodayTipCard(

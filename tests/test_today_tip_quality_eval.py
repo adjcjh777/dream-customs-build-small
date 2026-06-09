@@ -4,7 +4,7 @@ from scripts.evaluate_today_tip_quality import _load_cases, evaluate_case, evalu
 def test_today_tip_quality_eval_passes_fixture_cases():
     result = evaluate_cases(_load_cases())
 
-    assert result["case_count"] == 10
+    assert result["case_count"] == 11
     assert result["failures"] == {}
     assert result["passes"] is True
 

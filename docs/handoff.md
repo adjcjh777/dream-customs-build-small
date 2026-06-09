@@ -51,6 +51,12 @@ Final positioning:
 
 > Dream QA helps you record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.
 
+2026-06-09 tone contract:
+
+- English mode is not just English UI chrome; generated anchors, questions, and Today Tips should read as natural English.
+- If the model receives Chinese anchors while the selected language is English, translate or paraphrase them unless a short exact quote is intentionally preserved.
+- Tiny actions should feel like five-minute first steps. Avoid urgent command phrasing such as "address it immediately."
+
 ## Model Decision
 
 Use:

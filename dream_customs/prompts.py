@@ -20,7 +20,8 @@ def visual_witness_prompt() -> str:
 
 def _language_instruction(language: str = "en") -> str:
     return (
-        "Write all user-facing fields in English. Keep any user-provided dream anchors as written."
+        "Write all user-facing fields in natural English. Translate or paraphrase non-English dream anchors "
+        "into natural English, except for a short exact quote that the user explicitly wrote and needs preserved."
         if language != "zh"
         else "所有面向用户的字段都用自然中文书写。可以保留用户原文里的梦境关键词。"
     )
@@ -49,11 +50,13 @@ Return strict JSON with:
 def today_tip_prompt(state: DreamQAState, language: str = "en") -> str:
     return f"""
 You are MiniCPM5-1B writing the final Dream QA result.
-Write a non-diagnostic interpretation draft and exactly one primary 今日小 Tips.
+Write a non-diagnostic interpretation draft and exactly one primary Today Tip / 今日小 Tips.
 Use non-certain language such as "也许", "可以把它当作", "maybe", or "for today, try".
 The today_tip must cite at least one concrete dream anchor.
 Avoid prophecy, frightening certainty, medical advice, therapy framing, and generic wellness filler.
-Keep the tiny_action small enough to try today.
+Keep the whole result short, warm, and specific to the user's answer.
+The tiny_action must be a 5-minute first step, not a command to solve the whole problem.
+Avoid demanding phrases such as "immediately", "must", "fix it", or "solve it".
 Use safety_note only for self-harm, harm to others, severe distress, severe insomnia, panic, or inability to function.
 {_language_instruction(language)}
 

@@ -42,6 +42,8 @@ The voice is a calm dream companion who asks good questions and takes odd detail
 6. The demo path must survive Space constraints and still have a model-backed route.
 7. English mode is the default public path; Chinese mode is a first-class toggle, not a separate product.
 8. Recommendation quality is tested with a deterministic Today Tip eval set before deployment.
+9. English mode must stay natural English, including translated or paraphrased dream anchors; mixed Chinese helper text is a regression.
+10. Tiny actions should feel like a first step the user may choose, not a hard command to solve the real-world problem immediately.
 
 ## Accessibility & Inclusion
 

@@ -55,8 +55,9 @@ This is not a therapy, diagnosis, or prophecy product.
 
 - Default public UI: English.
 - Toggle: `English / 中文`.
-- English mode may preserve user-provided dream anchors as written, but all UI labels, guidance, and generated helper text should be English.
+- English mode translates or paraphrases non-English dream anchors into natural English, so an international judge does not see mixed UI/model language.
 - Chinese mode keeps the warm `梦境问答台` wording.
+- Today Tips should be small and optional: "write the first sentence" beats "handle it immediately."
 
 ## Current Direction References
 

@@ -14,6 +14,8 @@ FIXTURE_PATH = Path("tests/fixtures/today_tip_eval_cases.json")
 OLD_CUSTOMS_TERMS = ["permit", "contraband", "clearance", "sealed", "pact"]
 FRIGHTENING_TERMS = ["you will fail", "prophecy says", "fate says", "must mean", "mental illness"]
 CHINESE_UI_LABELS = ["今日小", "梦境摘要", "想理解的问题", "解读草稿", "没试过的小事", "关心一句"]
+CHINESE_LEAKAGE_TERMS = ["数字", "电梯", "按钮", "楼层", "融化", "梦境"]
+HARD_COMMAND_PHRASES = ["address it immediately", "fix it immediately", "solve it immediately"]
 
 
 def _load_cases(path: Path = FIXTURE_PATH) -> List[Dict[str, Any]]:
@@ -70,6 +72,12 @@ def evaluate_case(case: Dict[str, Any]) -> List[str]:
         chinese_labels = [label for label in CHINESE_UI_LABELS if label in combined]
         if chinese_labels:
             failures.append("chinese_ui_labels:" + ",".join(chinese_labels))
+        chinese_terms = [term for term in CHINESE_LEAKAGE_TERMS if term in combined]
+        if chinese_terms:
+            failures.append("chinese_anchor_leakage:" + ",".join(chinese_terms))
+        hard_commands = [phrase for phrase in HARD_COMMAND_PHRASES if phrase in lowered]
+        if hard_commands:
+            failures.append("hard_command:" + ",".join(hard_commands))
 
     if case.get("requires_safety_note") and "trusted person or professional support" not in lowered:
         failures.append("missing_support_note")

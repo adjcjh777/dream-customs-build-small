@@ -189,3 +189,44 @@ Blockers observed:
 - A safety check for direct Space git sync could not prove fast-forward safety because `git fetch space main` failed at the HF git/LFS negotiation layer with `fatal: expected 'acknowledgments'`.
 
 Result: HF Space PR #17 is ready but not merged. Public Space `main` is still `19c54925...` until a logged-in browser merge succeeds or the HF token gains merge permission.
+
+## Hugging Face Merge Follow-up - 2026-06-09
+
+Chrome logged-in merge succeeded.
+
+Observed discussion metadata:
+
+```text
+num=17
+title=Deploy Dream QA post-refactor polish
+status=merged
+is_pull_request=True
+```
+
+Observed refs after merge:
+
+```text
+space/main=c2a7a861b44613ff477695f4f1a15f781a440fae
+refs/pr/17=2017dd6906f3cce640e4a53508ea21b163c3b52e
+```
+
+HF Space was paused immediately after merge, then restarted from the Space page.
+
+Runtime check:
+
+```text
+stage=RUNNING
+hardware=zero-a10g
+requested_hardware=zero-a10g
+```
+
+Public Space `/config` check:
+
+```text
+title=Dream QA
+version=4.44.1
+mode=blocks
+component_count=72
+```
+
+Result: HF Space `main` now contains the Dream QA post-refactor polish, and the public Space is serving the updated Gradio app config.

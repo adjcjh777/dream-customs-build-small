@@ -117,6 +117,22 @@ _ZH_ANCHOR_MARKERS = [
     "楼层",
 ]
 
+_ZH_TO_EN_PHRASES = {
+    "电梯按钮": "elevator button",
+    "融化的按钮": "melted button",
+    "按钮融化": "melted button",
+    "数字 14": "floor 14",
+    "数字14": "floor 14",
+    "楼层数字": "floor number",
+    "楼层": "floor",
+    "老楼": "old apartment building",
+    "蓝色楼道": "blue hallway",
+    "电梯": "elevator",
+    "按钮": "button",
+    "融化": "melted",
+    "梦境": "dream",
+}
+
 
 def _dedupe_preserve_order(items: List[str]) -> List[str]:
     seen = set()
@@ -171,15 +187,52 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     return _dedupe_preserve_order(candidates)[:5]
 
 
-def _primary_anchor(intake: DreamIntake, language: str = "en") -> str:
+def _english_anchor_text(text: str) -> str:
+    clean = text or ""
+    for source, target in sorted(_ZH_TO_EN_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
+        clean = clean.replace(source, target)
+    clean = re.sub(r"[\u4e00-\u9fff]+", "dream detail", clean)
+    clean = re.sub(r"\s+", " ", clean).strip(" .,:;!?\"'()[]{}")
+    return clean
+
+
+def _anchors_for_language(intake: DreamIntake, language: str = "en") -> List[str]:
     anchors = _extract_dream_anchors(intake)
+    if _is_zh(language):
+        return anchors
+    localized = [_english_anchor_text(anchor) for anchor in anchors]
+    return _dedupe_preserve_order([anchor for anchor in localized if anchor])
+
+
+def _clean_english_today_tip_language(card: TodayTipCard) -> TodayTipCard:
+    cleaned = card.model_copy(deep=True)
+    for field in (
+        "dream_summary",
+        "main_question",
+        "interpretation",
+        "today_tip",
+        "tiny_action",
+        "caring_note",
+        "safety_note",
+    ):
+        setattr(cleaned, field, _english_anchor_text(getattr(cleaned, field)))
+    cleaned.dream_anchors = _dedupe_preserve_order(
+        [_english_anchor_text(anchor) for anchor in cleaned.dream_anchors if anchor]
+    )
+    cleaned.followup_questions = [_english_anchor_text(question) for question in cleaned.followup_questions]
+    cleaned.user_answers = [_english_anchor_text(answer) for answer in cleaned.user_answers]
+    return cleaned
+
+
+def _primary_anchor(intake: DreamIntake, language: str = "en") -> str:
+    anchors = _anchors_for_language(intake, language)
     if anchors:
         return anchors[0]
     return "梦里的那个细节" if _is_zh(language) else "that dream detail"
 
 
 def _secondary_anchor(intake: DreamIntake, language: str = "en") -> str:
-    anchors = _extract_dream_anchors(intake)
+    anchors = _anchors_for_language(intake, language)
     return anchors[1] if len(anchors) > 1 else _primary_anchor(intake, language)
 
 
@@ -227,8 +280,22 @@ def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
 def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
     primary = _primary_anchor(intake, language)
     if not _is_zh(language):
-        return f"For today, borrow one action from the {primary}: open the smallest first step and stop there."
+        return (
+            f"For today, borrow one action from the {primary}: open the task, write only the first line, "
+            "and let that be enough for now."
+        )
     return f"今天先从「{primary}」借一个动作：只做最小的第一步，不急着把整件事完成。"
+
+
+def _answer_based_tiny_action(answers: str, language: str = "en") -> str:
+    lowered = (answers or "").lower()
+    if _is_zh(language):
+        if "邮件" in lowered or "email" in lowered:
+            return "给自己 5 分钟，只打开那封邮件，写下第一句话；今天不要求立刻发出。"
+        return ""
+    if "email" in lowered or "message" in lowered:
+        return "Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet."
+    return ""
 
 
 def _anchor_in_text(text: str, anchors: List[str]) -> bool:
@@ -483,7 +550,7 @@ def build_qa_state(
     answers: Optional[List[str]] = None,
     language: str = "en",
 ) -> DreamQAState:
-    anchors = _extract_dream_anchors(intake)
+    anchors = _anchors_for_language(intake, language)
     return DreamQAState(
         dream_summary=_summary_from_intake(intake, language),
         main_question=_main_question_from_intake(intake, language),
@@ -496,8 +563,12 @@ def build_qa_state(
 
 def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
     polished = card.model_copy(deep=True)
-    intake_anchors = _extract_dream_anchors(intake)
-    card_anchors = polished.dream_anchors
+    intake_anchors = _anchors_for_language(intake, language)
+    card_anchors = (
+        polished.dream_anchors
+        if _is_zh(language)
+        else _dedupe_preserve_order([_english_anchor_text(anchor) for anchor in polished.dream_anchors])
+    )
     if intake_anchors and not any(_text_uses_anchor(anchor, intake_anchors) for anchor in card_anchors):
         anchors = intake_anchors
     else:
@@ -518,7 +589,15 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         or not _anchor_in_text(polished.today_tip, anchors)
     ):
         polished.today_tip = _grounded_today_tip(intake, language)
-    if not polished.tiny_action.strip():
+    hard_action_markers = ["address it immediately", "fix it immediately", "solve it immediately"]
+    answer_action = _answer_based_tiny_action(answers, language)
+    if answer_action and (
+        not polished.tiny_action.strip()
+        or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
+        or "email" in (answers or "").lower()
+    ):
+        polished.tiny_action = answer_action
+    elif not polished.tiny_action.strip() or any(marker in polished.tiny_action.lower() for marker in hard_action_markers):
         if _is_zh(language):
             polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
         else:
@@ -531,6 +610,8 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         )
     merged = "\n".join([intake.merged_text(), answers or ""])
     polished.safety_note = safety_note() if needs_escalation(merged) else ""
+    if not _is_zh(language):
+        polished = _clean_english_today_tip_language(polished)
     return polished
 
 

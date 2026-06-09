@@ -133,4 +133,34 @@ Observed:
 git diff --check clean
 ```
 
-Final HF follow-up: Pending.
+Final HF follow-up:
+
+```text
+discussion=19
+title=Bind Dream QA tip to user answer
+refs/pr/19=4649d0ebe736a5f3b1a81114b2ff5ed480d7233d
+status=merged
+space/main=177f005249d9f3847418dad52ba8bc4bce6dc817
+runtime_stage=RUNNING_APP_STARTING
+hardware=zero-a10g
+public_config_title=Dream QA
+public_config_version=4.44.1
+public_config_mode=blocks
+public_config_component_count=72
+```
+
+Final public user-view review after PR #19:
+
+```text
+first_screen_has_advanced=True
+first_screen_has_runtime_settings=False
+first_screen_has_model_routes=False
+question=When you think about the floor 14 and the elevator, is there one real thing today that you want to make easier to start?
+question_has_chinese_leakage=False
+today_tip=For today, treat the floor 14 as permission to start gently: open the overdue email and write only the first sentence.
+tiny_action=Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet.
+card_has_chinese_leakage=False
+card_has_immediately=False
+```
+
+Result: public Space now has the intended user-tone polish. Remaining product opportunity: the interpretation paragraph can become shorter and more directly tied to the user's waking-life answer, while the main Today Tip and Tiny action are now specific and usable.

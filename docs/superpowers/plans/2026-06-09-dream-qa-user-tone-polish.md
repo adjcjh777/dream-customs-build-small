@@ -144,7 +144,7 @@ Start the local app on port `7862`, check `/config`, and run one action-level En
 
 Write non-secret results to `docs/smoke/2026-06-09-user-tone-polish-smoke.md`.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 Commit the plan, implementation, docs, and smoke evidence. Push `feature/dream-qa-user-tone-polish` to GitHub.
 
@@ -153,23 +153,23 @@ Commit the plan, implementation, docs, and smoke evidence. Push `feature/dream-q
 **Files:**
 - Modify: `docs/smoke/2026-06-09-user-tone-polish-smoke.md`
 
-- [ ] **Step 1: Create HF Space PR**
+- [x] **Step 1: Create HF Space PR**
 
 Upload the current folder to `build-small-hackathon/dream-customs` with `create_pr=True`.
 
-- [ ] **Step 2: Merge with browser**
+- [x] **Step 2: Merge with browser**
 
 Open the HF discussion PR in Chrome, verify it is ready to merge, and click Merge from the logged-in browser session.
 
-- [ ] **Step 3: Restart and verify Space**
+- [x] **Step 3: Restart and verify Space**
 
 If the Space is paused, restart it. Verify runtime is `RUNNING` and public `/config` returns `title=Dream QA`.
 
-- [ ] **Step 4: Experience as a user**
+- [x] **Step 4: Experience as a user**
 
 Use the public Space in the browser with the elevator/email dream. Check that English mode stays English, the question feels grounded, and the Today Tip is warm and actionable.
 
-- [ ] **Step 5: Record final evidence**
+- [x] **Step 5: Record final evidence**
 
 Append HF PR number, merge SHA, runtime, public config, and user-view notes to the smoke document. Commit and push the final evidence.
 

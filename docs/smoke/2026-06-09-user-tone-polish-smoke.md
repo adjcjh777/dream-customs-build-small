@@ -72,8 +72,65 @@ has_zh_title=True
 
 ## Hugging Face Space Sync
 
-Pending.
+Initial HF PR:
+
+```text
+discussion=18
+title=Polish Dream QA user tone
+refs/pr/18=64306abd58defe5ed57402a1f8ef93a92b88d00f
+status=merged
+space/main=79a74147ba4b179c8376823668f0f6aeb531fb36
+```
+
+Public config after PR #18:
+
+```text
+title=Dream QA
+version=4.44.1
+mode=blocks
+component_count=72
+```
 
 ## Public User-View Review
 
-Pending.
+Initial public review after PR #18:
+
+```text
+first_screen_has_advanced=True
+first_screen_has_runtime_settings=False
+first_screen_has_model_routes=False
+question=When you think about the floor 14 and the elevator, is there one real thing today that you want to make easier to start?
+question_has_chinese_leakage=False
+```
+
+The final card improved the Tiny action, but the primary Today Tip still drifted toward generic elevator grounding instead of the user's overdue-email answer. Follow-up fix: answer-aware Today Tip polish now binds email/message answers to the primary suggestion as well as the Tiny action.
+
+Follow-up local action smoke:
+
+```text
+status=tip
+has_overdue_email=True
+has_first_sentence=True
+has_immediately=False
+has_chinese_leakage=False
+```
+
+Follow-up commands:
+
+```text
+.venv/bin/python -m pytest tests/test_ui_actions.py tests/test_today_tip_quality_eval.py -q
+.venv/bin/python scripts/evaluate_today_tip_quality.py
+.venv/bin/python -m pytest -q
+git diff --check
+```
+
+Observed:
+
+```text
+11 passed, 2 warnings
+{"case_count": 11, "failures": {}, "passes": true}
+95 passed, 2 warnings
+git diff --check clean
+```
+
+Final HF follow-up: Pending.

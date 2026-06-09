@@ -298,6 +298,20 @@ def _answer_based_tiny_action(answers: str, language: str = "en") -> str:
     return ""
 
 
+def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> str:
+    lowered = (answers or "").lower()
+    if _is_zh(language):
+        if "邮件" in lowered or "email" in lowered:
+            return f"今天把「{anchor}」当成允许慢慢开始的按钮：只打开那封邮件，先写第一句话。"
+        return ""
+    if "email" in lowered or "message" in lowered:
+        return (
+            f"For today, treat the {anchor} as permission to start gently: "
+            "open the overdue email and write only the first sentence."
+        )
+    return ""
+
+
 def _anchor_in_text(text: str, anchors: List[str]) -> bool:
     clean = (text or "").lower()
     for anchor in anchors:
@@ -583,7 +597,13 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     if not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
+    answer_tip = _answer_based_today_tip(answers, anchors[0], language)
     if (
+        answer_tip
+        and ("email" in (answers or "").lower() or "邮件" in (answers or "").lower())
+    ):
+        polished.today_tip = answer_tip
+    elif (
         not polished.today_tip.strip()
         or any(marker in polished.today_tip.lower() for marker in generic_tip_markers)
         or not _anchor_in_text(polished.today_tip, anchors)

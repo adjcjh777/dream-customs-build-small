@@ -176,9 +176,9 @@ The final result must include:
 
 - Dream summary.
 - Main question.
-- Grounded interpretation.
 - One primary today tip.
 - Optional tiny action.
+- Supporting grounded interpretation.
 - Optional caring note.
 - Safety note if the input indicates severe distress.
 
@@ -191,6 +191,8 @@ The final result must:
 - Use English UI/output labels by default and Chinese labels only when `中文` is selected.
 - Keep English mode fully English unless preserving a deliberate short user quote.
 - Make the optional tiny action a five-minute first step, not a demand to complete the whole waking-life problem.
+- Render the Today Tip before the interpretation so the user sees the actionable payoff first.
+- When the user answer names a real task, the supporting interpretation should bridge a dream anchor to that task.
 
 ## 10. UX Structure
 

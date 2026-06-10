@@ -11,7 +11,9 @@
     "dream_text": "I dreamed I was in an elevator where the floor buttons melted like wax. The number 14 kept blinking, and I felt late but strangely calm.",
     "mood": "Uneasy",
     "answer": "I want to make starting my overdue email easier without feeling trapped by it.",
-    "required_anchors": ["elevator", "button", "14"]
+    "required_anchors": ["elevator", "button", "14"],
+    "required_answer_terms": ["overdue email", "first sentence"],
+    "required_interpretation_terms": ["overdue email", "floor 14"]
   },
   {
     "id": "exam_without_pencil",

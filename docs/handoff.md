@@ -56,6 +56,7 @@ Final positioning:
 - English mode is not just English UI chrome; generated anchors, questions, and Today Tips should read as natural English.
 - If the model receives Chinese anchors while the selected language is English, translate or paraphrase them unless a short exact quote is intentionally preserved.
 - Tiny actions should feel like five-minute first steps. Avoid urgent command phrasing such as "address it immediately."
+- The final card should show the Today Tip before interpretation; interpretation is supporting reflection and should use the user's answer when it names a real task.
 
 ## Model Decision
 

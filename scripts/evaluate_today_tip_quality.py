@@ -52,6 +52,13 @@ def evaluate_case(case: Dict[str, Any]) -> List[str]:
     view = _text_for_case(case)
     combined = "\n".join([view.get("card_title", ""), view.get("card_text", ""), view.get("card_html", "")])
     lowered = combined.lower()
+    interpretation = (
+        view.get("debug", {})
+        .get("session", {})
+        .get("draft_tip", {})
+        .get("interpretation", "")
+        .lower()
+    )
     failures: List[str] = []
 
     if view.get("status") != "tip":
@@ -59,6 +66,16 @@ def evaluate_case(case: Dict[str, Any]) -> List[str]:
 
     if not any(anchor.lower() in lowered for anchor in case.get("required_anchors", [])):
         failures.append("missing_required_anchor")
+
+    missing_answer_terms = [term for term in case.get("required_answer_terms", []) if term.lower() not in lowered]
+    if missing_answer_terms:
+        failures.append("missing_answer_terms:" + ",".join(missing_answer_terms))
+
+    missing_interpretation_terms = [
+        term for term in case.get("required_interpretation_terms", []) if term.lower() not in interpretation
+    ]
+    if missing_interpretation_terms:
+        failures.append("missing_interpretation_terms:" + ",".join(missing_interpretation_terms))
 
     old_terms = [term for term in OLD_CUSTOMS_TERMS if term in lowered]
     if old_terms:

@@ -312,6 +312,31 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
     return ""
 
 
+def _answer_based_interpretation(answers: str, anchor: str, language: str = "en") -> str:
+    lowered = (answers or "").lower()
+    if _is_zh(language):
+        if "邮件" in lowered or "email" in lowered:
+            return f"也许「{anchor}」不是在催你立刻完成什么，而是在提醒你：那封邮件可以先从一句话开始。"
+        if "消息" in lowered or "message" in lowered:
+            return f"也许「{anchor}」不是在催你立刻回应什么，而是在提醒你：那条消息可以先从一句草稿开始。"
+        return ""
+    if "email" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to finish the overdue email at once. "
+            "It is pointing to the gentler threshold: opening it and writing one first sentence."
+        )
+    if "message" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to answer every message at once. "
+            "It is pointing to the gentler threshold: opening one thread and drafting one first sentence."
+        )
+    return ""
+
+
+def _answer_bridge_anchor(anchors: List[str]) -> str:
+    return next((anchor for anchor in anchors if "14" in anchor), anchors[0])
+
+
 def _anchor_in_text(text: str, anchors: List[str]) -> bool:
     clean = (text or "").lower()
     for anchor in anchors:
@@ -594,7 +619,10 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.dream_summary = _summary_from_intake(intake, language)
     if not polished.main_question.strip():
         polished.main_question = _main_question_from_intake(intake, language)
-    if not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
+    answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
+    if answer_interpretation:
+        polished.interpretation = answer_interpretation
+    elif not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)

@@ -30,7 +30,7 @@ The public hackathon demo is English-first for international judges. A visible i
 
 ## Concept
 
-Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a grounded follow-up question, and returns a Today Tip card: a short non-certain interpretation, one practical or caring suggestion for today, and an optional tiny action.
+Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a grounded follow-up question, and returns a Today Tip card: one practical or caring suggestion first, an optional tiny action, and a short non-certain supporting reflection.
 
 This is not a therapy, diagnosis, or prophecy product.
 
@@ -48,8 +48,8 @@ This is not a therapy, diagnosis, or prophecy product.
 1. Enter a dream by text, image, voice, or a mix.
 2. State or let the app infer the main question.
 3. Answer or skip one or more follow-up questions.
-4. Review a grounded interpretation.
-5. Receive one Today Tip tied to concrete dream details.
+4. Receive one Today Tip tied to concrete dream details and the user's answer.
+5. Read the supporting reflection if the user wants more context.
 
 ## Language
 

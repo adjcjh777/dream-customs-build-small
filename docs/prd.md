@@ -98,11 +98,13 @@ As a user, I want a clear final result so that I leave with one small thing for 
 
 Acceptance criteria:
 
-- Result includes dream summary, main question, interpretation, today tip, optional tiny action, optional caring note, and safety note when needed.
+- Result includes dream summary, main question, today tip, optional tiny action, supporting interpretation, optional caring note, and safety note when needed.
+- Result presents the Today Tip before supporting interpretation.
 - Result is readable on mobile and desktop.
 - Result avoids medical, prophetic, or deterministic framing.
 - Today tip references a concrete dream anchor.
 - Optional tiny action is a five-minute first step, not a command to solve the whole issue immediately.
+- Supporting interpretation uses the user's answer when the answer names a concrete waking-life task.
 
 #### Story 6: Bilingual Demo
 

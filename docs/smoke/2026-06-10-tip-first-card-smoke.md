@@ -81,8 +81,39 @@ has_immediately=False
 
 ## Hugging Face Space Sync
 
-Pending.
+HF PR:
+
+```text
+discussion=21
+title=Prioritize Dream QA Today Tip card
+refs/pr/21=81829c97ea1d72efd98c54e7c92094a789881151
+status=merged
+space/main=65ca5f6ca1110b4eca649fa13066507d3fe842b9
+runtime_stage=RUNNING_APP_STARTING
+hardware=zero-a10g
+public_config_title=Dream QA
+public_config_version=4.44.1
+public_config_mode=blocks
+public_config_component_count=72
+```
 
 ## Public User-View Review
 
-Pending.
+Final public browser review:
+
+```text
+first_screen_title=Dream QA
+question=When you think about the floor 14 and the elevator, is there one real thing today that you want to make easier to start?
+question_has_chinese_leakage=False
+small_suggestion_index=566
+tiny_action_index=793
+supporting_reflection_index=983
+tip_before_reflection=True
+today_tip=For today, treat the floor 14 as permission to start gently: open the overdue email and write only the first sentence.
+tiny_action=Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet.
+supporting_reflection=Maybe the floor 14 is not asking you to finish the overdue email at once. It is pointing to the gentler threshold: opening it and writing one first sentence.
+card_has_chinese_leakage=False
+card_has_immediately=False
+```
+
+Result: public Space now prioritizes the actionable Today Tip before supporting reflection, and the supporting reflection uses the user's waking-life email answer.

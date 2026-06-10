@@ -113,15 +113,15 @@ Expected: all commands pass.
 
 Start the local app, check `/config`, and run the elevator/email action flow.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 Commit implementation, docs, plan, and smoke evidence. Push `feature/dream-qa-tip-first-card`.
 
-- [ ] **Step 5: Merge GitHub and HF Space**
+- [x] **Step 5: Merge GitHub and HF Space**
 
 Create/merge GitHub PR. Upload to HF Space with `create_pr=True`, use Chrome to click Merge, then verify public `/config`.
 
-- [ ] **Step 6: Public user-view review**
+- [x] **Step 6: Public user-view review**
 
 Use the public Space in browser with the elevator/email dream. Confirm Today Tip appears before interpretation and interpretation references the email answer.
 

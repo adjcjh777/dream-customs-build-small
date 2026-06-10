@@ -12,7 +12,13 @@ from dream_customs.app_logic import (
     seal_pact_action,
     start_declaration_action,
 )
+from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.models import HostedASRClient, HostedMiniCPMTextClient, HostedMiniCPMVisionClient
+
+
+def test_defaults_use_modal_model_entrypoint():
+    assert DEFAULT_TEXT_BACKEND == "modal"
+    assert DEFAULT_VISION_BACKEND == "modal"
 
 
 def test_run_customs_once_generates_demo_outputs():

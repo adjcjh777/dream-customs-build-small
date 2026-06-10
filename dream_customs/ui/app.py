@@ -474,9 +474,9 @@ def build_demo() -> gr.Blocks:
                         text_backend = gr.Dropdown(
                             label="Text generation",
                             choices=[
+                                ("Modal: MiniCPM endpoint", "modal"),
                                 ("Auto: configured Space model", "model"),
                                 ("Demo: stable sample data", "demo"),
-                                ("Modal/API: private endpoint", "modal"),
                                 ("Local Ollama", "ollama"),
                             ],
                             value=DEFAULT_TEXT_BACKEND,
@@ -484,9 +484,9 @@ def build_demo() -> gr.Blocks:
                         vision_backend = gr.Dropdown(
                             label="Image understanding",
                             choices=[
+                                ("Modal: MiniCPM-V endpoint", "modal"),
                                 ("Auto: configured vision model", "model"),
                                 ("Demo: skip image model", "demo"),
-                                ("Modal/API: private endpoint", "modal"),
                                 ("Local Ollama", "ollama"),
                             ],
                             value=DEFAULT_VISION_BACKEND,

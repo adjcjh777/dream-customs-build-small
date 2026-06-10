@@ -14,7 +14,7 @@ The product helps a user unpack a dream through a guided, step-by-step Q&A. It a
 
 The hackathon-facing experience is English-first. A visible `English / 中文` language control keeps the Chinese experience available without making judges start from a Chinese-only first screen.
 
-Success means the user receives something more useful than a one-shot interpretation: a short summary of the dream, one clear question they were trying to answer, a non-certain explanation grounded in concrete dream details, and a tiny suggestion for today. The tip can be practical, playful, or simply caring, but it must feel connected to the dream.
+Success means the user receives something more useful than a one-shot interpretation: one clear today tip first, an optional tiny action, and then a non-certain explanation grounded in concrete dream details and the user's answer. The tip can be practical, playful, or simply caring, but it must feel connected to the dream.
 
 ## Brand Personality
 
@@ -44,6 +44,7 @@ The voice is a calm dream companion who asks good questions and takes odd detail
 8. Recommendation quality is tested with a deterministic Today Tip eval set before deployment.
 9. English mode must stay natural English, including translated or paraphrased dream anchors; mixed Chinese helper text is a regression.
 10. Tiny actions should feel like a first step the user may choose, not a hard command to solve the real-world problem immediately.
+11. The final card prioritizes the Today Tip before interpretation; interpretation is supporting reflection, not the main payoff.
 
 ## Accessibility & Inclusion
 

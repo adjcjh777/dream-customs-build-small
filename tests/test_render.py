@@ -1,6 +1,12 @@
 from dream_customs.pipeline import add_evidence, create_session
-from dream_customs.render import render_pact_card, render_pact_inspector, render_status_bar, render_timeline
-from dream_customs.schema import PactCard
+from dream_customs.render import (
+    render_pact_card,
+    render_pact_inspector,
+    render_status_bar,
+    render_timeline,
+    render_today_tip_card,
+)
+from dream_customs.schema import PactCard, TodayTipCard
 
 
 def test_render_pact_card_contains_core_fields():
@@ -72,3 +78,21 @@ def test_status_bar_is_status_not_fake_navigation():
     assert "Current: Empty desk" in html
     assert "dc-phase-rail" not in html
     assert "<nav" not in html
+
+
+def test_today_tip_card_prioritizes_tip_before_interpretation():
+    html = render_today_tip_card(
+        TodayTipCard(
+            dream_summary="You dreamed about an elevator.",
+            main_question="What feels hard to start?",
+            dream_anchors=["floor 14", "elevator"],
+            followup_questions=["What real task feels stuck?"],
+            user_answers=["An overdue email feels hard to start."],
+            interpretation="Maybe this dream is pointing to a stuck beginning.",
+            today_tip="Open the overdue email and write only the first sentence.",
+            tiny_action="Set a five-minute timer and stop after one sentence.",
+            caring_note="One line is enough for now.",
+        )
+    )
+
+    assert html.index("Today's small suggestion") < html.index("Maybe this dream is pointing to")

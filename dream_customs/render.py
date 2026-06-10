@@ -33,7 +33,7 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
         "thanks": "谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。"
         if is_zh
         else "Thanks for sharing this. Here is one grounded suggestion for today.",
-        "interpretation": "也许这个梦在提醒你" if is_zh else "Maybe this dream is pointing to",
+        "interpretation": "补充解读" if is_zh else "Supporting reflection",
         "today_tip": "今天的小建议" if is_zh else "Today's small suggestion",
         "tiny_action": "没试过的小事" if is_zh else "Tiny action",
         "anchors": "关键词：" if is_zh else "Anchors:",
@@ -73,14 +73,6 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
       <p>{labels['thanks']}</p>
     </div>
   </div>
-  <article class="dqa-result-card is-interpretation">
-    <div class="dqa-card-icon">☘</div>
-    <div>
-      <h3>{labels['interpretation']}</h3>
-      <p>{escape(card.interpretation)}</p>
-      <div class="dqa-anchor-strip">{labels['anchors']} {anchors}</div>
-    </div>
-  </article>
   <article class="dqa-result-card is-primary-tip">
     <div class="dqa-card-icon">☼</div>
     <div>
@@ -90,6 +82,14 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
     </div>
   </article>
   {tiny_action}
+  <article class="dqa-result-card is-interpretation">
+    <div class="dqa-card-icon">☘</div>
+    <div>
+      <h3>{labels['interpretation']}</h3>
+      <p>{escape(card.interpretation)}</p>
+      <div class="dqa-anchor-strip">{labels['anchors']} {anchors}</div>
+    </div>
+  </article>
   {qa_history}
   {safety}
   {caring_note}

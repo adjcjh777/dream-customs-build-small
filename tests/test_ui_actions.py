@@ -160,3 +160,29 @@ def test_english_today_tip_has_no_chinese_anchor_leakage():
     assert "overdue email" in combined.lower()
     assert "first sentence" in combined.lower()
     assert "immediately" not in combined.lower()
+
+
+def test_english_interpretation_uses_user_answer_before_tip():
+    state, _view_json = submit_dream_action(
+        dream_text=(
+            "I dreamed I was in an elevator where the floor buttons melted like wax. "
+            "The number 14 kept blinking, and I felt late but strangely calm."
+        ),
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+
+    _state, view_json = answer_to_card_action(
+        state,
+        "I want to make starting my overdue email easier without feeling trapped by it.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    interpretation_line = next(line for line in view["card_text"].splitlines() if line.startswith("Interpretation:"))
+
+    assert "overdue email" in interpretation_line.lower()
+    assert "floor 14" in interpretation_line.lower()

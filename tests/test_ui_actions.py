@@ -8,12 +8,12 @@ from dream_customs.ui.app import _reset
 from dream_customs.ui.copy import DEFAULT_MOOD, PROCESSING_NOTE
 
 
-def test_mobile_defaults_to_model_backends():
+def test_mobile_defaults_to_modal_backends():
     _state, view_json = initial_mobile_state()
     view = json.loads(view_json)
 
-    assert view["debug"]["text_backend"] == "model"
-    assert view["debug"]["vision_backend"] == "model"
+    assert view["debug"]["text_backend"] == "modal"
+    assert view["debug"]["vision_backend"] == "modal"
 
 
 def test_runtime_settings_are_collapsed_for_public_flow():

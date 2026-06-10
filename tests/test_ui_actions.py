@@ -22,6 +22,16 @@ def test_runtime_settings_are_collapsed_for_public_flow():
     assert 'gr.Accordion("Advanced", open=False' in source
 
 
+def test_voice_input_uses_gradio_audio_file_for_modal_asr():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert "audio_input = gr.Audio(" in source
+    assert 'sources=["microphone", "upload"]' in source
+    assert 'type="filepath"' in source
+    assert "audio_input = gr.State(None)" not in source
+    assert 'value=DEFAULT_ASR_BACKEND' in source
+
+
 def test_processing_note_is_story_copy_not_backend_jargon():
     lowered = PROCESSING_NOTE.lower()
 

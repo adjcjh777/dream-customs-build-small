@@ -2,6 +2,7 @@ import json
 
 from dream_customs.app_logic import (
     _clients,
+    _client_settings,
     _debug_json,
     add_material_action,
     ask_another_question_action,
@@ -12,13 +13,14 @@ from dream_customs.app_logic import (
     seal_pact_action,
     start_declaration_action,
 )
-from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
+from dream_customs.defaults import DEFAULT_ASR_BACKEND, DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.models import HostedASRClient, HostedMiniCPMTextClient, HostedMiniCPMVisionClient
 
 
 def test_defaults_use_modal_model_entrypoint():
     assert DEFAULT_TEXT_BACKEND == "modal"
     assert DEFAULT_VISION_BACKEND == "modal"
+    assert DEFAULT_ASR_BACKEND == "modal"
 
 
 def test_run_customs_once_generates_demo_outputs():
@@ -137,3 +139,12 @@ def test_developer_settings_configure_hosted_clients():
     assert vision_client.temperature == 0.22
     assert text_client.max_tokens == 256
     assert vision_client.max_tokens == 128
+
+
+def test_asr_endpoint_derives_from_modal_text_endpoint_when_secret_is_missing():
+    settings = _client_settings(
+        text_endpoint="https://workspace--dream-customs-minicpm-backend-text.modal.run",
+        asr_endpoint="",
+    )
+
+    assert settings["asr_endpoint"] == "https://workspace--dream-customs-minicpm-backend-asr.modal.run"

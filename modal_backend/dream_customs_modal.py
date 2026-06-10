@@ -9,6 +9,7 @@ from fastapi import Body, Header
 
 from modal_backend.contracts import (
     AuthError,
+    decode_audio_payload,
     decode_image_payload,
     ensure_authorized,
     normalize_text_payload,
@@ -19,6 +20,7 @@ from modal_backend.contracts import (
 APP_NAME = "dream-customs-minicpm-backend"
 TEXT_MODEL = "openbmb/MiniCPM5-1B"
 VISION_MODEL = "openbmb/MiniCPM-V-4.6"
+ASR_MODEL = "openai/whisper-tiny"
 MINUTES = 60
 
 app = modal.App(APP_NAME)
@@ -44,6 +46,8 @@ image = (
         "torch",
         "torchvision",
         "transformers>=4.56",
+        "librosa",
+        "soundfile",
     )
     .add_local_dir("modal_backend", remote_path="/root/modal_backend")
 )
@@ -57,6 +61,7 @@ secrets = [
 
 _TEXT_PIPE = None
 _VISION_PIPE = None
+_ASR_PIPE = None
 
 
 def _expected_token() -> str:
@@ -111,6 +116,20 @@ def _load_vision_pipe():
             trust_remote_code=True,
         )
     return _VISION_PIPE
+
+
+def _load_asr_pipe():
+    global _ASR_PIPE
+    if _ASR_PIPE is None:
+        from transformers import pipeline
+
+        _ASR_PIPE = pipeline(
+            "automatic-speech-recognition",
+            model=os.getenv("DREAM_CUSTOMS_ASR_MODEL", ASR_MODEL),
+            device_map="auto",
+            torch_dtype="auto",
+        )
+    return _ASR_PIPE
 
 
 def _messages_from_payload(payload: Dict[str, Any], prompt: str) -> list[Dict[str, str]]:
@@ -299,6 +318,7 @@ def health() -> Dict[str, str]:
         "app": APP_NAME,
         "text_model": TEXT_MODEL,
         "vision_model": VISION_MODEL,
+        "asr_model": ASR_MODEL,
     }
 
 
@@ -390,3 +410,35 @@ async def vision(
         ]
         result = pipe(text=messages, max_new_tokens=int(payload.get("max_tokens", 320)))
     return response_payload(_stringify_pipeline_result(result))
+
+
+@app.function(
+    image=image,
+    gpu="L4",
+    timeout=10 * MINUTES,
+    scaledown_window=5 * MINUTES,
+    volumes={"/root/.cache/huggingface": hf_cache},
+    secrets=secrets,
+)
+@modal.fastapi_endpoint(method="POST", docs=True)
+async def asr(
+    payload: Dict[str, Any] = Body(...),
+    authorization: str = Header(""),
+):
+    try:
+        ensure_authorized(authorization, _expected_token())
+    except AuthError as exc:
+        return _json_error(str(exc), status="unauthorized")
+    try:
+        audio_bytes, filename = decode_audio_payload(payload)
+    except ValueError as exc:
+        return _json_error(str(exc))
+
+    suffix = os.path.splitext(filename)[1] or ".wav"
+    pipe = _load_asr_pipe()
+    with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
+        temp_file.write(audio_bytes)
+        temp_file.flush()
+        result = pipe(temp_file.name)
+    transcript = _stringify_pipeline_result(result)
+    return {"status": "ok", "transcript": transcript, "response": transcript}

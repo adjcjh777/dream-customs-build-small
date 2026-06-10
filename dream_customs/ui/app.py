@@ -17,7 +17,7 @@ from dream_customs.app_logic import (
     DEFAULT_VISION_MODEL,
     DEFAULT_VISION_TEMPERATURE,
 )
-from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
+from dream_customs.defaults import DEFAULT_ASR_BACKEND, DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.ui.actions import (
     answer_to_card_action,
     initial_mobile_state,
@@ -370,6 +370,10 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
 """.strip()
 
 
+def _voice_help_html(language: str = DEFAULT_LANGUAGE) -> str:
+    return f"<p class=\"dc-voice-help\">{escape(copy_for(language)['voice_help'])}</p>"
+
+
 def _field_tip_html(language: str = DEFAULT_LANGUAGE) -> str:
     return f"<p class=\"dc-field-tip\">{escape(copy_for(language)['field_tip'])}</p>"
 
@@ -403,7 +407,7 @@ def build_demo() -> gr.Blocks:
     initial = _load_view(initial_view)
     initial_copy = copy_for(DEFAULT_LANGUAGE)
 
-    with gr.Blocks(css=CSS, js=VOICE_JS, title=APP_TITLE) as demo:
+    with gr.Blocks(css=CSS, title=APP_TITLE) as demo:
         session_state = gr.State(initial_state)
         view_state = gr.State(initial_view)
 
@@ -423,8 +427,14 @@ def build_demo() -> gr.Blocks:
                                 value="",
                                 elem_classes=["dc-dream-text"],
                             )
-                            mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))
-                            audio_input = gr.State(None)
+                            voice_help_html = gr.HTML(_voice_help_html(DEFAULT_LANGUAGE))
+                            audio_input = gr.Audio(
+                                label=initial_copy["voice_label"],
+                                sources=["microphone", "upload"],
+                                type="filepath",
+                                format="wav",
+                                elem_classes=["dc-voice-input"],
+                            )
                             field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button(initial_copy["example_button"], variant="secondary")
@@ -494,11 +504,11 @@ def build_demo() -> gr.Blocks:
                         asr_backend = gr.Dropdown(
                             label="Voice input",
                             choices=[
-                                ("Browser dictation now", "demo"),
-                                ("Modal ASR endpoint, planned", "modal"),
+                                ("Modal ASR endpoint", "modal"),
+                                ("Demo: mark voice received", "demo"),
                                 ("Hugging Face ASR endpoint, planned", "huggingface"),
                             ],
-                            value="demo",
+                            value=DEFAULT_ASR_BACKEND,
                         )
                         with gr.Accordion("Advanced endpoints", open=False, elem_classes=["dc-dev-advanced"]):
                             text_endpoint = gr.Textbox(label="Text endpoint", value="")
@@ -653,7 +663,7 @@ def build_demo() -> gr.Blocks:
                 _notice_html({"notice": copy["notice_record"], "status": "record"}),
                 _section_title_html(1, copy["dream_label"]),
                 gr.update(label=copy["dream_label"], placeholder=copy["dream_placeholder"]),
-                _mic_html(selected_language),
+                _voice_help_html(selected_language),
                 _field_tip_html(selected_language),
                 gr.update(value=copy["example_button"]),
                 gr.update(value=copy["submit_button"]),
@@ -682,7 +692,7 @@ def build_demo() -> gr.Blocks:
                 notice,
                 dream_section_html,
                 dream_text,
-                mic_html,
+                voice_help_html,
                 field_tip_html,
                 example_button,
                 submit_button,

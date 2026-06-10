@@ -394,6 +394,26 @@ body,
   display: none !important;
 }
 
+.dc-voice-help {
+  color: var(--dc-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  margin: 12px 0 6px;
+}
+
+.dc-voice-input {
+  margin-top: 0 !important;
+}
+
+.dc-voice-input .wrap,
+.dc-voice-input .container,
+.dc-voice-input .input-container {
+  background: rgba(255, 253, 248, 0.9) !important;
+  border-color: var(--dc-line) !important;
+  border-radius: var(--dc-radius-sm) !important;
+  color: var(--dc-ink) !important;
+}
+
 .dc-mic-control {
   align-items: end;
   bottom: 68px;

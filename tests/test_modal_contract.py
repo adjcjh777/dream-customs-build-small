@@ -2,6 +2,7 @@ import base64
 
 from modal_backend.contracts import (
     AuthError,
+    decode_audio_payload,
     decode_image_payload,
     ensure_authorized,
     normalize_text_payload,
@@ -37,6 +38,14 @@ def test_decode_image_payload_accepts_image_key():
 def test_decode_image_payload_accepts_images_list():
     encoded = base64.b64encode(b"fake-image-bytes").decode("ascii")
     assert decode_image_payload({"images": [encoded]}) == b"fake-image-bytes"
+
+
+def test_decode_audio_payload_accepts_audio_key():
+    encoded = base64.b64encode(b"fake-audio-bytes").decode("ascii")
+    audio_bytes, filename = decode_audio_payload({"audio": encoded, "filename": "dream.wav"})
+
+    assert audio_bytes == b"fake-audio-bytes"
+    assert filename == "dream.wav"
 
 
 def test_response_payload_uses_existing_client_shape():

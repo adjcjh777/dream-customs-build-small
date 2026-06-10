@@ -103,11 +103,12 @@ The public Space stays lightweight and can call private Modal endpoints through 
 
 - `DREAM_CUSTOMS_TEXT_ENDPOINT`: Modal text route for `openbmb/MiniCPM5-1B`.
 - `DREAM_CUSTOMS_VISION_ENDPOINT`: Modal vision route for `openbmb/MiniCPM-V-4.6`.
+- `DREAM_CUSTOMS_ASR_ENDPOINT`: Modal ASR adapter route for voice-note transcription.
 - `DREAM_CUSTOMS_HOSTED_TOKEN`: shared bearer token checked by Modal and sent by the Space.
 
 Set these only as Hugging Face Space repository secrets or local shell variables. Do not store values in `.env`, docs, logs, screenshots, or git. Missing endpoints or route failures fall back to deterministic demo behavior.
 
-The Gradio UI defaults to `modal` for both text and vision backends, so a configured Space enters the private Modal MiniCPM endpoints first. The `demo` backend remains available in developer settings and as the deterministic fallback path when hosted routes are missing or fail.
+The Gradio UI defaults to `modal` for text, vision, and voice transcription backends, so a configured Space enters the private Modal routes first. The `demo` backend remains available in developer settings and as the deterministic fallback path when hosted routes are missing or fail.
 
 The Hugging Face Space may run on ZeroGPU for hackathon hardware eligibility. `dream_customs.zerogpu` registers a lightweight `@spaces.GPU` startup probe so ZeroGPU accepts the app, but real MiniCPM inference still happens on the private Modal backend.
 

@@ -29,7 +29,7 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
     questions = "".join(f"<li>{escape(question)}</li>" for question in card.followup_questions)
     answers = "".join(f"<li>{escape(answer)}</li>" for answer in card.user_answers)
     labels = {
-        "page": "今日小 Tips" if is_zh else "Today Tip",
+        "page": "你的今日 Tip" if is_zh else "Your Today Tip",
         "thanks": "谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。"
         if is_zh
         else "Thanks for sharing this. Here is one grounded suggestion for today.",

@@ -54,6 +54,18 @@ def decode_image_payload(payload: Dict[str, Any]) -> bytes:
     return base64.b64decode(str(encoded))
 
 
+def decode_audio_payload(payload: Dict[str, Any]) -> tuple[bytes, str]:
+    encoded = payload.get("audio")
+    if not encoded and isinstance(payload.get("audios"), list) and payload["audios"]:
+        encoded = payload["audios"][0]
+    if not encoded:
+        raise ValueError("Missing audio payload.")
+    if isinstance(encoded, bytes):
+        encoded = encoded.decode("ascii")
+    filename = _clean_text(payload.get("filename")) or "dream-voice.wav"
+    return base64.b64decode(str(encoded)), filename
+
+
 def ensure_authorized(authorization_header: str, expected_token: str) -> None:
     expected_token = expected_token.strip()
     if not expected_token:

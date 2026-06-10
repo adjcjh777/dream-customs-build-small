@@ -181,7 +181,7 @@ Hugging Face Space Gradio UI
   -> MiniCPM5-1B text generation and MiniCPM-V-4.6 visual clue extraction
 ```
 
-The Space defaults to `modal` for both text and vision backends, so a configured Space enters the private Modal MiniCPM endpoints first. The `model` auto route remains available for compatibility, and the `demo` backend remains available in developer settings as the deterministic fallback path.
+The Space defaults to `modal` for text, vision, and voice transcription backends, so a configured Space enters the private Modal routes first. The `model` auto route remains available for compatibility, and the `demo` backend remains available in developer settings as the deterministic fallback path.
 
 The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the lightweight `@spaces.GPU` startup probe. Modal credits still pay for the hidden GPU backend; the ZeroGPU probe is only there to make the HF hardware setting valid for this Gradio frontend.
 

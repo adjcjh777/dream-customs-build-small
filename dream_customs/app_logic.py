@@ -1,6 +1,7 @@
 import json
 import os
 from typing import Any, Tuple
+from urllib.parse import urlparse, urlunparse
 
 from dream_customs.models import (
     FakeASRClient,
@@ -12,7 +13,7 @@ from dream_customs.models import (
     OllamaTextClient,
     OllamaVisionClient,
 )
-from dream_customs.defaults import DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
+from dream_customs.defaults import DEFAULT_ASR_BACKEND, DEFAULT_TEXT_BACKEND, DEFAULT_VISION_BACKEND
 from dream_customs.pipeline import (
     add_evidence,
     answer_question,
@@ -75,6 +76,19 @@ def _as_int(value: Any, default: int) -> int:
         return default
 
 
+def _derive_modal_asr_endpoint(text_endpoint: str) -> str:
+    if not text_endpoint:
+        return ""
+    parsed = urlparse(text_endpoint.strip())
+    if parsed.netloc.endswith("-text.modal.run"):
+        netloc = f"{parsed.netloc.removesuffix('-text.modal.run')}-asr.modal.run"
+        return urlunparse(parsed._replace(netloc=netloc))
+    if parsed.path.rstrip("/").endswith("/text"):
+        path = f"{parsed.path.rstrip('/')[:-len('/text')]}/asr"
+        return urlunparse(parsed._replace(path=path))
+    return ""
+
+
 def _client_settings(
     text_endpoint: str = "",
     vision_endpoint: str = "",
@@ -88,15 +102,19 @@ def _client_settings(
     vision_temperature: Any = DEFAULT_VISION_TEMPERATURE,
     text_max_tokens: Any = DEFAULT_TEXT_MAX_TOKENS,
     vision_max_tokens: Any = DEFAULT_VISION_MAX_TOKENS,
-    asr_backend: str = "demo",
+    asr_backend: str = DEFAULT_ASR_BACKEND,
     asr_endpoint: str = "",
     asr_timeout_seconds: Any = DEFAULT_ASR_TIMEOUT_SECONDS,
     text_latency_budget_ms: Any = DEFAULT_TEXT_LATENCY_BUDGET_MS,
     vision_latency_budget_ms: Any = DEFAULT_VISION_LATENCY_BUDGET_MS,
     asr_latency_budget_ms: Any = DEFAULT_ASR_LATENCY_BUDGET_MS,
 ) -> dict:
+    resolved_text_endpoint = (text_endpoint or os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", "")).strip()
+    resolved_asr_endpoint = (asr_endpoint or os.getenv("DREAM_CUSTOMS_ASR_ENDPOINT", "")).strip()
+    if not resolved_asr_endpoint:
+        resolved_asr_endpoint = _derive_modal_asr_endpoint(resolved_text_endpoint)
     return {
-        "text_endpoint": (text_endpoint or os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", "")).strip(),
+        "text_endpoint": resolved_text_endpoint,
         "vision_endpoint": (vision_endpoint or os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", "")).strip(),
         "hosted_token": (hosted_token or os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "")).strip(),
         "ollama_url": (ollama_url or os.getenv("DREAM_CUSTOMS_OLLAMA_URL", "http://localhost:11434")).strip(),
@@ -108,8 +126,8 @@ def _client_settings(
         "vision_temperature": max(0.0, min(_as_float(vision_temperature, DEFAULT_VISION_TEMPERATURE), 0.7)),
         "text_max_tokens": max(64, min(_as_int(text_max_tokens, DEFAULT_TEXT_MAX_TOKENS), 1200)),
         "vision_max_tokens": max(64, min(_as_int(vision_max_tokens, DEFAULT_VISION_MAX_TOKENS), 800)),
-        "asr_backend": (asr_backend or "demo").lower(),
-        "asr_endpoint": (asr_endpoint or os.getenv("DREAM_CUSTOMS_ASR_ENDPOINT", "")).strip(),
+        "asr_backend": (asr_backend or DEFAULT_ASR_BACKEND).lower(),
+        "asr_endpoint": resolved_asr_endpoint,
         "asr_timeout_seconds": max(1.0, _as_float(asr_timeout_seconds, DEFAULT_ASR_TIMEOUT_SECONDS)),
         "text_latency_budget_ms": max(0, _as_int(text_latency_budget_ms, DEFAULT_TEXT_LATENCY_BUDGET_MS)),
         "vision_latency_budget_ms": max(0, _as_int(vision_latency_budget_ms, DEFAULT_VISION_LATENCY_BUDGET_MS)),

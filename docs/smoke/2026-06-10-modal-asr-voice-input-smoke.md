@@ -16,4 +16,5 @@ No endpoint URLs, bearer tokens, Hugging Face tokens, Modal tokens, or secret va
 - Modal deploy: `dream-customs-minicpm-backend` redeployed with a new `asr` web function. CLI output URLs were redacted.
 - Modal ASR auth smoke: route reachable without printing URL; unauthenticated request returned `status="unauthorized"`, confirming the route exists and requires the hosted token.
 - HF Space secret update attempt: API returned 403 for writing `DREAM_CUSTOMS_ASR_ENDPOINT`. The app now derives the ASR endpoint from the existing Modal text endpoint when the explicit ASR endpoint secret is missing, so no endpoint value was printed or stored.
-- Public Space check: pending.
+- Public Space `/config`: `Voice note` is an `audio` component with microphone/upload sources; `Voice input` default is `modal`.
+- Public Chrome check: visible page shows `Voice note`, `Upload file`, and `Record audio`; Advanced shows `Voice input` as `Modal ASR endpoint`.

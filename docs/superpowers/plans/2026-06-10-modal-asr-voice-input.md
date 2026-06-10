@@ -23,8 +23,8 @@ Replace the browser-only voice placeholder with a real Gradio audio recording/up
 - [x] Replace the fake browser dictation input with `gr.Audio(sources=["microphone", "upload"], type="filepath")`.
 - [x] Add Modal `/asr` route with a small ASR adapter.
 - [x] Run full tests, eval, local UI smoke, and Modal deploy/smoke.
-- [ ] Run public Space verification after HF merge.
-- [ ] Commit, push, sync to Hugging Face Space, merge, and re-check Chrome.
+- [x] Run public Space verification after HF merge.
+- [x] Commit, push, sync to Hugging Face Space, merge, and re-check Chrome.
 
 ## Progress
 

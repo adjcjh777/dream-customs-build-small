@@ -77,6 +77,8 @@ def test_side_panel_dropdown_hover_stays_readable():
     assert '.gradio-container [role="option"]:hover' in CSS
     assert 'background: var(--dqa-sage-soft) !important;' in CSS
     assert 'color: var(--dqa-ink) !important;' in CSS
+    assert '.dc-side-panel .block:has(input[role="listbox"])' in CSS
+    assert 'resize: none !important;' in CSS
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

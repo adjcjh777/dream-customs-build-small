@@ -1538,6 +1538,8 @@ button.secondary {
 
 .dc-stage .dc-composer .form {
   background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
 
 .dc-stage .dc-composer .dc-section-title {
@@ -1642,6 +1644,32 @@ button.secondary {
   color: var(--dqa-muted) !important;
 }
 
+.dc-side-panel .block:has(input[role="listbox"]) {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+  padding: 20px 22px 18px !important;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]) .wrap,
+.dc-side-panel .block:has(input[role="listbox"]) .container,
+.dc-side-panel .block:has(input[role="listbox"]) input[role="listbox"] {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]) .wrap {
+  min-height: 34px !important;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]) input[role="listbox"] {
+  font-size: 1rem !important;
+  min-height: 30px !important;
+}
+
 .gradio-container [role="listbox"],
 .gradio-container .options,
 .gradio-container .dropdown-options {
@@ -1710,8 +1738,9 @@ button.secondary {
     0 18px 38px rgba(30, 42, 48, 0.1) !important;
   color: var(--dqa-ink) !important;
   min-height: 320px !important;
+  overflow: hidden !important;
   padding: 28px 96px 82px 78px !important;
-  resize: vertical;
+  resize: none !important;
 }
 
 .dc-attach-control,

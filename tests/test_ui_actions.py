@@ -28,7 +28,8 @@ def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
     source = inspect.getsource(ui_app.build_demo)
 
     assert "audio_input = gr.Audio(" in source
-    assert 'sources=["microphone", "upload"]' in source
+    assert 'sources=["upload"]' in source
+    assert 'sources=["microphone", "upload"]' not in source
     assert 'type="filepath"' in source
     assert "visible=False" in source
     assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
@@ -42,7 +43,21 @@ def test_image_upload_is_composer_plus_drawer():
     assert "attachment_html = gr.HTML(_attachment_html(DEFAULT_LANGUAGE))" in source
     assert 'elem_classes=["dc-image-popover"]' in source
     assert 'image_input = gr.Image(' in source
+    assert 'sources=["upload", "clipboard"]' in source
     assert "gr.Accordion(" not in source.split("image_input = gr.Image(")[0].split("with gr.Group(elem_classes=[\"dc-composer\"]):")[-1]
+
+
+def test_image_popover_uses_unified_upload_clipboard_ui():
+    assert "data-upload" in ui_app._attachment_html("en")
+    assert "data-paste" in ui_app._attachment_html("zh")
+    assert "上传图片" in ui_app._attachment_html("zh")
+    assert ".dc-image-popover [data-testid=\"source-select\"]" in CSS
+    assert "border-top: 0 !important;" in CSS
+    assert '[aria-label="Capture from camera"]' in CSS
+    assert "display: none !important;" in CSS
+    assert ".dc-image-upload-copy" in CSS
+    assert ".dc-image-label-copy" in inspect.getsource(ui_app)
+    assert "clipboardSelected ? copy.paste : copy.upload" in inspect.getsource(ui_app)
 
 
 def test_composer_scripts_are_attached_to_blocks():
@@ -83,6 +98,8 @@ def test_side_panel_dropdown_hover_stays_readable():
     assert '[aria-expanded="true"]) .dropdown-arrow' in CSS
     assert '.wrap-inner.show_options' in CSS
     assert 'transform: rotate(180deg) !important;' in CSS
+    assert '.dc-side-panel .block:has(input[role="listbox"]) .wrap-inner' in CSS
+    assert '.dc-side-panel .block:has(input[role="listbox"]) .secondary-wrap' in CSS
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

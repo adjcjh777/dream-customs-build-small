@@ -1654,6 +1654,9 @@ button.secondary {
 
 .dc-side-panel .block:has(input[role="listbox"]) .wrap,
 .dc-side-panel .block:has(input[role="listbox"]) .container,
+.dc-side-panel .block:has(input[role="listbox"]) .wrap-inner,
+.dc-side-panel .block:has(input[role="listbox"]) .secondary-wrap,
+.dc-side-panel .block:has(input[role="listbox"]) .input-container,
 .dc-side-panel .block:has(input[role="listbox"]) input[role="listbox"] {
   background: transparent !important;
   border: 0 !important;
@@ -1834,10 +1837,18 @@ button.secondary {
 
 .dc-image-popover {
   bottom: 88px;
+  background: rgba(255, 253, 248, 0.99) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 26px !important;
+  border-style: solid !important;
+  box-shadow: 0 18px 42px rgba(30, 42, 48, 0.16) !important;
+  color: var(--dqa-ink) !important;
+  height: 220px !important;
   left: 24px;
   margin: 0 !important;
   max-width: calc(100% - 48px);
   opacity: 0;
+  overflow: hidden !important;
   pointer-events: none;
   position: absolute !important;
   transform: translateY(8px) scale(0.98);
@@ -1854,17 +1865,143 @@ button.secondary {
   visibility: visible;
 }
 
-.dc-image-popover,
 .dc-image-popover .wrap,
 .dc-image-popover .container,
 .dc-image-popover .upload-container,
 .dc-image-popover .image-container,
 .dc-image-popover [data-testid="image"],
 .dc-image-popover [data-testid="file-upload"] {
-  background: rgba(255, 253, 248, 0.99) !important;
-  border-color: var(--dqa-line) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 18px 42px rgba(30, 42, 48, 0.16) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.dc-image-popover [data-testid="block-label"] {
+  align-items: center !important;
+  background: rgba(238, 247, 236, 0.96) !important;
+  border: 1px solid rgba(88, 142, 94, 0.2) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: var(--dqa-sage-deep) !important;
+  display: inline-flex !important;
+  font-family: inherit !important;
+  font-size: 0.84rem !important;
+  font-weight: 720 !important;
+  gap: 7px !important;
+  left: 16px !important;
+  line-height: 1 !important;
+  padding: 8px 12px !important;
+  top: 14px !important;
+}
+
+.dc-image-popover [data-testid="block-label"] svg {
+  color: var(--dqa-sage-deep) !important;
+  height: 16px !important;
+  width: 16px !important;
+}
+
+.dc-image-popover .image-container {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.dc-image-popover .upload-container {
+  height: 100% !important;
+  padding: 18px 18px 64px !important;
+}
+
+.dc-image-popover .upload-container button {
+  align-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 22px !important;
+  box-shadow: none !important;
+  color: var(--dqa-ink) !important;
+  display: flex !important;
+  justify-content: center !important;
+  min-height: 130px !important;
+  width: 100% !important;
+}
+
+.dc-image-popover .upload-container button:hover {
+  background: rgba(238, 247, 236, 0.56) !important;
+}
+
+.dc-image-popover .upload-container .wrap {
+  align-items: center !important;
+  color: var(--dqa-ink) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  font-size: 0 !important;
+  gap: 12px !important;
+  justify-content: center !important;
+}
+
+.dc-image-popover .upload-container .icon-wrap,
+.dc-image-popover .upload-container svg {
+  color: var(--dqa-sage-deep) !important;
+  height: 32px !important;
+  width: 32px !important;
+}
+
+.dc-image-popover .upload-container .or {
+  display: none !important;
+}
+
+.dc-image-upload-copy {
+  color: var(--dqa-ink) !important;
+  display: block !important;
+  font-size: 1rem !important;
+  font-weight: 760 !important;
+  letter-spacing: 0 !important;
+}
+
+.dc-image-popover [data-testid="source-select"] {
+  align-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  bottom: 16px !important;
+  box-shadow: none !important;
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: center !important;
+  left: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  right: 0 !important;
+}
+
+.dc-image-popover [data-testid="source-select"]::before,
+.dc-image-popover [data-testid="source-select"]::after {
+  display: none !important;
+}
+
+.dc-image-popover [data-testid="source-select"] button {
+  align-items: center !important;
+  background: rgba(255, 253, 248, 0.92) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: var(--dqa-muted) !important;
+  display: inline-flex !important;
+  height: 42px !important;
+  justify-content: center !important;
+  min-height: 42px !important;
+  padding: 0 !important;
+  width: 42px !important;
+}
+
+.dc-image-popover [data-testid="source-select"] button:hover,
+.dc-image-popover [data-testid="source-select"] button.selected {
+  background: var(--dqa-sage-soft) !important;
+  border-color: rgba(88, 142, 94, 0.26) !important;
+  color: var(--dqa-sage-deep) !important;
+}
+
+.dc-image-popover [aria-label="Capture from camera"] {
+  display: none !important;
 }
 
 @media (max-width: 900px) {

@@ -70,6 +70,8 @@ VOICE_JS = r"""
     }
     button.dataset.bound = "true";
 
+    const messageFor = (key, fallback) => button.dataset[key] || fallback;
+
     const setStatus = (message, mode) => {
       if (status) {
         status.textContent = message;
@@ -94,24 +96,15 @@ VOICE_JS = r"""
     button.addEventListener("click", async () => {
       const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!Recognition) {
-        setStatus("This browser cannot transcribe voice here. You can still type the dream.", "error");
+        setStatus(messageFor("unsupported", "This browser cannot transcribe voice here. You can still type the dream."), "error");
         textarea.focus();
         return;
       }
 
-      setStatus("Checking microphone permission...", "listening");
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          stream.getTracks().forEach((track) => track.stop());
-        }
-      } catch (error) {
-        setStatus("Microphone permission was not granted. Allow recording and try again.", "error");
-        return;
-      }
+      setStatus(messageFor("checking", "Checking microphone permission..."), "listening");
 
       const recognition = new Recognition();
-      recognition.lang = "en-US";
+      recognition.lang = button.dataset.language === "zh" ? "zh-CN" : "en-US";
       recognition.interimResults = true;
       recognition.continuous = false;
       recognition.maxAlternatives = 1;
@@ -119,7 +112,7 @@ VOICE_JS = r"""
       let latestTranscript = "";
 
       recognition.onstart = () => {
-        setStatus("Listening. Say the dream fragment when you are ready.", "listening");
+        setStatus(messageFor("listening", "Listening. Say the dream fragment when you are ready."), "listening");
       };
 
       recognition.onresult = (event) => {
@@ -134,17 +127,17 @@ VOICE_JS = r"""
 
       recognition.onerror = (event) => {
         const message = event.error === "not-allowed"
-          ? "Microphone permission was denied. Allow recording and try again."
-          : "I did not catch that. Tap the microphone again if you want to retry.";
+          ? messageFor("permission", "Microphone permission was denied. Allow recording and try again.")
+          : messageFor("empty", "I did not catch that. Tap the microphone again if you want to retry.");
         setStatus(message, "error");
       };
 
       recognition.onend = () => {
         if (latestTranscript) {
           appendTranscript(latestTranscript);
-          setStatus("Added to the dream note.", "done");
+          setStatus(messageFor("done", "Added to the dream note."), "done");
         } else if (button.dataset.mode === "listening") {
-          setStatus("No speech detected. Tap again if you want to retry.", "idle");
+          setStatus(messageFor("empty", "No speech detected. Tap again if you want to retry."), "idle");
         }
       };
 
@@ -161,7 +154,83 @@ VOICE_JS = r"""
     }
     button.dataset.bound = "true";
 
+    const localizeImagePopover = () => {
+      const control = composer.querySelector(".dc-attach-control");
+      const popover = composer.querySelector(".dc-image-popover");
+      if (!control || !popover) {
+        return;
+      }
+
+      const copy = {
+        imageLabel: control.dataset.imageLabel || "Image clue",
+        upload: control.dataset.upload || "Upload image",
+        paste: control.dataset.paste || "Paste from Clipboard",
+      };
+      composer.dataset.imageLanguage = control.dataset.language || "en";
+      const sourceButtons = popover.querySelectorAll('[data-testid="source-select"] button');
+      const clipboardSelected = sourceButtons.length > 1
+        && sourceButtons[sourceButtons.length - 1].classList.contains("selected");
+      const primaryCopy = clipboardSelected ? copy.paste : copy.upload;
+
+      const label = popover.querySelector('[data-testid="block-label"]');
+      if (label) {
+        let labelText = label.querySelector(".dc-image-label-copy");
+        if (!labelText) {
+          labelText = document.createElement("span");
+          labelText.className = "dc-image-label-copy";
+          label.appendChild(labelText);
+        }
+        Array.from(label.childNodes).forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            node.textContent = "";
+          }
+        });
+        labelText.textContent = copy.imageLabel;
+      }
+
+      const uploadWrap = popover.querySelector(".upload-container button .wrap");
+      if (uploadWrap) {
+        Array.from(uploadWrap.childNodes).forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            node.textContent = "";
+          }
+        });
+        let uploadText = uploadWrap.querySelector(".dc-image-upload-copy");
+        if (!uploadText) {
+          uploadText = document.createElement("strong");
+          uploadText.className = "dc-image-upload-copy";
+          uploadWrap.appendChild(uploadText);
+        }
+        uploadText.textContent = primaryCopy;
+      }
+
+      const uploadButton = popover.querySelector(".upload-container button");
+      uploadButton?.setAttribute("aria-label", primaryCopy);
+
+      if (sourceButtons[0]) {
+        sourceButtons[0].setAttribute("aria-label", copy.upload);
+      }
+      if (sourceButtons[sourceButtons.length - 1]) {
+        sourceButtons[sourceButtons.length - 1].setAttribute("aria-label", copy.paste);
+      }
+
+      const replaceText = (root) => {
+        Array.from(root.childNodes).forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent || "";
+            if (text.includes("Paste from Clipboard") || text.includes("从剪贴板粘贴")) {
+              node.textContent = text.replace("Paste from Clipboard", copy.paste).replace("从剪贴板粘贴", copy.paste);
+            }
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            replaceText(node);
+          }
+        });
+      };
+      replaceText(popover);
+    };
+
     const setOpen = (open) => {
+      localizeImagePopover();
       composer.classList.toggle("dc-image-open", open);
       button.setAttribute("aria-expanded", open ? "true" : "false");
     };
@@ -176,6 +245,9 @@ VOICE_JS = r"""
         uploadInput?.focus();
       }
     });
+
+    composer.addEventListener("click", localizeImagePopover);
+    localizeImagePopover();
 
     document.addEventListener("click", (event) => {
       if (!composer.contains(event.target)) {
@@ -425,7 +497,18 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     copy = copy_for(language)
     return f"""
 <div class="dc-mic-control">
-  <button type="button" class="dc-mic-button" aria-label="{escape(copy['mic_idle'])}">
+  <button
+    type="button"
+    class="dc-mic-button"
+    aria-label="{escape(copy['mic_idle'])}"
+    data-language="{escape(language)}"
+    data-checking="{escape('正在请求麦克风权限...' if language == 'zh' else 'Checking microphone permission...')}"
+    data-unsupported="{escape(copy['mic_unsupported'])}"
+    data-permission="{escape(copy['mic_permission'])}"
+    data-listening="{escape(copy['mic_listening'])}"
+    data-done="{escape(copy['mic_done'])}"
+    data-empty="{escape(copy['mic_empty'])}"
+  >
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>
   <div class="dc-mic-status" aria-live="polite">{escape(copy['mic_idle'])}</div>
@@ -437,7 +520,13 @@ def _attachment_html(language: str = DEFAULT_LANGUAGE) -> str:
     copy = copy_for(language)
     label = escape(copy["image_accordion"])
     return f"""
-<div class="dc-attach-control">
+<div
+  class="dc-attach-control"
+  data-language="{escape(language)}"
+  data-image-label="{escape(copy['image_label'])}"
+  data-upload="{escape(copy['image_upload'])}"
+  data-paste="{escape(copy['image_paste'])}"
+>
   <button type="button" class="dc-attach-button" aria-label="{label}" aria-expanded="false">
     <span aria-hidden="true">+</span>
   </button>
@@ -511,13 +600,14 @@ def build_demo() -> gr.Blocks:
                             attachment_html = gr.HTML(_attachment_html(DEFAULT_LANGUAGE))
                             image_input = gr.Image(
                                 label=initial_copy["image_label"],
+                                sources=["upload", "clipboard"],
                                 type="filepath",
                                 height=180,
                                 elem_classes=["dc-image-popover"],
                             )
                             audio_input = gr.Audio(
                                 label=initial_copy["voice_label"],
-                                sources=["microphone", "upload"],
+                                sources=["upload"],
                                 type="filepath",
                                 format="wav",
                                 elem_classes=["dc-voice-input"],

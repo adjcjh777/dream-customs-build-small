@@ -36,6 +36,7 @@ def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
     assert 'sources=["microphone", "upload"]' not in source
     assert 'type="filepath"' in source
     assert "visible=False" in source
+    assert "_make_media_api_info_client_safe(audio_input)" in source
     assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
     assert "audio_input = gr.State(None)" not in source
     assert 'value=DEFAULT_ASR_BACKEND' in source
@@ -48,6 +49,7 @@ def test_image_upload_is_composer_plus_drawer():
     assert 'elem_classes=["dc-image-popover"]' in source
     assert 'image_input = gr.Image(' in source
     assert 'sources=["upload", "clipboard"]' in source
+    assert "_make_media_api_info_client_safe(image_input)" in source
     assert "gr.Accordion(" not in source.split("image_input = gr.Image(")[0].split("with gr.Group(elem_classes=[\"dc-composer\"]):")[-1]
 
 

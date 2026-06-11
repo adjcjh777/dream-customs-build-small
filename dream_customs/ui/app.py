@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from html import escape
 
 import gradio as gr
@@ -57,6 +58,22 @@ def _json_schema_to_python_type(schema, defs):
 
 
 gradio_client_utils._json_schema_to_python_type = _json_schema_to_python_type
+
+
+def _make_media_api_info_client_safe(component):
+    """Patch Gradio FileData schemas so gradio_client can parse the config."""
+
+    original_api_info = component.api_info
+
+    def api_info():
+        schema = deepcopy(original_api_info())
+        meta = schema.get("properties", {}).get("meta", {})
+        if isinstance(meta.get("additionalProperties"), bool):
+            meta["additionalProperties"] = {"type": "string"}
+        return schema
+
+    component.api_info = api_info
+
 
 VOICE_JS = r"""
 () => {
@@ -441,6 +458,46 @@ def _reset(language, text_backend, vision_backend, *settings_values):
     return (*_updates(state, view_json), "", "", None, None, default_mood_for(language))
 
 
+def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language: str = DEFAULT_LANGUAGE) -> dict:
+    """Text-only public API for external agents.
+
+    The visual UI keeps image and voice inputs, but those components currently
+    generate Gradio schemas that some agent clients cannot parse. This endpoint
+    keeps the agent path simple and stable while still exercising the same
+    Dream QA pipeline and configured Modal text backend.
+    """
+
+    language = normalize_language(language)
+    state, view_json = submit_dream_action(
+        dream_text=dream_text,
+        image_value=None,
+        audio_value=None,
+        mood=mood,
+        text_backend=DEFAULT_TEXT_BACKEND,
+        vision_backend=DEFAULT_VISION_BACKEND,
+        language=language,
+    )
+    view = json.loads(view_json)
+    if view.get("status") != "ask":
+        return view
+    if answer and answer.strip():
+        _state, view_json = answer_to_card_action(
+            state,
+            answer=answer,
+            text_backend=DEFAULT_TEXT_BACKEND,
+            vision_backend=DEFAULT_VISION_BACKEND,
+            language=language,
+        )
+    else:
+        _state, view_json = skip_to_card_action(
+            state,
+            text_backend=DEFAULT_TEXT_BACKEND,
+            vision_backend=DEFAULT_VISION_BACKEND,
+            language=language,
+        )
+    return json.loads(view_json)
+
+
 def _active_step_for_status(status: str) -> int:
     return {"record": 1, "error": 1, "ask": 2, "drafting": 3, "tip": 4}.get(status, 1)
 
@@ -605,6 +662,7 @@ def build_demo() -> gr.Blocks:
                                 height=180,
                                 elem_classes=["dc-image-popover"],
                             )
+                            _make_media_api_info_client_safe(image_input)
                             audio_input = gr.Audio(
                                 label=initial_copy["voice_label"],
                                 sources=["upload"],
@@ -613,6 +671,7 @@ def build_demo() -> gr.Blocks:
                                 elem_classes=["dc-voice-input"],
                                 visible=False,
                             )
+                            _make_media_api_info_client_safe(audio_input)
                         field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button(initial_copy["example_button"], variant="secondary")
@@ -753,6 +812,14 @@ def build_demo() -> gr.Blocks:
                                 precision=0,
                             )
 
+            with gr.Group(visible=False):
+                agent_dream_text = gr.Textbox(label="Agent dream text")
+                agent_mood = gr.Textbox(label="Agent mood", value=DEFAULT_MOOD)
+                agent_answer = gr.Textbox(label="Agent answer")
+                agent_language = gr.Textbox(label="Agent language", value=DEFAULT_LANGUAGE)
+                agent_result = gr.JSON(label="Agent Dream QA result")
+                agent_button = gr.Button("Agent Dream QA")
+
         outputs = [
             session_state,
             view_state,
@@ -791,39 +858,51 @@ def build_demo() -> gr.Blocks:
             _submit,
             inputs=[dream_text, image_input, audio_input, mood, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
+            api_name=False,
+            show_api=False,
         )
         answer_button.click(
             _answer,
             inputs=[session_state, answer_text, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
+            api_name=False,
+            show_api=False,
         )
         skip_button.click(
             _skip,
             inputs=[session_state, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
+            api_name=False,
+            show_api=False,
         )
         gentle_button.click(
             _revise,
             inputs=[session_state, gr.State("softer"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
+            api_name=False,
+            show_api=False,
         )
         weird_button.click(
             _revise,
             inputs=[session_state, gr.State("stranger"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
+            api_name=False,
+            show_api=False,
         )
-        copy_button.click(lambda text: text, inputs=card_text, outputs=card_text)
+        copy_button.click(lambda text: text, inputs=card_text, outputs=card_text, api_name=False, show_api=False)
         reset_button.click(
             _reset,
             inputs=[language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs + [dream_text, answer_text, image_input, audio_input, mood],
+            api_name=False,
+            show_api=False,
         )
 
         def _example(selected_language):
             selected_language = normalize_language(selected_language)
             return EXAMPLE_DREAMS[selected_language], EXAMPLE_MOODS[selected_language]
 
-        example_button.click(_example, inputs=language, outputs=[dream_text, mood])
+        example_button.click(_example, inputs=language, outputs=[dream_text, mood], api_name=False, show_api=False)
 
         def _language_ui(selected_language):
             selected_language = normalize_language(selected_language)
@@ -893,6 +972,15 @@ def build_demo() -> gr.Blocks:
                 debug_help_html,
                 debug_json,
             ],
+            api_name=False,
+            show_api=False,
+        )
+        agent_button.click(
+            _agent_dream_qa,
+            inputs=[agent_dream_text, agent_mood, agent_answer, agent_language],
+            outputs=agent_result,
+            api_name="agent_dream_qa",
+            show_api=True,
         )
 
     return demo

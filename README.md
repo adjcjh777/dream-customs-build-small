@@ -81,6 +81,22 @@ python app.py
 
 Open `http://127.0.0.1:7860`.
 
+## Local Space Mirror
+
+For pre-merge UI review, run the same `app.py` entrypoint with the local Space mirror wrapper:
+
+```bash
+.venv/bin/python scripts/local_space_mirror.py
+```
+
+Open `http://127.0.0.1:7862`, then verify the Gradio config in another terminal:
+
+```bash
+.venv/bin/python scripts/smoke_local_space_mirror.py
+```
+
+Use this path before merging Hugging Face Space PRs so UI changes can be reviewed locally. Details: `docs/local-space-mirror.md`.
+
 ## Optional Ollama Models
 
 ```bash

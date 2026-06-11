@@ -35,7 +35,7 @@ health_image = (
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .apt_install("git")
+    .apt_install("ffmpeg", "git")
     .pip_install(
         "accelerate",
         "einops",

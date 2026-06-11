@@ -262,7 +262,7 @@ body,
 }
 
 .dc-workspace-grid {
-  align-items: stretch !important;
+  align-items: start !important;
   display: grid !important;
   gap: 18px !important;
   grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
@@ -937,6 +937,11 @@ a.built-with[href*="gradio.app"] {
   box-shadow: var(--dqa-shadow, var(--dc-soft-shadow));
   margin-top: 18px;
   padding: 10px !important;
+}
+
+.dc-flow-column .dc-debug-panel {
+  align-self: stretch;
+  width: 100%;
 }
 
 .dc-debug-panel > button {
@@ -1652,6 +1657,14 @@ button.secondary {
   padding: 20px 22px 18px !important;
 }
 
+.dc-side-panel .form:has(input[role="listbox"]) {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
 .dc-side-panel .block:has(input[role="listbox"]) .wrap,
 .dc-side-panel .block:has(input[role="listbox"]) .container,
 .dc-side-panel .block:has(input[role="listbox"]) .wrap-inner,
@@ -1701,9 +1714,7 @@ button.secondary {
   transform-box: fill-box;
 }
 
-.dc-side-panel .block:has(input[role="listbox"][aria-expanded="true"]) .dropdown-arrow,
-.dc-side-panel .block:has(.wrap-inner.show_options) .dropdown-arrow,
-.dc-side-panel .block:has(.options) .dropdown-arrow {
+.dc-side-panel .block:has(> .container input[role="listbox"][aria-expanded="true"]) > .container .dropdown-arrow {
   color: var(--dqa-sage-deep) !important;
   transform: rotate(180deg) !important;
 }
@@ -1794,11 +1805,86 @@ button.secondary {
   color: var(--dqa-ink) !important;
   font-size: 0.94rem !important;
   font-weight: 560 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  width: 100% !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .wrap-inner {
+  align-items: center !important;
+  display: flex !important;
+  gap: 8px !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .secondary-wrap {
+  flex: 1 1 auto !important;
+  max-width: calc(100% - 38px) !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
 }
 
 .dc-side-panel .dc-dev .block:has(input[role="listbox"]) .icon-wrap {
+  flex: 0 0 28px !important;
   height: 28px !important;
   width: 28px !important;
+}
+
+.dc-side-panel .dc-dev-tuning {
+  display: grid !important;
+  gap: 8px !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 6px 0 12px !important;
+}
+
+.dc-side-panel .dc-dev-tuning > .styler,
+.dc-side-panel .dc-dev-tuning .form {
+  display: grid !important;
+  gap: 8px !important;
+  grid-column: 1 / -1 !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  width: 100% !important;
+}
+
+.dc-side-panel .dc-dev-tuning .block {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+  padding: 10px 12px !important;
+}
+
+.dc-side-panel .dc-dev-tuning .wrap.hide {
+  display: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+}
+
+.dc-side-panel .dc-dev-tuning .container {
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
+.dc-side-panel .dc-dev-tuning label,
+.dc-side-panel .dc-dev-tuning [data-testid="block-label"] {
+  color: var(--dqa-muted) !important;
+  font-size: 0.74rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin-bottom: 0 !important;
+}
+
+.dc-side-panel .dc-dev-tuning input {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--dqa-ink) !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  min-height: 30px !important;
+  padding: 0 !important;
 }
 
 .dc-side-panel .dc-dev-advanced {

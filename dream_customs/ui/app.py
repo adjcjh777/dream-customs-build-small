@@ -645,6 +645,13 @@ def build_demo() -> gr.Blocks:
                             show_copy_button=True,
                             elem_classes=["dc-hidden-text"],
                         )
+                    with gr.Accordion(initial_copy["debug_title"], open=False, elem_classes=["dc-debug-panel"]) as debug_panel:
+                        debug_help_html = gr.HTML(_debug_help_html(DEFAULT_LANGUAGE))
+                        debug_json = gr.Code(
+                            label=initial_copy["debug_state_label"],
+                            value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
+                            language="json",
+                        )
 
                 with gr.Column(elem_classes=["dc-side-panel"]):
                     language = gr.Radio(
@@ -657,6 +664,27 @@ def build_demo() -> gr.Blocks:
                     side_stamp_html = gr.HTML(_side_stamp_html(DEFAULT_LANGUAGE))
                     with gr.Accordion("Advanced", open=False, elem_classes=["dc-dev"]):
                         dev_help_html = gr.HTML(_dev_help_html(DEFAULT_LANGUAGE))
+                        with gr.Group(elem_classes=["dc-dev-tuning"]):
+                            text_temperature = gr.Number(
+                                label="Text temperature",
+                                value=DEFAULT_TEXT_TEMPERATURE,
+                                precision=2,
+                            )
+                            vision_temperature = gr.Number(
+                                label="Image temperature",
+                                value=DEFAULT_VISION_TEMPERATURE,
+                                precision=2,
+                            )
+                            text_max_tokens = gr.Number(
+                                label="Text max tokens",
+                                value=DEFAULT_TEXT_MAX_TOKENS,
+                                precision=0,
+                            )
+                            vision_max_tokens = gr.Number(
+                                label="Image max tokens",
+                                value=DEFAULT_VISION_MAX_TOKENS,
+                                precision=0,
+                            )
                         text_backend = gr.Dropdown(
                             label="Text generation",
                             choices=[
@@ -724,41 +752,6 @@ def build_demo() -> gr.Blocks:
                                 value=DEFAULT_ASR_LATENCY_BUDGET_MS,
                                 precision=0,
                             )
-                            text_temperature = gr.Slider(
-                                label="Text temperature",
-                                minimum=0,
-                                maximum=0.7,
-                                step=0.05,
-                                value=DEFAULT_TEXT_TEMPERATURE,
-                            )
-                            vision_temperature = gr.Slider(
-                                label="Image temperature",
-                                minimum=0,
-                                maximum=0.7,
-                                step=0.05,
-                                value=DEFAULT_VISION_TEMPERATURE,
-                            )
-                            text_max_tokens = gr.Slider(
-                                label="Text max tokens",
-                                minimum=64,
-                                maximum=1200,
-                                step=1,
-                                value=DEFAULT_TEXT_MAX_TOKENS,
-                            )
-                            vision_max_tokens = gr.Slider(
-                                label="Image max tokens",
-                                minimum=64,
-                                maximum=800,
-                                step=1,
-                                value=DEFAULT_VISION_MAX_TOKENS,
-                            )
-            with gr.Accordion(initial_copy["debug_title"], open=False, elem_classes=["dc-debug-panel"]) as debug_panel:
-                debug_help_html = gr.HTML(_debug_help_html(DEFAULT_LANGUAGE))
-                debug_json = gr.Code(
-                    label=initial_copy["debug_state_label"],
-                    value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
-                    language="json",
-                )
 
         outputs = [
             session_state,

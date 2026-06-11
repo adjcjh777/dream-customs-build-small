@@ -19,9 +19,13 @@ def test_mobile_defaults_to_modal_backends():
 
 def test_runtime_settings_are_collapsed_for_public_flow():
     source = inspect.getsource(ui_app.build_demo)
+    flow_column_source = source.split('with gr.Column(elem_classes=["dc-flow-column"]):', 1)[1].split(
+        'with gr.Column(elem_classes=["dc-side-panel"]):', 1
+    )[0]
 
     assert 'gr.Accordion("Advanced", open=False' in source
     assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in source
+    assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in flow_column_source
 
 
 def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
@@ -95,11 +99,13 @@ def test_side_panel_dropdown_hover_stays_readable():
     assert '.dc-side-panel .block:has(input[role="listbox"])' in CSS
     assert 'resize: none !important;' in CSS
     assert 'pointer-events: none !important;' in CSS
-    assert '[aria-expanded="true"]) .dropdown-arrow' in CSS
-    assert '.wrap-inner.show_options' in CSS
+    assert '> .container input[role="listbox"][aria-expanded="true"]) > .container .dropdown-arrow' in CSS
+    assert '.dc-side-panel .block:has(.wrap-inner.show_options) .dropdown-arrow' not in CSS
+    assert '.dc-side-panel .block:has(.options) .dropdown-arrow' not in CSS
     assert 'transform: rotate(180deg) !important;' in CSS
     assert '.dc-side-panel .block:has(input[role="listbox"]) .wrap-inner' in CSS
     assert '.dc-side-panel .block:has(input[role="listbox"]) .secondary-wrap' in CSS
+    assert '.dc-side-panel .form:has(input[role="listbox"])' in CSS
     assert '--input-border-width: 0px;' in CSS
     assert '--block-border-width: 0px;' in CSS
 
@@ -113,6 +119,15 @@ def test_advanced_panel_uses_compact_readable_controls():
     assert 'font-size: 0.94rem !important;' in CSS
     assert '.dc-side-panel .dc-dev > button' in CSS
     assert 'min-height: 46px !important;' in CSS
+    assert '.dc-side-panel .dc-dev-tuning' in CSS
+    assert '.dc-flow-column .dc-debug-panel' in CSS
+    assert 'align-items: start !important;' in CSS
+    source = inspect.getsource(ui_app.build_demo)
+    assert 'with gr.Group(elem_classes=["dc-dev-tuning"])' in source
+    assert "text_temperature = gr.Number(" in source
+    assert "text_temperature = gr.Slider(" not in source
+    assert source.index("text_temperature = gr.Number(") < source.index("text_backend = gr.Dropdown(")
+    assert source.index("text_temperature = gr.Number(") < source.index('with gr.Accordion("Advanced endpoints"')
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

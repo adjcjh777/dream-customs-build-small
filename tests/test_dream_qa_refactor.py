@@ -115,8 +115,8 @@ def test_mobile_action_payload_uses_today_tip_not_clearance_pass():
     view = json.loads(view_json)
 
     assert view["status"] == "tip"
-    assert view["card_title"] == "Today Tip"
-    assert "elevator" in view["card_text"].lower() or "14" in view["card_text"]
+    assert view["card_title"] == "今日小 Tips"
+    assert "电梯" in view["card_text"] or "14" in view["card_text"]
     assert "clearance" not in view["card_text"].lower()
     assert "permit" not in view["card_html"].lower()
     assert "sealed" not in view["card_html"].lower()

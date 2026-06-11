@@ -19,6 +19,20 @@ from dream_customs.schema import CustomsSession, TimelineEvent, TodayTipCard
 from dream_customs.ui.copy import copy_for, normalize_language
 
 
+def _looks_mostly_chinese(text: str) -> bool:
+    clean = text or ""
+    cjk_count = sum(1 for char in clean if "\u4e00" <= char <= "\u9fff")
+    latin_count = sum(1 for char in clean if char.isascii() and char.isalpha())
+    return cjk_count >= 4 and cjk_count >= latin_count
+
+
+def _resolve_language_for_input(language: str, dream_text: str = "") -> str:
+    normalized = normalize_language(language)
+    if normalized == "en" and _looks_mostly_chinese(dream_text):
+        return "zh"
+    return normalized
+
+
 def _state_json(session: CustomsSession) -> str:
     return json.dumps(session.model_dump(mode="json"), ensure_ascii=False)
 
@@ -45,12 +59,20 @@ def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) 
 
 def _card_plain_text(card: TodayTipCard, language: str) -> str:
     if language == "zh":
-        return card.to_plain_text()
+        text = card.to_plain_text()
+        if card.followup_questions:
+            text += "\n追问记录: " + " / ".join(card.followup_questions)
+        if card.user_answers:
+            text += "\n用户回答: " + " / ".join(card.user_answers)
+        text += "\n模型说明: 文本推理由 MiniCPM5-1B 路线生成；图片线索由 MiniCPM-V-4.6 路线理解。"
+        return text
     lines = [
         "Today Tip",
         f"Dream summary: {card.dream_summary}",
         f"Question: {card.main_question}",
         f"Dream anchors: {', '.join(card.dream_anchors)}",
+        f"Follow-up questions: {' / '.join(card.followup_questions)}",
+        f"User answers: {' / '.join(card.user_answers)}",
         f"Interpretation: {card.interpretation}",
         f"Today Tip: {card.today_tip}",
     ]
@@ -60,6 +82,7 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
         lines.append(f"Caring note: {card.caring_note}")
     if card.safety_note:
         lines.append(f"Safety note: {card.safety_note}")
+    lines.append("Model note: text via MiniCPM5-1B route; visual clues via MiniCPM-V-4.6 route.")
     return "\n".join(lines)
 
 
@@ -79,6 +102,9 @@ def _view_payload(
     **settings,
 ) -> Dict[str, Any]:
     language = normalize_language(language)
+    session_language = normalize_language(getattr(session, "language", language))
+    if session_language != language and session.phase != "empty":
+        language = session_language
     copy = copy_for(language)
     card = session.sealed_tip or session.draft_tip
     error = _latest_error(session)
@@ -159,7 +185,7 @@ def submit_dream_action(
     language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    language = normalize_language(language)
+    language = _resolve_language_for_input(language, dream_text)
     if not (dream_text or "").strip() and not _file_path(image_value) and not _file_path(audio_value):
         session = create_session(language=language)
         session.phase = "error"
@@ -201,8 +227,9 @@ def skip_to_card_action(
     language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    language = normalize_language(language)
-    session = skip_question(_session_from_state(state), language=language)
+    session = _session_from_state(state)
+    language = normalize_language(getattr(session, "language", language))
+    session = skip_question(session, language=language)
     return _seal_view(session, text_backend, vision_backend, language=language, **settings)
 
 
@@ -214,8 +241,9 @@ def answer_to_card_action(
     language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    language = normalize_language(language)
-    session = answer_question(_session_from_state(state), answer or "", language=language)
+    session = _session_from_state(state)
+    language = normalize_language(getattr(session, "language", language))
+    session = answer_question(session, answer or "", language=language)
     if session.phase == "error":
         return _view(session, text_backend, vision_backend, language=language, **settings)
     return _seal_view(session, text_backend, vision_backend, language=language, **settings)
@@ -229,8 +257,8 @@ def revise_card_action(
     language: str = "en",
     **settings,
 ) -> Tuple[str, str]:
-    language = normalize_language(language)
     session = _session_from_state(state)
+    language = normalize_language(getattr(session, "language", language))
     if session.sealed_tip and not session.draft_tip:
         session.draft_tip = session.sealed_tip
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
@@ -255,5 +283,6 @@ def _seal_view(
     **settings,
 ) -> Tuple[str, str]:
     text_client, _vision_client, _asr_client = _clients(text_backend, vision_backend, **settings)
+    language = normalize_language(getattr(session, "language", language))
     session = finish_today_tip(session, text_client, language=language)
     return _view(session, text_backend, vision_backend, language=language, **settings)

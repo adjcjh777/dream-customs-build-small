@@ -219,6 +219,7 @@ class TimelineEvent(BaseModel):
 
 class CustomsSession(BaseModel):
     phase: SessionPhase = "empty"
+    language: str = "en"
     intake: DreamQuestionIntake = Field(default_factory=DreamQuestionIntake)
     qa_state: DreamQAState = Field(default_factory=DreamQAState)
     evidence_items: list[EvidenceItem] = Field(default_factory=list)

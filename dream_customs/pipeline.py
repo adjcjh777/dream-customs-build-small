@@ -107,6 +107,30 @@ _ZH_ANCHOR_MARKERS = [
     "红色门",
     "海边",
     "海浪",
+    "森林",
+    "白色猫",
+    "黑猫",
+    "猫",
+    "空白路牌",
+    "路牌",
+    "大雾",
+    "雾很大",
+    "雾",
+    "红色胡同",
+    "胡同",
+    "便签",
+    "草图",
+    "蓝色的小屋",
+    "小屋",
+    "红色邮箱",
+    "邮箱",
+    "红蓝两条路",
+    "两条路",
+    "旧房子",
+    "天花板",
+    "掉灰",
+    "考试",
+    "掉队",
     "旧钥匙",
     "钥匙",
     "没名字的人",
@@ -155,6 +179,30 @@ _ZH_TO_EN_PHRASES = {
     "红色门": "red door",
     "海边": "seaside",
     "海浪": "wave",
+    "大雾": "heavy fog",
+    "雾很大": "heavy fog",
+    "雾": "fog",
+    "森林": "forest",
+    "白色猫": "white cat",
+    "黑猫": "black cat",
+    "猫": "cat",
+    "路牌": "road sign",
+    "空白路牌": "blank road sign",
+    "红色胡同": "red alley",
+    "胡同": "alley",
+    "便签": "note",
+    "草图": "sketch",
+    "蓝色的小屋": "blue small house",
+    "小屋": "small house",
+    "红色邮箱": "red mailbox",
+    "邮箱": "mailbox",
+    "红蓝两条路": "red and blue roads",
+    "两条路": "two roads",
+    "旧房子": "old house",
+    "天花板": "ceiling",
+    "掉灰": "falling dust",
+    "考试": "exam",
+    "掉队": "falling behind",
     "旧钥匙": "old key",
     "钥匙": "key",
     "没名字的人": "nameless person",
@@ -251,7 +299,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"hat|hats|phone|phones|water|shoe|shoes|"
         r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains|"
         r"email|emails|meeting|meetings|deadline|deadlines|classroom|classrooms|teacher|teachers|"
-        r"assignment|assignments|homework|message|messages"
+        r"assignment|assignments|homework|message|messages|airport|airports|glass|bird|birds|child|children|"
+        r"cat|cats|forest|forests|sign|signs|alley|alleys|mailbox|mailboxes|sketch|sketches|ceiling|ceilings"
         r")\b"
     )
     for match in pair_pattern.finditer(text):
@@ -264,7 +313,7 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor|"
         r"exam|pencil|train|door|subway|station|snow|snowfield|hat|phone|water|shoe|stairwell|"
         r"room|key|note|rain|moon|curtain|sleep|dream|email|meeting|deadline|classroom|teacher|"
-        r"assignment|homework|message)\b"
+        r"assignment|homework|message|airport|glass|bird|child|cat|forest|sign|alley|mailbox|sketch|ceiling)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
     candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
@@ -276,7 +325,7 @@ def _english_anchor_text(text: str) -> str:
     clean = text or ""
     for source, target in sorted(_ZH_TO_EN_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
         clean = clean.replace(source, target)
-    clean = re.sub(r"[\u4e00-\u9fff]+", "dream detail", clean)
+    clean = re.sub(r"[\u4e00-\u9fff]+", " dream fragment ", clean)
     clean = re.sub(r"\s+", " ", clean).strip(" .,:;!?\"'()[]{}")
     return clean
 
@@ -311,6 +360,9 @@ def _clean_english_today_tip_language(card: TodayTipCard) -> TodayTipCard:
 
 def _clean_placeholder_phrase(text: str) -> str:
     clean = text or ""
+    clean = clean.replace("梦里的那个细节", "梦境片段").replace("那个细节", "梦境片段")
+    clean = re.sub(r"(?<=[A-Za-z])dream\s+detail", " dream detail", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"dream\s+detail(?=[A-Za-z])", "dream detail ", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\b(?:the\s+)?that\s+dream\s+detail\b", "the dream fragment", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\bdream detail(?:dream detail|dream)*\b", "dream fragment", clean, flags=re.IGNORECASE)
     clean = re.sub(r"\bthe\s+the\s+", "the ", clean, flags=re.IGNORECASE)
@@ -343,6 +395,8 @@ def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
     clean = re.sub(r"\s+", " ", merged).strip()
     if len(clean) > 72:
         clean = clean[:69].rstrip() + "..."
+    if not _is_zh(language):
+        clean = _clean_placeholder_phrase(_english_anchor_text(clean))
     if not _is_zh(language):
         return clean if clean.lower().startswith(("i ", "you ")) else f"You dreamed about {clean}"
     if clean.startswith(("你", "我", "I ", "i ")) or any(marker in clean[:12] for marker in ("梦见", "梦到")):
@@ -839,6 +893,10 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
             if _is_zh(language)
             else "The real concern you named deserves gentle handling; today, start with one small doorway into it."
         )
+    elif not _is_zh(language) and any(marker in polished.caring_note.lower() for marker in ["whole building", "one floor at a time"]):
+        polished.caring_note = "You do not have to solve the whole dream this morning; start by noticing one detail and one small next step."
+    elif _is_zh(language) and "所有楼层" in polished.caring_note:
+        polished.caring_note = "你不需要一醒来就解释完整个梦；先照顾一个细节和一个很小的下一步就好。"
     merged = "\n".join([intake.merged_text(), answers or ""])
     polished.safety_note = safety_note(language) if needs_escalation(merged) else ""
     if not _is_zh(language):
@@ -846,9 +904,20 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     return polished
 
 
-def generate_today_tip(intake: DreamIntake, answers: str, text_client, language: str = "en") -> TodayTipCard:
+def generate_today_tip(
+    intake: DreamIntake,
+    answers: str,
+    text_client,
+    language: str = "en",
+    followup_questions: Optional[List[str]] = None,
+) -> TodayTipCard:
     language = _normalize_language(language)
-    qa_state = build_qa_state(intake, answers=[answer for answer in [answers] if answer], language=language)
+    qa_state = build_qa_state(
+        intake,
+        questions=followup_questions or [],
+        answers=[answer for answer in [answers] if answer],
+        language=language,
+    )
     prompt = today_tip_prompt(qa_state, language=language)
     try:
         if hasattr(text_client, "generate_today_tip"):
@@ -877,8 +946,7 @@ def generate_today_tip(intake: DreamIntake, answers: str, text_client, language:
                 interpretation=_fallback_interpretation(intake, language),
                 today_tip=_grounded_today_tip(intake, language),
             )
-    if not card.followup_questions:
-        card.followup_questions = qa_state.followup_questions
+    card.followup_questions = qa_state.followup_questions
     if qa_state.user_answers:
         card.user_answers = qa_state.user_answers
     return _polish_today_tip(card, intake, answers, language)
@@ -947,6 +1015,7 @@ def _supports_model_led_pact(text_client) -> bool:
 def create_session(language: str = "en") -> CustomsSession:
     language = _normalize_language(language)
     return CustomsSession(
+        language=language,
         events=[
             TimelineEvent(
                 role="system",
@@ -1014,6 +1083,7 @@ def add_evidence(
 ) -> CustomsSession:
     language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
+    next_session.language = language
     added_items: List[EvidenceItem] = []
 
     if dream_text and dream_text.strip():
@@ -1137,6 +1207,7 @@ def add_evidence(
 def ask_questions(session: CustomsSession, text_client, force_another: bool = False, language: str = "en") -> CustomsSession:
     language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
+    next_session.language = language
     if not next_session.intake.merged_text():
         next_session.phase = "error"
         next_session.events.append(
@@ -1208,6 +1279,7 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
 def answer_question(session: CustomsSession, answer: str, language: str = "en") -> CustomsSession:
     language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
+    next_session.language = language
     if not answer or not answer.strip():
         next_session.phase = "error"
         next_session.events.append(
@@ -1227,6 +1299,7 @@ def answer_question(session: CustomsSession, answer: str, language: str = "en") 
 def skip_question(session: CustomsSession, language: str = "en") -> CustomsSession:
     language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
+    next_session.language = language
     skip_text = "用户选择跳过这个追问。" if _is_zh(language) else "The user chose to skip this question."
     next_session.answer_history.append(skip_text)
     next_session.phase = "ask"
@@ -1240,6 +1313,7 @@ def skip_question(session: CustomsSession, language: str = "en") -> CustomsSessi
 def finish_today_tip(session: CustomsSession, text_client, language: str = "en") -> CustomsSession:
     language = _normalize_language(language)
     next_session = session.model_copy(deep=True)
+    next_session.language = language
     if not next_session.intake.merged_text():
         next_session.phase = "error"
         next_session.events.append(
@@ -1254,7 +1328,13 @@ def finish_today_tip(session: CustomsSession, text_client, language: str = "en")
         )
         return next_session
     answers = next_session.answers_text()
-    card = generate_today_tip(next_session.intake, answers, text_client, language=language)
+    card = generate_today_tip(
+        next_session.intake,
+        answers,
+        text_client,
+        language=language,
+        followup_questions=next_session.question_history,
+    )
     next_session.qa_state = build_qa_state(
         next_session.intake, next_session.question_history, next_session.answer_history, language=language
     )

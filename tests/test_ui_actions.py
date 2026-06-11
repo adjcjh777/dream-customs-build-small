@@ -225,6 +225,40 @@ def test_mobile_mvp_empty_submit_stays_on_record_with_clear_error():
     assert json.loads(state)["phase"] == "error"
 
 
+def test_mobile_mvp_auto_switches_chinese_input_to_chinese_result():
+    state, view_json = submit_dream_action(
+        dream_text="梦里我在一片雾很大的森林里追着一只白色猫跑，周围有很多空白路牌。",
+        mood="焦虑",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+
+    assert view["language"] == "zh"
+    assert json.loads(state)["language"] == "zh"
+    assert view["status"] == "ask"
+    assert "白色猫" in view["question"] or "森林" in view["question"] or "路牌" in view["question"]
+
+    _state, view_json = answer_to_card_action(
+        state,
+        "我其实很在意工作里的选择，梦里看到空白路牌让我很不安。",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    combined = "\n".join([view["card_text"], view["card_html"]])
+
+    assert view["language"] == "zh"
+    assert view["card_title"] == "今日小 Tips"
+    assert "that dream detail" not in combined
+    assert "dream detail" not in combined
+    assert "追问记录" in view["card_text"]
+    assert "用户回答" in view["card_text"]
+    assert "MiniCPM5-1B" in view["card_text"]
+
+
 def test_mobile_mvp_zh_language_switch_keeps_chinese_today_tip():
     state, _view_json = submit_dream_action(
         dream_text="我梦到电梯按钮融化，楼层数字停在 14。",
@@ -265,6 +299,9 @@ def test_mobile_mvp_answer_to_card_generates_today_tip():
     assert view["status"] == "tip"
     assert view["phase"] == "tip"
     assert "It may be asking me to slow down." in view["debug"]["session"]["answer_history"]
+    assert "Follow-up questions:" in view["card_text"]
+    assert "User answers:" in view["card_text"]
+    assert "MiniCPM5-1B" in view["card_text"]
 
 
 def test_english_today_tip_has_no_chinese_anchor_leakage():

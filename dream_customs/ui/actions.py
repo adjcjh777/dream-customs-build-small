@@ -15,7 +15,7 @@ from dream_customs.pipeline import (
     skip_question,
 )
 from dream_customs.render import render_today_tip_card
-from dream_customs.schema import CustomsSession, TodayTipCard
+from dream_customs.schema import CustomsSession, TimelineEvent, TodayTipCard
 from dream_customs.ui.copy import copy_for, normalize_language
 
 
@@ -160,6 +160,22 @@ def submit_dream_action(
     **settings,
 ) -> Tuple[str, str]:
     language = normalize_language(language)
+    if not (dream_text or "").strip() and not _file_path(image_value) and not _file_path(audio_value):
+        session = create_session(language=language)
+        session.phase = "error"
+        session.events.append(
+            TimelineEvent(
+                role="error",
+                title="还没有梦境材料" if language == "zh" else "No dream material yet",
+                body=(
+                    "请先写一句梦境，或上传图片/语音；这样今日小 Tips 才能引用真实细节。"
+                    if language == "zh"
+                    else "Write at least one dream sentence, or add image/voice evidence, so the Today Tip can use real details."
+                ),
+                status="empty",
+            )
+        )
+        return _view(session, text_backend, vision_backend, language=language, **settings)
     text_client, vision_client, asr_client = _clients(text_backend, vision_backend, **settings)
     session = add_evidence(
         create_session(language=language),

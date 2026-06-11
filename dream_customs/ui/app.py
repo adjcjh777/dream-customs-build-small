@@ -88,8 +88,13 @@ VOICE_JS = r"""
     button.dataset.bound = "true";
 
     const messageFor = (key, fallback) => button.dataset[key] || fallback;
+    let checkingTimer = null;
 
     const setStatus = (message, mode) => {
+      if (mode !== "listening" && checkingTimer) {
+        window.clearTimeout(checkingTimer);
+        checkingTimer = null;
+      }
       if (status) {
         status.textContent = message;
         status.dataset.mode = mode || "";
@@ -119,16 +124,30 @@ VOICE_JS = r"""
       }
 
       setStatus(messageFor("checking", "Checking microphone permission..."), "listening");
+      let latestTranscript = "";
 
       const recognition = new Recognition();
       recognition.lang = button.dataset.language === "zh" ? "zh-CN" : "en-US";
       recognition.interimResults = true;
       recognition.continuous = false;
       recognition.maxAlternatives = 1;
-
-      let latestTranscript = "";
+      checkingTimer = window.setTimeout(() => {
+        if (button.dataset.mode === "listening" && !latestTranscript) {
+          setStatus(messageFor("timeout", "Voice is taking too long here. You can keep typing the dream instead."), "error");
+          try {
+            recognition.stop();
+          } catch (_error) {
+            // Best-effort stop for browsers that leave speech recognition pending.
+          }
+          textarea.focus();
+        }
+      }, 3000);
 
       recognition.onstart = () => {
+        if (checkingTimer) {
+          window.clearTimeout(checkingTimer);
+          checkingTimer = null;
+        }
         setStatus(messageFor("listening", "Listening. Say the dream fragment when you are ready."), "listening");
       };
 
@@ -143,6 +162,10 @@ VOICE_JS = r"""
       };
 
       recognition.onerror = (event) => {
+        if (checkingTimer) {
+          window.clearTimeout(checkingTimer);
+          checkingTimer = null;
+        }
         const message = event.error === "not-allowed"
           ? messageFor("permission", "Microphone permission was denied. Allow recording and try again.")
           : messageFor("empty", "I did not catch that. Tap the microphone again if you want to retry.");
@@ -150,6 +173,10 @@ VOICE_JS = r"""
       };
 
       recognition.onend = () => {
+        if (checkingTimer) {
+          window.clearTimeout(checkingTimer);
+          checkingTimer = null;
+        }
         if (latestTranscript) {
           appendTranscript(latestTranscript);
           setStatus(messageFor("done", "Added to the dream note."), "done");
@@ -560,6 +587,7 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     aria-label="{escape(copy['mic_idle'])}"
     data-language="{escape(language)}"
     data-checking="{escape('正在请求麦克风权限...' if language == 'zh' else 'Checking microphone permission...')}"
+    data-timeout="{escape('语音识别等待太久了。你可以先继续手动输入梦境。' if language == 'zh' else 'Voice is taking too long here. You can keep typing the dream instead.')}"
     data-unsupported="{escape(copy['mic_unsupported'])}"
     data-permission="{escape(copy['mic_permission'])}"
     data-listening="{escape(copy['mic_listening'])}"

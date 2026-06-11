@@ -105,6 +105,25 @@ _ZH_ANCHOR_MARKERS = [
     "边缘",
     "红色的门",
     "红色门",
+    "海边",
+    "海浪",
+    "旧钥匙",
+    "钥匙",
+    "没名字的人",
+    "陌生的人",
+    "白色走廊",
+    "漆黑的走廊",
+    "漆黑走廊",
+    "黑暗走廊",
+    "走廊",
+    "教室",
+    "老师",
+    "交作业",
+    "作业",
+    "门牌子",
+    "门牌",
+    "脚步声",
+    "心跳",
     "大雪地",
     "雪地",
     "地铁站",
@@ -134,6 +153,25 @@ _ZH_TO_EN_PHRASES = {
     "边缘": "edge",
     "红色的门": "red door",
     "红色门": "red door",
+    "海边": "seaside",
+    "海浪": "wave",
+    "旧钥匙": "old key",
+    "钥匙": "key",
+    "没名字的人": "nameless person",
+    "陌生的人": "stranger",
+    "白色走廊": "white hallway",
+    "漆黑的走廊": "dark hallway",
+    "漆黑走廊": "dark hallway",
+    "黑暗走廊": "dark hallway",
+    "走廊": "hallway",
+    "教室": "classroom",
+    "老师": "teacher",
+    "交作业": "assignment",
+    "作业": "assignment",
+    "门牌子": "door sign",
+    "门牌": "door sign",
+    "脚步声": "footsteps",
+    "心跳": "heartbeat",
     "大雪地": "snowfield",
     "雪地": "snow",
     "地铁站": "subway station",
@@ -211,7 +249,9 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"gate|gates|floor|floors|stamp|stamps|number|numbers|exam|exams|"
         r"pencil|pencils|train|trains|door|doors|subway|station|stations|snow|snowfield|"
         r"hat|hats|phone|phones|water|shoe|shoes|"
-        r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains"
+        r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains|"
+        r"email|emails|meeting|meetings|deadline|deadlines|classroom|classrooms|teacher|teachers|"
+        r"assignment|assignments|homework|message|messages"
         r")\b"
     )
     for match in pair_pattern.finditer(text):
@@ -223,7 +263,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     noun_pattern = re.compile(
         r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor|"
         r"exam|pencil|train|door|subway|station|snow|snowfield|hat|phone|water|shoe|stairwell|"
-        r"room|key|note|rain|moon|curtain|sleep|dream)\b"
+        r"room|key|note|rain|moon|curtain|sleep|dream|email|meeting|deadline|classroom|teacher|"
+        r"assignment|homework|message)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
     candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
@@ -266,6 +307,15 @@ def _clean_english_today_tip_language(card: TodayTipCard) -> TodayTipCard:
     cleaned.followup_questions = [_english_anchor_text(question) for question in cleaned.followup_questions]
     cleaned.user_answers = [_english_anchor_text(answer) for answer in cleaned.user_answers]
     return cleaned
+
+
+def _clean_placeholder_phrase(text: str) -> str:
+    clean = text or ""
+    clean = re.sub(r"\b(?:the\s+)?that\s+dream\s+detail\b", "the dream fragment", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\bdream detail(?:dream detail|dream)*\b", "dream fragment", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\bthe\s+the\s+", "the ", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\s+", " ", clean)
+    return clean.strip()
 
 
 def _primary_anchor(intake: DreamIntake, language: str = "en") -> str:
@@ -338,9 +388,15 @@ def _answer_based_tiny_action(answers: str, language: str = "en") -> str:
     if _is_zh(language):
         if "邮件" in lowered or "email" in lowered:
             return "给自己 5 分钟，只打开那封邮件，写下第一句话；今天不要求立刻发出。"
+        if "消息" in lowered or "发消息" in lowered:
+            return "给自己 5 分钟，只写一条诚实的进度消息草稿；今天先不要求把整件事做完。"
+        if "作业" in lowered or "草稿" in lowered:
+            return "给自己 5 分钟，只打开草稿，写下下一小段或一个待补的标题。"
         return ""
     if "email" in lowered or "message" in lowered:
         return "Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet."
+    if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
+        return "Set a five-minute timer, open the draft, and write only the next small heading or first sentence."
     return ""
 
 
@@ -349,11 +405,20 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
     if _is_zh(language):
         if "邮件" in lowered or "email" in lowered:
             return f"今天把「{anchor}」当成允许慢慢开始的按钮：只打开那封邮件，先写第一句话。"
+        if "消息" in lowered or "发消息" in lowered:
+            return f"今天把「{anchor}」当成一个小门牌：先给对方发一条进度消息，不要求马上完成全部。"
+        if "作业" in lowered or "草稿" in lowered:
+            return f"今天把「{anchor}」当成一个可以靠近的教室门口：只打开草稿，补上下一小段。"
         return ""
     if "email" in lowered or "message" in lowered:
         return (
             f"For today, treat the {anchor} as permission to start gently: "
             "open the overdue email and write only the first sentence."
+        )
+    if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
+        return (
+            f"For today, treat the {anchor} as a smaller doorway: open the draft "
+            "and write only the next tiny piece."
         )
     return ""
 
@@ -365,6 +430,8 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
             return f"也许「{anchor}」不是在催你立刻完成什么，而是在提醒你：那封邮件可以先从一句话开始。"
         if "消息" in lowered or "message" in lowered:
             return f"也许「{anchor}」不是在催你立刻回应什么，而是在提醒你：那条消息可以先从一句草稿开始。"
+        if "作业" in lowered or "草稿" in lowered:
+            return f"也许「{anchor}」不是在说你已经来不及，而是在提醒你：草稿可以先从下一小段开始。"
         return ""
     if "email" in lowered:
         return (
@@ -375,6 +442,11 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
         return (
             f"Maybe the {anchor} is not asking you to answer every message at once. "
             "It is pointing to the gentler threshold: opening one thread and drafting one first sentence."
+        )
+    if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to finish the whole assignment at once. "
+            "It is pointing to the gentler threshold: opening the draft and adding one small piece."
         )
     return ""
 
@@ -554,6 +626,26 @@ def _grounded_question(intake: DreamIntake, question: str, language: str = "en")
     )
 
 
+def _question_for_declared_real_task(intake: DreamIntake, language: str = "en") -> str:
+    merged = intake.merged_text().lower()
+    primary = _primary_anchor(intake, language)
+    if not _is_zh(language):
+        if "email" in merged:
+            return f"When the {primary} shows up beside the overdue email, what would make opening that email feel smaller today?"
+        if any(term in merged for term in ["assignment", "homework", "draft"]):
+            return f"When the {primary} shows up beside the assignment, what is the smallest useful piece you could start today?"
+        if "message" in merged:
+            return f"When the {primary} shows up beside that message, what is one sentence you could safely draft today?"
+        return ""
+    if "邮件" in merged or "email" in merged:
+        return f"当「{primary}」和那封邮件连在一起时，今天怎样才能让打开它这件事变小一点？"
+    if "作业" in merged or "草稿" in merged:
+        return f"当「{primary}」和作业连在一起时，今天最小、最安全的一步可以是什么？"
+    if "消息" in merged or "发消息" in merged:
+        return f"当「{primary}」和那条消息连在一起时，今天可以先写哪一句草稿？"
+    return ""
+
+
 def _grounded_followup_question(intake: DreamIntake, language: str = "en") -> str:
     primary = _primary_anchor(intake, language)
     if not _is_zh(language):
@@ -657,6 +749,9 @@ def build_qa_state(
 
 def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
     polished = card.model_copy(deep=True)
+    answer_lines = [line.strip() for line in (answers or "").splitlines() if line.strip()]
+    if answer_lines:
+        polished.user_answers = answer_lines
     intake_anchors = _remove_placeholder_anchors(_anchors_for_language(intake, language))
     card_anchors = _remove_placeholder_anchors(
         polished.dream_anchors
@@ -672,7 +767,17 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     if not anchors:
         anchors = ["梦境片段" if _is_zh(language) else "dream fragment"]
     polished.dream_anchors = anchors
-    if not polished.dream_summary.strip() or not _text_uses_anchor(polished.dream_summary, anchors):
+    for field in (
+        "dream_summary",
+        "main_question",
+        "interpretation",
+        "today_tip",
+        "tiny_action",
+        "caring_note",
+        "safety_note",
+    ):
+        setattr(polished, field, _clean_placeholder_phrase(getattr(polished, field)))
+    if not polished.dream_summary.strip() or _is_placeholder_anchor(polished.dream_summary) or not _text_uses_anchor(polished.dream_summary, anchors):
         polished.dream_summary = _summary_from_intake(intake, language)
     if (
         not polished.main_question.strip()
@@ -725,6 +830,15 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
             if _is_zh(language)
             else "You do not have to solve the whole dream this morning; noticing one detail is enough."
         )
+    elif any(
+        marker in polished.caring_note.lower()
+        for marker in ["does not indicate any real-life concerns", "does not indicate any real life concerns"]
+    ):
+        polished.caring_note = (
+            "你刚才提到的现实困扰值得被温柔对待；今天先照顾一个很小的入口。"
+            if _is_zh(language)
+            else "The real concern you named deserves gentle handling; today, start with one small doorway into it."
+        )
     merged = "\n".join([intake.merged_text(), answers or ""])
     polished.safety_note = safety_note(language) if needs_escalation(merged) else ""
     if not _is_zh(language):
@@ -763,6 +877,10 @@ def generate_today_tip(intake: DreamIntake, answers: str, text_client, language:
                 interpretation=_fallback_interpretation(intake, language),
                 today_tip=_grounded_today_tip(intake, language),
             )
+    if not card.followup_questions:
+        card.followup_questions = qa_state.followup_questions
+    if qa_state.user_answers:
+        card.user_answers = qa_state.user_answers
     return _polish_today_tip(card, intake, answers, language)
 
 
@@ -1040,6 +1158,9 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
     )
     negotiation = text_client.generate_negotiation(prompt)
     questions = [question for question in negotiation.get("questions", []) if question]
+    task_question = _question_for_declared_real_task(next_session.intake, language)
+    if task_question:
+        questions = [task_question] + [question for question in questions if question != task_question]
     fresh_questions = [question for question in questions if question not in next_session.question_history]
     if force_another and not fresh_questions:
         fresh_questions = [

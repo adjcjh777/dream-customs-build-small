@@ -30,6 +30,7 @@ def test_runtime_settings_are_collapsed_for_public_flow():
 
 def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
     source = inspect.getsource(ui_app.build_demo)
+    app_source = inspect.getsource(ui_app)
 
     assert "audio_input = gr.Audio(" in source
     assert 'sources=["upload"]' in source
@@ -40,6 +41,9 @@ def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
     assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
     assert "audio_input = gr.State(None)" not in source
     assert 'value=DEFAULT_ASR_BACKEND' in source
+    assert 'data-timeout="' in ui_app._mic_html("en")
+    assert "Voice is taking too long here" in ui_app._mic_html("en")
+    assert "window.setTimeout" in app_source
 
 
 def test_image_upload_is_composer_plus_drawer():
@@ -203,6 +207,22 @@ def test_mobile_mvp_submit_then_skip_generates_today_tip():
     assert "电梯" in view["card_text"] or "elevator" in view["card_text"].lower()
     assert "DC-DEMO-014" not in view["card_text"]
     assert "Today Tip" in view["card_html"]
+
+
+def test_mobile_mvp_empty_submit_stays_on_record_with_clear_error():
+    state, view_json = submit_dream_action(
+        dream_text="",
+        mood="Neutral",
+        text_backend="demo",
+        vision_backend="demo",
+    )
+    view = json.loads(view_json)
+
+    assert view["status"] == "error"
+    assert view["phase"] == "error"
+    assert "at least one dream sentence" in view["notice"]
+    assert view["debug"]["session"]["answer_history"] == []
+    assert json.loads(state)["phase"] == "error"
 
 
 def test_mobile_mvp_zh_language_switch_keeps_chinese_today_tip():

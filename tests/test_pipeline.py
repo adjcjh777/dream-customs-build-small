@@ -131,6 +131,65 @@ def test_generate_today_tip_repairs_placeholder_and_stale_model_anchors():
     assert card.dream_anchors[0] in {"红色的门", "红色门", "大雪地", "雪地"}
 
 
+def test_generate_today_tip_keeps_answer_history_and_removes_placeholder_text():
+    class PlaceholderTextClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="You dreamed about that dream detail.",
+                main_question="What might the that dream detail be asking me to notice today?",
+                dream_anchors=["that dream detail"],
+                followup_questions=[],
+                user_answers=[],
+                interpretation="Maybe that dream detail points to a stuck point.",
+                today_tip="For today, borrow one action from the that dream detail.",
+                tiny_action="Spend five minutes with that dream detail.",
+                caring_note="This dream detail does not indicate any real-life concerns.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text="I dreamed I was in a white hallway looking for a classroom while the teacher kept asking for homework.",
+        mood="Uneasy",
+    )
+
+    card = generate_today_tip(
+        intake,
+        "I should message my group lead and send a rough draft tonight.",
+        PlaceholderTextClient(),
+        language="en",
+    )
+    combined = "\n".join(
+        [
+            card.dream_summary,
+            card.main_question,
+            ",".join(card.dream_anchors),
+            "\n".join(card.user_answers),
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert "that dream detail" not in combined
+    assert "white hallway" in combined or "classroom" in combined or "teacher" in combined
+    assert "group lead" in combined
+    assert "message" in combined
+    assert "does not indicate any real-life concerns" not in combined
+
+
+def test_generate_today_tip_adds_safety_note_for_repeated_insomnia_without_self_harm():
+    intake = build_intake(
+        dream_text="我昨晚反复梦见自己在一条漆黑的走廊里走，醒来后心跳很快，已经连续3晚都睡不好。",
+        mood="焦虑",
+    )
+
+    card = generate_today_tip(intake, "我想知道今晚能不能睡好一点。", FakeTextClient(), language="zh")
+
+    assert card.safety_note
+    assert "可信任的人" in card.safety_note
+
+
 def test_generate_today_tip_adds_chinese_safety_note_for_hopeless_text():
     intake = build_intake(dream_text="我梦到站在高楼边缘，醒来后不想醒来，很绝望。")
 

@@ -400,7 +400,7 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     <div class="dc-brand-lockup">
       <div>
         <h1>{copy['title']}</h1>
-        <p class="dc-brand-subtitle">{copy['brand_subtitle']}</p>
+        <p class="dc-brand-subtitle">{copy['subtitle']}</p>
       </div>
     </div>
     <div class="dc-sun-mark" aria-hidden="true">☀</div>

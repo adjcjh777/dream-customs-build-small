@@ -6,6 +6,7 @@ from dream_customs.ui.actions import answer_to_card_action, initial_mobile_state
 import dream_customs.ui.app as ui_app
 from dream_customs.ui.app import _reset
 from dream_customs.ui.copy import DEFAULT_MOOD, PROCESSING_NOTE
+from dream_customs.ui.styles import CSS
 
 
 def test_mobile_defaults_to_modal_backends():
@@ -62,6 +63,20 @@ def test_hero_stepper_tracks_app_status():
     assert '<span class="dc-step is-complete"><strong>3</strong>' in tip_html
     assert '<span class="dc-step is-active" aria-current="step"><strong>4</strong>' in tip_html
     assert tip_html.count("dc-stepper-line is-complete") == 3
+
+
+def test_hero_subtitle_explains_app_instead_of_legacy_name():
+    hero_html = ui_app._hero_html()
+
+    assert "grounded Today Tip" in hero_html
+    assert "Dream Customs" not in hero_html
+
+
+def test_side_panel_dropdown_hover_stays_readable():
+    assert '.dc-side-panel .dc-section-title strong' in CSS
+    assert '.gradio-container [role="option"]:hover' in CSS
+    assert 'background: var(--dqa-sage-soft) !important;' in CSS
+    assert 'color: var(--dqa-ink) !important;' in CSS
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

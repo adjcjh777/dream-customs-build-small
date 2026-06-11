@@ -1549,6 +1549,12 @@ button.secondary {
   color: var(--dqa-ink) !important;
 }
 
+.dc-side-panel .dc-section-title,
+.dc-side-panel .dc-section-title strong {
+  color: var(--dqa-ink) !important;
+  opacity: 1 !important;
+}
+
 .dc-shell,
 .dc-stage,
 .dc-side-panel,
@@ -1634,6 +1640,44 @@ button.secondary {
   background: rgba(255, 253, 248, 0.96) !important;
   border-color: var(--dqa-line) !important;
   color: var(--dqa-muted) !important;
+}
+
+.gradio-container [role="listbox"],
+.gradio-container .options,
+.gradio-container .dropdown-options {
+  background: rgba(255, 253, 248, 0.99) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 16px 38px rgba(30, 42, 48, 0.12) !important;
+  color: var(--dqa-ink) !important;
+  overflow: hidden !important;
+}
+
+.gradio-container [role="option"],
+.gradio-container .option,
+.gradio-container .item {
+  background: transparent !important;
+  color: var(--dqa-ink) !important;
+}
+
+.gradio-container [role="option"]:hover,
+.gradio-container [role="option"][aria-selected="true"],
+.gradio-container [role="option"].selected,
+.gradio-container .option:hover,
+.gradio-container .option.selected,
+.gradio-container .item:hover,
+.gradio-container .item.selected {
+  background: var(--dqa-sage-soft) !important;
+  color: var(--dqa-ink) !important;
+}
+
+.gradio-container [role="option"]:focus,
+.gradio-container .option:focus,
+.gradio-container .item:focus {
+  background: rgba(233, 243, 231, 0.78) !important;
+  color: var(--dqa-ink) !important;
+  outline: 2px solid rgba(79, 138, 88, 0.34) !important;
+  outline-offset: -2px;
 }
 
 .dc-stage .dc-dream-text,

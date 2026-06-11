@@ -1521,6 +1521,161 @@ button.secondary {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.dc-stage .dc-composer {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  position: relative;
+}
+
+.dc-stage > .styler {
+  background: transparent !important;
+}
+
+.dc-stage .dc-composer .form {
+  background: transparent !important;
+}
+
+.dc-stage .dc-composer .dc-section-title {
+  color: var(--dqa-ink) !important;
+  margin: 0 0 14px;
+}
+
+.dc-stage .dc-composer .dc-section-title strong {
+  color: var(--dqa-ink) !important;
+}
+
+.dc-stage .dc-dream-text,
+.dc-stage .dc-dream-text .wrap,
+.dc-stage .dc-dream-text .container,
+.dc-stage .dc-dream-text .input-container,
+.dc-stage .dc-dream-text .form,
+.dc-stage .dc-dream-text > div {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.dc-stage .dc-dream-text [data-testid="block-label"],
+.dc-stage .dc-dream-text [data-testid="block-info"],
+.dc-stage .dc-dream-text .block-label {
+  display: none !important;
+}
+
+.dc-stage .dc-dream-text textarea {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 30px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 18px 38px rgba(30, 42, 48, 0.1) !important;
+  color: var(--dqa-ink) !important;
+  min-height: 320px !important;
+  padding: 28px 96px 82px 78px !important;
+  resize: vertical;
+}
+
+.dc-attach-control,
+.dc-mic-control {
+  bottom: 24px !important;
+  position: absolute;
+  z-index: 18;
+}
+
+.dc-attach-control {
+  left: 24px;
+}
+
+.dc-mic-control {
+  display: block !important;
+  height: 52px !important;
+  right: 24px !important;
+  width: 52px !important;
+}
+
+.dc-stage .dc-attach-control .dc-attach-button,
+.dc-stage .dc-mic-control .dc-mic-button {
+  align-items: center !important;
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid rgba(7, 60, 67, 0.22) !important;
+  border-radius: 999px !important;
+  box-sizing: border-box !important;
+  box-shadow: 0 10px 22px rgba(7, 60, 67, 0.12) !important;
+  color: var(--dc-teal-dark) !important;
+  display: inline-flex !important;
+  height: 52px !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  max-height: 52px !important;
+  min-height: 52px !important;
+  padding: 0 !important;
+  width: 52px !important;
+}
+
+.dc-stage .dc-attach-control .dc-attach-button {
+  cursor: pointer;
+  font-size: 1.6rem !important;
+  font-weight: 420 !important;
+}
+
+.dc-stage .dc-attach-control .dc-attach-button:hover,
+.dc-stage .dc-attach-control .dc-attach-button[aria-expanded="true"],
+.dc-stage .dc-mic-control .dc-mic-button:hover {
+  border-color: rgba(234, 107, 44, 0.42) !important;
+  color: var(--dc-coral-dark) !important;
+  transform: translateY(-1px);
+}
+
+.dc-stage .dc-mic-control .dc-mic-status {
+  bottom: 62px;
+  position: absolute;
+  right: 0;
+  white-space: nowrap;
+}
+
+.dc-image-popover {
+  bottom: 88px;
+  left: 24px;
+  margin: 0 !important;
+  max-width: calc(100% - 48px);
+  opacity: 0;
+  pointer-events: none;
+  position: absolute !important;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+  visibility: hidden;
+  width: min(420px, calc(100% - 48px));
+  z-index: 20;
+}
+
+.dc-composer.dc-image-open .dc-image-popover {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+}
+
+.dc-image-popover,
+.dc-image-popover .wrap,
+.dc-image-popover .container,
+.dc-image-popover .upload-container,
+.dc-image-popover .image-container,
+.dc-image-popover [data-testid="image"],
+.dc-image-popover [data-testid="file-upload"] {
+  background: rgba(255, 253, 248, 0.99) !important;
+  border-color: var(--dqa-line) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 18px 42px rgba(30, 42, 48, 0.16) !important;
+}
+
 @media (max-width: 900px) {
   .dc-shell {
     padding: 0;
@@ -1580,9 +1735,21 @@ button.secondary {
     right: 20px;
   }
 
-  .dc-attachment-drawer {
+  .dc-attach-control {
     bottom: 22px;
     left: 20px;
+  }
+
+  .dc-stage .dc-dream-text textarea {
+    border-radius: 24px !important;
+    min-height: 300px !important;
+    padding: 24px 78px 78px 70px !important;
+  }
+
+  .dc-image-popover {
+    bottom: 84px;
+    left: 20px;
+    width: min(360px, calc(100% - 40px));
   }
 
   .dqa-tip-page {

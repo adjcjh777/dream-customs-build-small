@@ -64,7 +64,7 @@ def test_local_space_mirror_loads_runtime_env_json_without_printing_values(tmp_p
 def test_local_space_mirror_config_smoke_requires_composer_debug_markers():
     config = {
         "title": "Dream QA",
-        "css": ".dc-stepper .dc-mic-button .dc-attachment-drawer .dc-debug-panel",
+        "css": ".dc-stepper .dc-mic-button .dc-attach-button .dc-image-popover .dc-debug-panel",
         "components": [
             {"props": {"label": "Dream note"}},
             {"props": {"label": "Language"}},

@@ -38,10 +38,18 @@ def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
 def test_image_upload_is_composer_plus_drawer():
     source = inspect.getsource(ui_app.build_demo)
 
-    assert 'initial_copy["image_accordion"]' in source
-    assert "open=False" in source
-    assert 'elem_classes=["dc-attachment-drawer"]' in source
-    assert 'image_input = gr.Image(label=initial_copy["image_label"]' in source
+    assert "attachment_html = gr.HTML(_attachment_html(DEFAULT_LANGUAGE))" in source
+    assert 'elem_classes=["dc-image-popover"]' in source
+    assert 'image_input = gr.Image(' in source
+    assert "gr.Accordion(" not in source.split("image_input = gr.Image(")[0].split("with gr.Group(elem_classes=[\"dc-composer\"]):")[-1]
+
+
+def test_composer_scripts_are_attached_to_blocks():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert "with gr.Blocks(css=CSS, js=VOICE_JS, title=APP_TITLE)" in source
+    assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
+    assert "attachment_html = gr.HTML(_attachment_html(DEFAULT_LANGUAGE))" in source
 
 
 def test_hero_stepper_tracks_app_status():

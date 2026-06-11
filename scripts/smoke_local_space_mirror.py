@@ -12,7 +12,8 @@ from urllib.request import urlopen
 REQUIRED_CSS_MARKERS = [
     ".dc-stepper",
     ".dc-mic-button",
-    ".dc-attachment-drawer",
+    ".dc-attach-button",
+    ".dc-image-popover",
     ".dc-debug-panel",
 ]
 

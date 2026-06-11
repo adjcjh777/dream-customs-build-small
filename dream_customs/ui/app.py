@@ -99,6 +99,7 @@ VOICE_JS = r"""
         return;
       }
 
+      setStatus("Checking microphone permission...", "listening");
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -151,8 +152,51 @@ VOICE_JS = r"""
     });
   };
 
-  bindVoiceButton();
-  const observer = new MutationObserver(bindVoiceButton);
+  const bindAttachmentButton = () => {
+    const button = document.querySelector(".dc-attach-button");
+    const composer = button?.closest(".dc-composer");
+
+    if (!button || !composer || button.dataset.bound === "true") {
+      return;
+    }
+    button.dataset.bound = "true";
+
+    const setOpen = (open) => {
+      composer.classList.toggle("dc-image-open", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const shouldOpen = !composer.classList.contains("dc-image-open");
+      setOpen(shouldOpen);
+      if (shouldOpen) {
+        const uploadInput = composer.querySelector(".dc-image-popover input[type='file']");
+        uploadInput?.focus();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!composer.contains(event.target)) {
+        setOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    });
+  };
+
+  const bindComposerControls = () => {
+    bindVoiceButton();
+    bindAttachmentButton();
+  };
+
+  bindComposerControls();
+  const observer = new MutationObserver(bindComposerControls);
   observer.observe(document.body, { childList: true, subtree: true });
 }
 """
@@ -389,6 +433,18 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
 """.strip()
 
 
+def _attachment_html(language: str = DEFAULT_LANGUAGE) -> str:
+    copy = copy_for(language)
+    label = escape(copy["image_accordion"])
+    return f"""
+<div class="dc-attach-control">
+  <button type="button" class="dc-attach-button" aria-label="{label}" aria-expanded="false">
+    <span aria-hidden="true">+</span>
+  </button>
+</div>
+""".strip()
+
+
 def _field_tip_html(language: str = DEFAULT_LANGUAGE) -> str:
     return f"<p class=\"dc-field-tip\">{escape(copy_for(language)['field_tip'])}</p>"
 
@@ -431,7 +487,7 @@ def build_demo() -> gr.Blocks:
     initial = _load_view(initial_view)
     initial_copy = copy_for(DEFAULT_LANGUAGE)
 
-    with gr.Blocks(css=CSS, title=APP_TITLE) as demo:
+    with gr.Blocks(css=CSS, js=VOICE_JS, title=APP_TITLE) as demo:
         session_state = gr.State(initial_state)
         view_state = gr.State(initial_view)
 
@@ -452,12 +508,13 @@ def build_demo() -> gr.Blocks:
                                 elem_classes=["dc-dream-text"],
                             )
                             mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))
-                            with gr.Accordion(
-                                initial_copy["image_accordion"],
-                                open=False,
-                                elem_classes=["dc-attachment-drawer"],
-                            ) as image_drawer:
-                                image_input = gr.Image(label=initial_copy["image_label"], type="filepath", height=160)
+                            attachment_html = gr.HTML(_attachment_html(DEFAULT_LANGUAGE))
+                            image_input = gr.Image(
+                                label=initial_copy["image_label"],
+                                type="filepath",
+                                height=180,
+                                elem_classes=["dc-image-popover"],
+                            )
                             audio_input = gr.Audio(
                                 label=initial_copy["voice_label"],
                                 sources=["microphone", "upload"],
@@ -466,7 +523,7 @@ def build_demo() -> gr.Blocks:
                                 elem_classes=["dc-voice-input"],
                                 visible=False,
                             )
-                            field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
+                        field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button(initial_copy["example_button"], variant="secondary")
                             submit_button = gr.Button(initial_copy["submit_button"], variant="primary")
@@ -695,7 +752,7 @@ def build_demo() -> gr.Blocks:
                 _section_title_html(1, copy["dream_label"]),
                 gr.update(label=copy["dream_label"], placeholder=copy["dream_placeholder"]),
                 _mic_html(selected_language),
-                gr.update(label=copy["image_accordion"]),
+                _attachment_html(selected_language),
                 gr.update(label=copy["image_label"]),
                 _field_tip_html(selected_language),
                 gr.update(value=copy["example_button"]),
@@ -729,7 +786,7 @@ def build_demo() -> gr.Blocks:
                 dream_section_html,
                 dream_text,
                 mic_html,
-                image_drawer,
+                attachment_html,
                 image_input,
                 field_tip_html,
                 example_button,

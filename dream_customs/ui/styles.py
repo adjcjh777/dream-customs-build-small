@@ -1831,29 +1831,39 @@ button.secondary {
 }
 
 .dc-side-panel .dc-dev-tuning {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
   display: grid !important;
-  gap: 8px !important;
+  gap: 0 !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin: 6px 0 12px !important;
+  overflow: hidden !important;
+  padding: 6px !important;
 }
 
 .dc-side-panel .dc-dev-tuning > .styler,
 .dc-side-panel .dc-dev-tuning .form {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
   display: grid !important;
-  gap: 8px !important;
+  gap: 6px !important;
   grid-column: 1 / -1 !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   width: 100% !important;
 }
 
 .dc-side-panel .dc-dev-tuning .block {
-  background: rgba(255, 253, 248, 0.98) !important;
-  border: 1px solid var(--dqa-line) !important;
-  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.58) !important;
+  border: 1px solid rgba(217, 226, 220, 0.72) !important;
+  border-radius: 12px !important;
   box-shadow: none !important;
   margin: 0 !important;
   min-width: 0 !important;
-  padding: 10px 12px !important;
+  padding: 9px 10px !important;
 }
 
 .dc-side-panel .dc-dev-tuning .wrap.hide {

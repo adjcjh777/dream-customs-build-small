@@ -120,6 +120,10 @@ def test_advanced_panel_uses_compact_readable_controls():
     assert '.dc-side-panel .dc-dev > button' in CSS
     assert 'min-height: 46px !important;' in CSS
     assert '.dc-side-panel .dc-dev-tuning' in CSS
+    assert 'background: rgba(255, 253, 248, 0.98) !important;' in CSS
+    assert 'overflow: hidden !important;' in CSS
+    assert '.dc-side-panel .dc-dev-tuning > .styler' in CSS
+    assert 'background: transparent !important;' in CSS
     assert '.dc-flow-column .dc-debug-panel' in CSS
     assert 'align-items: start !important;' in CSS
     source = inspect.getsource(ui_app.build_demo)

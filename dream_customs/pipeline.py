@@ -1,3 +1,4 @@
+import json
 import re
 from datetime import date
 from typing import Dict, List, Optional, Tuple
@@ -136,6 +137,15 @@ _ZH_ANCHOR_MARKERS = [
     "没名字的人",
     "陌生的人",
     "白色走廊",
+    "旧图书馆",
+    "图书馆",
+    "红色楼梯",
+    "楼梯",
+    "大雨",
+    "窗",
+    "家门",
+    "旧家",
+    "楼顶",
     "漆黑的走廊",
     "漆黑走廊",
     "黑暗走廊",
@@ -208,6 +218,17 @@ _ZH_TO_EN_PHRASES = {
     "没名字的人": "nameless person",
     "陌生的人": "stranger",
     "白色走廊": "white hallway",
+    "旧图书馆": "old library",
+    "图书馆": "library",
+    "红色楼梯": "red staircase",
+    "楼梯": "staircase",
+    "大雨": "heavy rain",
+    "雨": "rain",
+    "开着的窗": "open window",
+    "窗": "window",
+    "家门": "home door",
+    "旧家": "old home",
+    "楼顶": "rooftop",
     "漆黑的走廊": "dark hallway",
     "漆黑走廊": "dark hallway",
     "黑暗走廊": "dark hallway",
@@ -261,6 +282,8 @@ _PLACEHOLDER_ANCHORS = {
     "that dream detail",
     "that that dream detail",
     "the dream detail",
+    "dream",
+    "dream fragment",
 }
 
 
@@ -271,6 +294,70 @@ def _is_placeholder_anchor(text: str) -> bool:
 
 def _remove_placeholder_anchors(items: List[str]) -> List[str]:
     return [item for item in items if not _is_placeholder_anchor(item)]
+
+
+_VISUAL_CLUE_PREFIXES = (
+    "Scene:",
+    "Object:",
+    "Visible text:",
+    "Spatial relation:",
+    "Mood cue:",
+    "Uncertain detail:",
+    "Surprising detail:",
+)
+
+
+def _flatten_visual_value(value) -> List[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        items: List[str] = []
+        for item in value:
+            items.extend(_flatten_visual_value(item))
+        return items
+    if isinstance(value, dict):
+        items = []
+        for item in value.values():
+            items.extend(_flatten_visual_value(item))
+        return items
+    return []
+
+
+def _clean_visual_clue_text(clue: str) -> str:
+    clean = (clue or "").strip()
+    if not clean:
+        return ""
+    try:
+        parsed = json.loads(clean)
+    except json.JSONDecodeError:
+        parsed = None
+    if parsed is not None:
+        flattened = _flatten_visual_value(parsed)
+        clean = ", ".join(item for item in flattened if item.strip())
+    for prefix in _VISUAL_CLUE_PREFIXES:
+        if clean.lower().startswith(prefix.lower()):
+            clean = clean[len(prefix) :].strip()
+            break
+    clean = re.sub(r"\b(scene_summary|objects|visible_text|spatial_relations|mood_cues|uncertain_details|surprising_detail)\b", " ", clean)
+    clean = re.sub(r"[{}\[\]\"']", " ", clean)
+    clean = re.sub(r"\s+", " ", clean).strip(" .,:;!?()")
+    return clean
+
+
+def _visual_anchor_candidates(intake: DreamIntake) -> List[str]:
+    candidates: List[str] = []
+    for clue in intake.visual_clues:
+        clean = _clean_visual_clue_text(clue)
+        if not clean:
+            continue
+        for phrase in re.split(r"\s*(?:,|;|，|；|/|\n)\s*", clean):
+            phrase = phrase.strip(" .,:;!?()[]{}")
+            if not phrase:
+                continue
+            if len(phrase) > 48:
+                phrase = phrase[:48].rsplit(" ", 1)[0].strip() or phrase[:48].strip()
+            candidates.append(phrase)
+    return _dedupe_preserve_order(candidates)
 
 
 def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
@@ -284,6 +371,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     )
     text = raw_text.lower()
     candidates: List[str] = []
+    visual_candidates = _visual_anchor_candidates(intake)
+    candidates.extend(visual_candidates[:3])
     for marker in _ZH_ANCHOR_MARKERS:
         if marker in raw_text:
             candidates.append(marker)
@@ -317,7 +406,7 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"assignment|homework|message|airport|glass|bird|child|cat|forest|sign|alley|mailbox|sketch|ceiling)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
-    candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
+    candidates.extend(visual_candidates)
 
     return _dedupe_preserve_order(candidates)[:5]
 
@@ -383,6 +472,13 @@ def _secondary_anchor(intake: DreamIntake, language: str = "en") -> str:
     return anchors[1] if len(anchors) > 1 else _primary_anchor(intake, language)
 
 
+def _anchor_with_article(anchor: str) -> str:
+    clean = (anchor or "").strip()
+    if clean.lower().startswith(("the ", "a ", "an ")):
+        return clean
+    return f"the {clean}"
+
+
 def _title_anchor(text: str) -> str:
     return " ".join(part.capitalize() for part in text.split())
 
@@ -419,7 +515,7 @@ def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str
         return "我怎样把这个梦当作一种感受来照顾，而不是当成预兆？"
     primary = _primary_anchor(intake, language)
     if not _is_zh(language):
-        return f"What might the {primary} be asking me to notice today?"
+        return f"What might {_anchor_with_article(primary)} be asking me to notice today?"
     return f"这个梦里的「{primary}」可能在提醒我什么？"
 
 
@@ -428,8 +524,8 @@ def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
     secondary = _secondary_anchor(intake, language)
     if not _is_zh(language):
         return (
-            f"Maybe this dream is not giving you a fixed answer. It is placing the {primary} "
-            f"beside the {secondary} so you can notice one small stuck point today."
+            f"Maybe this dream is not giving you a fixed answer. It is placing {_anchor_with_article(primary)} "
+            f"beside {_anchor_with_article(secondary)} so you can notice one small stuck point today."
         )
     return (
         f"也许这个梦不是在给你一个确定答案，而是把「{primary}」和「{secondary}」放到一起，"
@@ -441,7 +537,7 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
     primary = _primary_anchor(intake, language)
     if not _is_zh(language):
         return (
-            f"For today, borrow one action from the {primary}: open the task, write only the first line, "
+            f"For today, borrow one action from {_anchor_with_article(primary)}: open the task, write only the first line, "
             "and let that be enough for now."
         )
     return f"今天先从「{primary}」借一个动作：只做最小的第一步，不急着把整件事完成。"

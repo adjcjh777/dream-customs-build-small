@@ -495,6 +495,33 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
     """
 
     language = normalize_language(language)
+    contract = {
+        "schema_version": "dream_qa.agent.v1",
+        "route_mode": "text_only_queue",
+        "api_name": "/agent_dream_qa",
+        "expected_fields": ["dream_text", "mood", "answer", "language"],
+        "media_note": "Image and voice clues are available in the Gradio UI path; this public agent endpoint is intentionally text-only.",
+    }
+    if not isinstance(dream_text, str) or not dream_text.strip():
+        return {
+            "status": "error",
+            "phase": "error",
+            "language": language,
+            "error_code": "missing_dream_text",
+            "error": "dream_text is required.",
+            "notice": "Provide dream_text as a non-empty string, then call the queue endpoint again.",
+            "dream_summary": "",
+            "main_question": "",
+            "dream_anchors": [],
+            "followup_questions": [],
+            "user_answers": [],
+            "interpretation": "",
+            "today_tip": "",
+            "tiny_action": "",
+            "caring_note": "",
+            "safety_note": "",
+            "api_contract": contract,
+        }
     state, view_json = submit_dream_action(
         dream_text=dream_text,
         image_value=None,
@@ -506,6 +533,7 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
     )
     view = json.loads(view_json)
     if view.get("status") != "ask":
+        view["api_contract"] = contract
         return view
     if answer and answer.strip():
         _state, view_json = answer_to_card_action(
@@ -522,7 +550,9 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
             vision_backend=DEFAULT_VISION_BACKEND,
             language=language,
         )
-    return json.loads(view_json)
+    result = json.loads(view_json)
+    result["api_contract"] = contract
+    return result
 
 
 def _active_step_for_status(status: str) -> int:

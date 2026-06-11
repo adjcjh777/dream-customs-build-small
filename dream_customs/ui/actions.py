@@ -133,6 +133,16 @@ def _view_payload(
         "card_html": _render_today_pass(card, language) if card else "",
         "error": error,
         "notice": _notice_for_status(status, error, language),
+        "dream_summary": "",
+        "main_question": "",
+        "dream_anchors": [],
+        "followup_questions": list(session.question_history),
+        "user_answers": list(session.answer_history),
+        "interpretation": "",
+        "today_tip": "",
+        "tiny_action": "",
+        "caring_note": "",
+        "safety_note": "",
         "debug": json.loads(_debug_json(session, text_backend, vision_backend, **settings)),
     }
     if card:
@@ -170,7 +180,10 @@ def _view(
 def _notice_for_status(status: str, error: str = "", language: str = "en") -> str:
     copy = copy_for(language)
     if status == "error":
-        return error or copy["notice_error"]
+        base = error or copy["notice_error"]
+        if language == "zh":
+            return f"{base} 你可以保留文字再点一次继续，或点击重新开始；Text-only 路径仍可用。"
+        return f"{base} You can keep the text and try Continue again, or start over; the text-only path still works."
     if status == "ask":
         return copy["notice_ask"]
     if status == "tip":

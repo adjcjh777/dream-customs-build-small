@@ -463,6 +463,49 @@ def test_add_evidence_prefers_vision_witness_report():
     assert "flat clue should not win" not in session.intake.visual_clues
 
 
+def test_visual_witness_clues_drive_questions_and_today_tip():
+    class RedStairVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="A red staircase inside an old library.",
+                objects=["red staircase", "yellow sticky note"],
+                visible_text=["CALL HOME"],
+                surprising_detail="Rain is drawn outside the window.",
+            )
+
+        def extract_clues(self, image_path):
+            return ["flat fallback should not win"]
+
+    session = add_evidence(
+        create_session(),
+        dream_text="I only remember a dream fragment.",
+        image_path="note.png",
+        mood="Uneasy",
+        vision_client=RedStairVision(),
+        asr_client=FakeASRClient(),
+        language="en",
+    )
+    session = ask_questions(session, FakeTextClient(), language="en")
+    session = answer_question(session, "The sticky note felt urgent.", language="en")
+    session = skip_question(session, language="en")
+    text = "\n".join([session.question_history[0], ",".join(session.qa_state.dream_anchors)]).lower()
+
+    assert "red staircase" in text or "old library" in text or "yellow sticky note" in text
+
+    card = generate_today_tip(
+        session.intake,
+        session.answers_text(),
+        FakeTextClient(),
+        language="en",
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join([card.dream_summary, ",".join(card.dream_anchors), card.today_tip]).lower()
+
+    assert "red staircase" in combined or "old library" in combined or "yellow sticky note" in combined
+    assert "scene_summary" not in combined
+    assert "objects" not in combined
+
+
 def test_witness_failure_keeps_text_path_alive():
     class BrokenWitnessVision:
         def extract_witness(self, image_path):

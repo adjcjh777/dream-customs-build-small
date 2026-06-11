@@ -43,6 +43,45 @@ def test_agent_api_requires_text_only_public_endpoint():
     assert result["agent_input_types"] == ["textbox", "textbox", "textbox", "textbox"]
 
 
+def test_agent_dream_qa_returns_stable_flat_contract():
+    from dream_customs.ui.app import _agent_dream_qa
+
+    result = _agent_dream_qa(
+        "I dreamed of a red room with no door.",
+        mood="Uneasy",
+        answer="I woke up nervous.",
+        language="en",
+    )
+
+    assert result["api_contract"]["schema_version"] == "dream_qa.agent.v1"
+    assert result["api_contract"]["route_mode"] == "text_only_queue"
+    assert result["api_contract"]["expected_fields"] == ["dream_text", "mood", "answer", "language"]
+    assert "text-only" in result["api_contract"]["media_note"]
+    for key in [
+        "dream_summary",
+        "main_question",
+        "dream_anchors",
+        "followup_questions",
+        "user_answers",
+        "interpretation",
+        "today_tip",
+        "tiny_action",
+        "caring_note",
+        "safety_note",
+    ]:
+        assert key in result
+
+
+def test_agent_dream_qa_rejects_empty_text_with_structured_error():
+    from dream_customs.ui.app import _agent_dream_qa
+
+    result = _agent_dream_qa("", mood="Uneasy", answer="", language="en")
+
+    assert result["status"] == "error"
+    assert result["error_code"] == "missing_dream_text"
+    assert result["api_contract"]["expected_fields"] == ["dream_text", "mood", "answer", "language"]
+
+
 def test_agent_api_fails_if_media_schema_is_public():
     config = {
         "components": [

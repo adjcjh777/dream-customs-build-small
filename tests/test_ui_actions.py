@@ -227,6 +227,7 @@ def test_mobile_mvp_empty_submit_stays_on_record_with_clear_error():
     assert view["status"] == "error"
     assert view["phase"] == "error"
     assert "at least one dream sentence" in view["notice"]
+    assert "try Continue again" in view["notice"]
     assert view["debug"]["session"]["answer_history"] == []
     assert json.loads(state)["phase"] == "error"
 

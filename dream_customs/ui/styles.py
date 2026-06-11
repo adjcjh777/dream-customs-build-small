@@ -1549,6 +1549,93 @@ button.secondary {
   color: var(--dqa-ink) !important;
 }
 
+.dc-shell,
+.dc-stage,
+.dc-side-panel,
+.dc-dev,
+.dc-debug-panel {
+  color-scheme: light;
+}
+
+.dc-side-panel {
+  background: rgba(255, 253, 248, 0.96) !important;
+  border-color: var(--dqa-line) !important;
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel > .styler,
+.dc-side-panel .form,
+.dc-side-panel .block,
+.dc-side-panel .wrap,
+.dc-side-panel .container,
+.dc-side-panel .input-container {
+  background: transparent !important;
+  border-color: rgba(217, 226, 220, 0.88) !important;
+  box-shadow: none !important;
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel .block:has(input[type="radio"]),
+.dc-side-panel .wrap:has(input[type="radio"]) {
+  background: transparent !important;
+}
+
+.dc-side-panel label,
+.dc-side-panel [data-testid="block-label"],
+.dc-side-panel [data-testid="block-info"] {
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel label:has(input[type="radio"]),
+.dc-side-panel .wrap label {
+  background: rgba(255, 253, 248, 0.96) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 12px !important;
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel label:has(input[type="radio"]:checked) {
+  background: var(--dqa-sage-soft) !important;
+  border-color: rgba(79, 138, 88, 0.42) !important;
+  color: var(--dqa-sage-deep) !important;
+}
+
+.dc-side-panel input,
+.dc-side-panel select,
+.dc-side-panel button,
+.dc-side-panel .dropdown,
+.dc-side-panel .svelte-1gfkn6j,
+.dc-side-panel .svelte-1hfxrpf,
+.dc-side-panel .svelte-1b6s6s {
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel select,
+.dc-side-panel .wrap:has(select),
+.dc-side-panel .container:has(select),
+.dc-side-panel [role="listbox"],
+.dc-side-panel [aria-haspopup="listbox"] {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border-color: var(--dqa-line) !important;
+  border-radius: 12px !important;
+  color: var(--dqa-ink) !important;
+}
+
+.dc-side-panel svg,
+.dc-side-panel img {
+  color: var(--dqa-muted) !important;
+  opacity: 0.86;
+}
+
+.dc-side-panel .dc-dev,
+.dc-side-panel .dc-dev > .label-wrap,
+.dc-side-panel .dc-dev > button,
+.dc-side-panel button[aria-expanded] {
+  background: rgba(255, 253, 248, 0.96) !important;
+  border-color: var(--dqa-line) !important;
+  color: var(--dqa-muted) !important;
+}
+
 .dc-stage .dc-dream-text,
 .dc-stage .dc-dream-text .wrap,
 .dc-stage .dc-dream-text .container,
@@ -1623,7 +1710,13 @@ button.secondary {
 .dc-stage .dc-attach-control .dc-attach-button {
   cursor: pointer;
   font-size: 1.6rem !important;
-  font-weight: 420 !important;
+  font-weight: 720 !important;
+  opacity: 1 !important;
+}
+
+.dc-stage .dc-attach-control .dc-attach-button span {
+  color: var(--dc-teal-dark) !important;
+  opacity: 1 !important;
 }
 
 .dc-stage .dc-attach-control .dc-attach-button:hover,

@@ -197,6 +197,7 @@ def _updates(state: str, view_json: str):
     return (
         state,
         view_json,
+        _hero_html(language, status),
         _notice_html(view),
         _question_markdown(view, language),
         view.get("card_html", ""),
@@ -324,9 +325,23 @@ def _reset(language, text_backend, vision_backend, *settings_values):
     return (*_updates(state, view_json), "", "", None, None, default_mood_for(language))
 
 
-def _hero_html(language: str = DEFAULT_LANGUAGE) -> str:
+def _active_step_for_status(status: str) -> int:
+    return {"record": 1, "error": 1, "ask": 2, "drafting": 3, "tip": 4}.get(status, 1)
+
+
+def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     copy = copy_for(language)
     steps = copy["steps"]
+    active_step = _active_step_for_status(status)
+    step_html = []
+    for index, label in enumerate(steps, start=1):
+        classes = []
+        if index < active_step:
+            classes.append("is-complete")
+        if index == active_step:
+            classes.append("is-active")
+        class_attr = f' class="{" ".join(classes)}"' if classes else ""
+        step_html.append(f"<span{class_attr}><strong>{index}</strong>{label}</span>")
     return f"""
 <header class="dc-hero">
   <div class="dc-hero-top">
@@ -340,10 +355,7 @@ def _hero_html(language: str = DEFAULT_LANGUAGE) -> str:
     <div class="dc-sun-mark" aria-hidden="true">☀</div>
   </div>
   <div class="dc-stepper" aria-label="Dream QA steps">
-    <span class="is-active"><strong>1</strong>{steps[0]}</span>
-    <span><strong>2</strong>{steps[1]}</span>
-    <span><strong>3</strong>{steps[2]}</span>
-    <span><strong>4</strong>{steps[3]}</span>
+    {''.join(step_html)}
   </div>
 </header>
 """.strip()
@@ -368,10 +380,6 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
   <div class="dc-mic-status" aria-live="polite">{escape(copy['mic_idle'])}</div>
 </div>
 """.strip()
-
-
-def _voice_help_html(language: str = DEFAULT_LANGUAGE) -> str:
-    return f"<p class=\"dc-voice-help\">{escape(copy_for(language)['voice_help'])}</p>"
 
 
 def _field_tip_html(language: str = DEFAULT_LANGUAGE) -> str:
@@ -402,6 +410,15 @@ def _dev_help_html(language: str = DEFAULT_LANGUAGE) -> str:
 """.strip()
 
 
+def _debug_help_html(language: str = DEFAULT_LANGUAGE) -> str:
+    return f"""
+<div class="dc-debug-help">
+  <strong>{escape(copy_for(language)['debug_title'])}</strong>
+  <span>{escape(copy_for(language)['debug_help'])}</span>
+</div>
+""".strip()
+
+
 def build_demo() -> gr.Blocks:
     initial_state, initial_view = initial_mobile_state(language=DEFAULT_LANGUAGE)
     initial = _load_view(initial_view)
@@ -427,21 +444,26 @@ def build_demo() -> gr.Blocks:
                                 value="",
                                 elem_classes=["dc-dream-text"],
                             )
-                            voice_help_html = gr.HTML(_voice_help_html(DEFAULT_LANGUAGE))
+                            mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))
+                            with gr.Accordion(
+                                initial_copy["image_accordion"],
+                                open=False,
+                                elem_classes=["dc-attachment-drawer"],
+                            ) as image_drawer:
+                                image_input = gr.Image(label=initial_copy["image_label"], type="filepath", height=160)
                             audio_input = gr.Audio(
                                 label=initial_copy["voice_label"],
                                 sources=["microphone", "upload"],
                                 type="filepath",
                                 format="wav",
                                 elem_classes=["dc-voice-input"],
+                                visible=False,
                             )
                             field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button(initial_copy["example_button"], variant="secondary")
                             submit_button = gr.Button(initial_copy["submit_button"], variant="primary")
                         processing_html = gr.HTML(_processing_html(DEFAULT_LANGUAGE))
-                        with gr.Accordion(initial_copy["image_accordion"], open=False, elem_classes=["dc-attachment-drawer"]):
-                            image_input = gr.Image(label=initial_copy["image_label"], type="filepath", height=160)
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
                         question_markdown = gr.HTML(_question_markdown(initial, DEFAULT_LANGUAGE))
@@ -576,16 +598,18 @@ def build_demo() -> gr.Blocks:
                                 step=1,
                                 value=DEFAULT_VISION_MAX_TOKENS,
                             )
-                        debug_json = gr.Code(
-                            label="Current state",
-                            value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
-                            language="json",
-                            visible=False,
-                        )
+            with gr.Accordion(initial_copy["debug_title"], open=False, elem_classes=["dc-debug-panel"]) as debug_panel:
+                debug_help_html = gr.HTML(_debug_help_html(DEFAULT_LANGUAGE))
+                debug_json = gr.Code(
+                    label=initial_copy["debug_state_label"],
+                    value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
+                    language="json",
+                )
 
         outputs = [
             session_state,
             view_state,
+            hero_html,
             notice,
             question_markdown,
             card_html,
@@ -663,7 +687,9 @@ def build_demo() -> gr.Blocks:
                 _notice_html({"notice": copy["notice_record"], "status": "record"}),
                 _section_title_html(1, copy["dream_label"]),
                 gr.update(label=copy["dream_label"], placeholder=copy["dream_placeholder"]),
-                _voice_help_html(selected_language),
+                _mic_html(selected_language),
+                gr.update(label=copy["image_accordion"]),
+                gr.update(label=copy["image_label"]),
                 _field_tip_html(selected_language),
                 gr.update(value=copy["example_button"]),
                 gr.update(value=copy["submit_button"]),
@@ -682,6 +708,9 @@ def build_demo() -> gr.Blocks:
                 gr.update(label=copy["mood_label"], choices=moods, value=moods[0]),
                 _side_stamp_html(selected_language),
                 _dev_help_html(selected_language),
+                gr.update(label=copy["debug_title"]),
+                _debug_help_html(selected_language),
+                gr.update(label=copy["debug_state_label"]),
             )
 
         language.change(
@@ -692,7 +721,9 @@ def build_demo() -> gr.Blocks:
                 notice,
                 dream_section_html,
                 dream_text,
-                voice_help_html,
+                mic_html,
+                image_drawer,
+                image_input,
                 field_tip_html,
                 example_button,
                 submit_button,
@@ -711,6 +742,9 @@ def build_demo() -> gr.Blocks:
                 mood,
                 side_stamp_html,
                 dev_help_html,
+                debug_panel,
+                debug_help_html,
+                debug_json,
             ],
         )
 

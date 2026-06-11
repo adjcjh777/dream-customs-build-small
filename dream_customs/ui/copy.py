@@ -31,8 +31,8 @@ APP_COPY = {
         "processing_note": (
             "After submission, Dream QA asks one grounded question, then turns the dream into a small Today Tip."
         ),
-        "image_accordion": "Add image clue",
-        "image_label": "Upload a sketch, note, or screenshot",
+        "image_accordion": "＋",
+        "image_label": "Image clue",
         "question_kicker": "Question",
         "question_title": "What do you most want to understand in this dream?",
         "question_body": "Answer in one or two lines, or skip and get a Today Tip from the clues already here.",
@@ -54,6 +54,9 @@ APP_COPY = {
         "side_stamp_body": "It helps the final suggestion stay grounded in your dream.",
         "language_label": "Language",
         "runtime_help": "Advanced controls for demos and development. Most visitors can leave these unchanged.",
+        "debug_title": "Debug",
+        "debug_help": "Inspect the current session, backend route, latency budgets, and Space/Modal status without exposing secrets.",
+        "debug_state_label": "Runtime state",
         "card_title": "Today Tip",
         "error_state": "The interface state could not be read. Please start over.",
     },
@@ -82,8 +85,8 @@ APP_COPY = {
         "processing_note": (
             "提交后，梦境助手会先追问一个关键细节，再把梦境整理成一个今日小 Tips。"
         ),
-        "image_accordion": "添加图片线索",
-        "image_label": "上传草图、便签或截图",
+        "image_accordion": "＋",
+        "image_label": "图片线索",
         "question_kicker": "追问",
         "question_title": "在这个梦里，你最想理解的是什么呢？",
         "question_body": "回答一两句就好；也可以跳过，直接得到一个基于现有线索的今日小 Tips。",
@@ -105,6 +108,9 @@ APP_COPY = {
         "side_stamp_body": "有助于更准确地理解梦境。",
         "language_label": "语言",
         "runtime_help": "高级演示与开发控制。普通体验保持默认即可。",
+        "debug_title": "调试",
+        "debug_help": "查看当前会话、后端路由、延迟预算和 Space/Modal 状态；不会暴露密钥。",
+        "debug_state_label": "运行状态",
         "card_title": "今日小 Tips",
         "error_state": "界面状态读取失败，请重新开始。",
     },

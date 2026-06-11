@@ -20,16 +20,38 @@ def test_runtime_settings_are_collapsed_for_public_flow():
     source = inspect.getsource(ui_app.build_demo)
 
     assert 'gr.Accordion("Advanced", open=False' in source
+    assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in source
 
 
-def test_voice_input_uses_gradio_audio_file_for_modal_asr():
+def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
     source = inspect.getsource(ui_app.build_demo)
 
     assert "audio_input = gr.Audio(" in source
     assert 'sources=["microphone", "upload"]' in source
     assert 'type="filepath"' in source
+    assert "visible=False" in source
+    assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
     assert "audio_input = gr.State(None)" not in source
     assert 'value=DEFAULT_ASR_BACKEND' in source
+
+
+def test_image_upload_is_composer_plus_drawer():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert 'initial_copy["image_accordion"]' in source
+    assert "open=False" in source
+    assert 'elem_classes=["dc-attachment-drawer"]' in source
+    assert 'image_input = gr.Image(label=initial_copy["image_label"]' in source
+
+
+def test_hero_stepper_tracks_app_status():
+    ask_html = ui_app._hero_html(status="ask")
+    tip_html = ui_app._hero_html(status="tip")
+
+    assert '<span class="is-complete"><strong>1</strong>' in ask_html
+    assert '<span class="is-active"><strong>2</strong>' in ask_html
+    assert '<span class="is-complete"><strong>3</strong>' in tip_html
+    assert '<span class="is-active"><strong>4</strong>' in tip_html
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

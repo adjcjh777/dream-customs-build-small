@@ -394,15 +394,8 @@ body,
   display: none !important;
 }
 
-.dc-voice-help {
-  color: var(--dc-muted);
-  font-size: 0.86rem;
-  line-height: 1.4;
-  margin: 12px 0 6px;
-}
-
 .dc-voice-input {
-  margin-top: 0 !important;
+  display: none !important;
 }
 
 .dc-voice-input .wrap,
@@ -416,31 +409,31 @@ body,
 
 .dc-mic-control {
   align-items: end;
-  bottom: 68px;
+  bottom: 28px;
   display: grid;
   gap: 8px;
   justify-items: end;
   max-width: 280px;
   position: absolute;
-  right: 34px;
+  right: 28px;
   z-index: 8;
 }
 
 .dc-mic-button {
   align-items: center;
   background: rgba(255, 249, 238, 0.96) !important;
-  border: 2px solid var(--dc-teal) !important;
+  border: 1px solid rgba(7, 60, 67, 0.26) !important;
   border-radius: 999px !important;
-  box-shadow: 0 10px 22px rgba(7, 60, 67, 0.14);
+  box-shadow: 0 8px 18px rgba(7, 60, 67, 0.12);
   cursor: pointer;
   display: inline-flex;
-  height: 64px !important;
+  height: 48px !important;
   justify-content: center;
-  min-height: 64px !important;
-  min-width: 64px !important;
+  min-height: 48px !important;
+  min-width: 48px !important;
   padding: 0 !important;
   transition: background 160ms ease, transform 160ms ease, border-color 160ms ease;
-  width: 64px !important;
+  width: 48px !important;
 }
 
 .dc-mic-button:hover {
@@ -454,33 +447,33 @@ body,
 }
 
 .dc-mic-glyph {
-  border: 3px solid var(--dc-teal);
+  border: 2px solid var(--dc-teal);
   border-radius: 14px;
-  height: 28px;
+  height: 22px;
   position: relative;
-  width: 16px;
+  width: 13px;
 }
 
 .dc-mic-glyph::before {
-  border: 3px solid var(--dc-teal);
+  border: 2px solid var(--dc-teal);
   border-top: 0;
   border-radius: 0 0 18px 18px;
   content: "";
-  height: 15px;
-  left: -9px;
+  height: 12px;
+  left: -7px;
   position: absolute;
-  top: 15px;
-  width: 28px;
+  top: 13px;
+  width: 23px;
 }
 
 .dc-mic-glyph::after {
   background: var(--dc-teal);
-  bottom: -19px;
+  bottom: -15px;
   content: "";
-  height: 13px;
-  left: 5px;
+  height: 10px;
+  left: 4px;
   position: absolute;
-  width: 3px;
+  width: 2px;
 }
 
 .dc-mic-button[data-mode="listening"] .dc-mic-glyph,
@@ -583,10 +576,10 @@ body,
 .dc-stage .dc-mic-button {
   border-radius: 999px !important;
   font-family: "Avenir Next", "Gill Sans", sans-serif !important;
-  height: 64px !important;
-  min-height: 64px !important;
-  min-width: 64px !important;
-  width: 64px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  min-width: 48px !important;
+  width: 48px !important;
 }
 
 .dc-stage .primary button,
@@ -626,11 +619,43 @@ button.secondary {
 }
 
 .dc-attachment-drawer {
-  background: rgba(230, 221, 208, 0.52) !important;
+  background: transparent !important;
+  border: 0 !important;
+  bottom: 28px;
+  box-shadow: none !important;
+  left: 28px;
+  margin: 0;
+  max-width: min(420px, calc(100% - 96px));
+  padding: 0 !important;
+  position: absolute;
+  z-index: 9;
+}
+
+.dc-attachment-drawer > button {
+  align-items: center !important;
+  background: rgba(255, 249, 238, 0.96) !important;
+  border: 1px solid rgba(7, 60, 67, 0.26) !important;
+  border-radius: 999px !important;
+  box-shadow: 0 8px 18px rgba(7, 60, 67, 0.12);
+  color: var(--dc-teal-dark) !important;
+  display: inline-flex !important;
+  font-family: "Avenir Next", "Gill Sans", sans-serif !important;
+  font-size: 1.5rem !important;
+  height: 48px !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  min-height: 48px !important;
+  padding: 0 !important;
+  width: 48px !important;
+}
+
+.dc-attachment-drawer > div {
+  background: rgba(255, 253, 248, 0.98) !important;
   border: 1px solid var(--dc-line) !important;
-  border-radius: var(--dc-radius-sm) !important;
-  box-shadow: inset 0 1px 2px rgba(19, 41, 47, 0.05) !important;
-  margin-top: 18px;
+  border-radius: var(--dc-radius-md) !important;
+  box-shadow: var(--dc-soft-shadow);
+  margin-top: 8px;
+  padding: 12px !important;
 }
 
 .dc-row {
@@ -905,6 +930,41 @@ a.built-with[href*="gradio.app"] {
   margin-top: 10px;
 }
 
+.dc-debug-panel {
+  background: rgba(255, 253, 248, 0.94) !important;
+  border: 1px solid var(--dqa-line, var(--dc-line)) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--dqa-shadow, var(--dc-soft-shadow));
+  margin-top: 18px;
+  padding: 10px !important;
+}
+
+.dc-debug-panel > button {
+  color: var(--dc-ink) !important;
+  font-size: 0.92rem !important;
+  min-height: 46px !important;
+}
+
+.dc-debug-help {
+  color: var(--dc-muted);
+  display: grid;
+  gap: 4px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.dc-debug-help strong {
+  color: var(--dc-ink);
+}
+
+.dc-debug-panel textarea,
+.dc-debug-panel code,
+.dc-debug-panel pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 0.82rem !important;
+}
+
 @keyframes dc-mic-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(11, 91, 100, 0.32);
@@ -1013,22 +1073,28 @@ a.built-with[href*="gradio.app"] {
 
   .dc-dream-text textarea {
     min-height: 300px !important;
-    padding-right: 20px !important;
+    padding-right: 78px !important;
     padding-bottom: 96px !important;
   }
 
   .dc-mic-control {
-    bottom: 72px;
-    left: 20px;
-    max-width: calc(100% - 40px);
+    bottom: 22px;
+    left: auto;
+    max-width: calc(100% - 112px);
     right: 20px;
   }
 
   .dc-mic-button {
-    height: 58px !important;
-    min-height: 58px !important;
-    min-width: 58px !important;
-    width: 58px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    min-width: 48px !important;
+    width: 48px !important;
+  }
+
+  .dc-attachment-drawer {
+    bottom: 22px;
+    left: 20px;
+    max-width: calc(100% - 96px);
   }
 
   .dc-pass-topline {
@@ -1183,6 +1249,16 @@ body,
 .dc-stepper .is-active strong {
   background: var(--dqa-sage);
   color: #fff;
+}
+
+.dc-stepper .is-complete {
+  color: var(--dqa-sage-deep);
+}
+
+.dc-stepper .is-complete strong {
+  background: rgba(91, 138, 97, 0.18);
+  border-color: rgba(91, 138, 97, 0.42);
+  color: var(--dqa-sage-deep);
 }
 
 .dc-workspace-grid {
@@ -1493,8 +1569,13 @@ button.secondary {
   }
 
   .dc-mic-control {
-    bottom: 78px;
-    right: 28px;
+    bottom: 22px;
+    right: 20px;
+  }
+
+  .dc-attachment-drawer {
+    bottom: 22px;
+    left: 20px;
   }
 
   .dqa-tip-page {

@@ -100,6 +100,19 @@ def test_side_panel_dropdown_hover_stays_readable():
     assert 'transform: rotate(180deg) !important;' in CSS
     assert '.dc-side-panel .block:has(input[role="listbox"]) .wrap-inner' in CSS
     assert '.dc-side-panel .block:has(input[role="listbox"]) .secondary-wrap' in CSS
+    assert '--input-border-width: 0px;' in CSS
+    assert '--block-border-width: 0px;' in CSS
+
+
+def test_advanced_panel_uses_compact_readable_controls():
+    assert '.dc-side-panel .dc-dev-help span' in CSS
+    assert 'color: #60717a !important;' in CSS
+    assert '.dc-side-panel .dc-dev .block:has(input[role="listbox"])' in CSS
+    assert 'padding: 12px 14px !important;' in CSS
+    assert '.dc-side-panel .dc-dev .block:has(input[role="listbox"]) input[role="listbox"]' in CSS
+    assert 'font-size: 0.94rem !important;' in CSS
+    assert '.dc-side-panel .dc-dev > button' in CSS
+    assert 'min-height: 46px !important;' in CSS
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

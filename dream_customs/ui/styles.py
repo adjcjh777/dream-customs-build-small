@@ -1673,6 +1673,22 @@ button.secondary {
   min-height: 30px !important;
 }
 
+.dc-side-panel .block:has(input[role="listbox"]) * {
+  --input-border-width: 0px;
+  --block-border-width: 0px;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]) .wrap,
+.dc-side-panel .block:has(input[role="listbox"]) .container,
+.dc-side-panel .block:has(input[role="listbox"]) .wrap-inner,
+.dc-side-panel .block:has(input[role="listbox"]) .secondary-wrap,
+.dc-side-panel .block:has(input[role="listbox"]) .input-container,
+.dc-side-panel .block:has(input[role="listbox"]) input[role="listbox"] {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+}
+
 .dc-side-panel .block:has(input[role="listbox"]) .icon-wrap {
   pointer-events: none !important;
   transition: color 160ms ease, transform 160ms ease;
@@ -1696,6 +1712,109 @@ button.secondary {
 .dc-side-panel .block:has(input[role="listbox"]:focus) .dropdown-arrow,
 .dc-side-panel .block:has(input[role="listbox"]) .icon-wrap:hover .dropdown-arrow {
   color: var(--dqa-sage-deep) !important;
+}
+
+.dc-side-panel .dc-dev {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  color: var(--dqa-ink) !important;
+  padding: 14px !important;
+}
+
+.dc-side-panel .dc-dev > button {
+  align-items: center !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  color: var(--dqa-ink) !important;
+  font-size: 1rem !important;
+  font-weight: 680 !important;
+  min-height: 46px !important;
+  padding: 0 4px !important;
+}
+
+.dc-side-panel .dc-dev > button:hover,
+.dc-side-panel .dc-dev > button[aria-expanded="true"] {
+  background: var(--dqa-sage-soft) !important;
+  color: var(--dqa-sage-deep) !important;
+}
+
+.dc-side-panel .dc-dev-help {
+  color: #60717a !important;
+  display: grid !important;
+  font-size: 0.92rem !important;
+  gap: 8px !important;
+  line-height: 1.5 !important;
+  margin: 8px 0 14px !important;
+}
+
+.dc-side-panel .dc-dev-help strong {
+  color: var(--dqa-ink) !important;
+  font-size: 0.94rem !important;
+  font-weight: 760 !important;
+  line-height: 1.42 !important;
+}
+
+.dc-side-panel .dc-dev-help span {
+  color: #60717a !important;
+  opacity: 1 !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  margin: 8px 0 !important;
+  padding: 12px 14px !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) label,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) [data-testid="block-label"] {
+  color: var(--dqa-ink) !important;
+  font-size: 0.84rem !important;
+  font-weight: 680 !important;
+  margin-bottom: 8px !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .wrap,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .container,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .wrap-inner,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .secondary-wrap,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .input-container,
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) input[role="listbox"] {
+  min-height: 32px !important;
+  padding: 0 !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) input[role="listbox"] {
+  color: var(--dqa-ink) !important;
+  font-size: 0.94rem !important;
+  font-weight: 560 !important;
+}
+
+.dc-side-panel .dc-dev .block:has(input[role="listbox"]) .icon-wrap {
+  height: 28px !important;
+  width: 28px !important;
+}
+
+.dc-side-panel .dc-dev-advanced {
+  background: rgba(255, 253, 248, 0.98) !important;
+  border: 1px solid var(--dqa-line) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  margin-top: 12px !important;
+}
+
+.dc-side-panel .dc-dev-advanced > button {
+  color: var(--dqa-ink) !important;
+  font-size: 0.94rem !important;
+  font-weight: 650 !important;
+  min-height: 42px !important;
+  padding: 0 12px !important;
 }
 
 .gradio-container [role="listbox"],

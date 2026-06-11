@@ -79,6 +79,10 @@ def test_side_panel_dropdown_hover_stays_readable():
     assert 'color: var(--dqa-ink) !important;' in CSS
     assert '.dc-side-panel .block:has(input[role="listbox"])' in CSS
     assert 'resize: none !important;' in CSS
+    assert 'pointer-events: none !important;' in CSS
+    assert '[aria-expanded="true"]) .dropdown-arrow' in CSS
+    assert '.wrap-inner.show_options' in CSS
+    assert 'transform: rotate(180deg) !important;' in CSS
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

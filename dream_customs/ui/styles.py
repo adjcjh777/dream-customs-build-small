@@ -1670,6 +1670,31 @@ button.secondary {
   min-height: 30px !important;
 }
 
+.dc-side-panel .block:has(input[role="listbox"]) .icon-wrap {
+  pointer-events: none !important;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]) .dropdown-arrow {
+  color: var(--dqa-muted) !important;
+  transition: color 160ms ease, transform 160ms ease;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.dc-side-panel .block:has(input[role="listbox"][aria-expanded="true"]) .dropdown-arrow,
+.dc-side-panel .block:has(.wrap-inner.show_options) .dropdown-arrow,
+.dc-side-panel .block:has(.options) .dropdown-arrow {
+  color: var(--dqa-sage-deep) !important;
+  transform: rotate(180deg) !important;
+}
+
+.dc-side-panel .block:has(input[role="listbox"]:hover) .dropdown-arrow,
+.dc-side-panel .block:has(input[role="listbox"]:focus) .dropdown-arrow,
+.dc-side-panel .block:has(input[role="listbox"]) .icon-wrap:hover .dropdown-arrow {
+  color: var(--dqa-sage-deep) !important;
+}
+
 .gradio-container [role="listbox"],
 .gradio-container .options,
 .gradio-container .dropdown-options {

@@ -12,6 +12,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SPACE_ID = "build-small-hackathon/dream-customs"
+DEFAULT_RUNTIME_ENV_JSON = Path("/tmp/dream-customs-runtime.json")
+RUNTIME_ENV_KEYS = {
+    "DREAM_CUSTOMS_TEXT_ENDPOINT",
+    "DREAM_CUSTOMS_VISION_ENDPOINT",
+    "DREAM_CUSTOMS_ASR_ENDPOINT",
+    "DREAM_CUSTOMS_HOSTED_TOKEN",
+}
 
 
 def _repo_root_on_path() -> None:
@@ -27,6 +34,27 @@ def _configured_env() -> dict:
         "vision_endpoint_configured": bool(os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", "").strip()),
         "asr_endpoint_configured": bool(os.getenv("DREAM_CUSTOMS_ASR_ENDPOINT", "").strip()),
         "hosted_token_configured": bool(os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "").strip()),
+    }
+
+
+def load_runtime_env_json(path: Path) -> dict:
+    if not path.exists():
+        return {"loaded": False, "path": str(path), "reason": "missing"}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"loaded": False, "path": str(path), "reason": exc.__class__.__name__}
+
+    loaded_keys = []
+    for key in sorted(RUNTIME_ENV_KEYS):
+        value = str(data.get(key, "")).strip()
+        if value:
+            os.environ[key] = value
+            loaded_keys.append(key)
+    return {
+        "loaded": bool(loaded_keys),
+        "path": str(path),
+        "configured_keys": loaded_keys,
     }
 
 
@@ -63,6 +91,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Print the local mirror manifest without starting Gradio.",
     )
+    parser.add_argument(
+        "--runtime-env-json",
+        type=Path,
+        default=Path(os.getenv("DREAM_CUSTOMS_RUNTIME_ENV_JSON", DEFAULT_RUNTIME_ENV_JSON)),
+        help=(
+            "Load hosted endpoint/token secrets from a local JSON file before launching. "
+            "Only configuration booleans are printed."
+        ),
+    )
+    parser.add_argument(
+        "--no-runtime-env-json",
+        action="store_true",
+        help="Do not auto-load the default local runtime env JSON.",
+    )
     return parser.parse_args(argv)
 
 
@@ -73,7 +115,12 @@ def main(argv: list[str] | None = None) -> int:
     os.environ.setdefault("SPACE_ID", SPACE_ID)
     os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "False")
 
+    runtime_env = {"loaded": False, "reason": "disabled"}
+    if not args.no_runtime_env_json:
+        runtime_env = load_runtime_env_json(args.runtime_env_json)
+
     manifest = mirror_manifest(args.host, args.port)
+    manifest["runtime_env_json"] = runtime_env
     print(json.dumps(manifest, ensure_ascii=False, indent=2), flush=True)
     if args.manifest_only:
         return 0

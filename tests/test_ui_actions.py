@@ -48,10 +48,12 @@ def test_hero_stepper_tracks_app_status():
     ask_html = ui_app._hero_html(status="ask")
     tip_html = ui_app._hero_html(status="tip")
 
-    assert '<span class="is-complete"><strong>1</strong>' in ask_html
-    assert '<span class="is-active"><strong>2</strong>' in ask_html
-    assert '<span class="is-complete"><strong>3</strong>' in tip_html
-    assert '<span class="is-active"><strong>4</strong>' in tip_html
+    assert '<span class="dc-step is-complete"><strong>1</strong>' in ask_html
+    assert '<i class="dc-stepper-line is-complete" aria-hidden="true"></i>' in ask_html
+    assert '<span class="dc-step is-active" aria-current="step"><strong>2</strong>' in ask_html
+    assert '<span class="dc-step is-complete"><strong>3</strong>' in tip_html
+    assert '<span class="dc-step is-active" aria-current="step"><strong>4</strong>' in tip_html
+    assert tip_html.count("dc-stepper-line is-complete") == 3
 
 
 def test_processing_note_is_story_copy_not_backend_jargon():

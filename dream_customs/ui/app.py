@@ -335,13 +335,20 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     active_step = _active_step_for_status(status)
     step_html = []
     for index, label in enumerate(steps, start=1):
-        classes = []
+        classes = ["dc-step"]
         if index < active_step:
             classes.append("is-complete")
         if index == active_step:
             classes.append("is-active")
-        class_attr = f' class="{" ".join(classes)}"' if classes else ""
-        step_html.append(f"<span{class_attr}><strong>{index}</strong>{label}</span>")
+        aria_current = ' aria-current="step"' if index == active_step else ""
+        step_html.append(
+            f'<span class="{" ".join(classes)}"{aria_current}><strong>{index}</strong>{label}</span>'
+        )
+        if index < len(steps):
+            line_classes = ["dc-stepper-line"]
+            if index < active_step:
+                line_classes.append("is-complete")
+            step_html.append(f'<i class="{" ".join(line_classes)}" aria-hidden="true"></i>')
     return f"""
 <header class="dc-hero">
   <div class="dc-hero-top">

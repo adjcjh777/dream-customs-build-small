@@ -1199,33 +1199,40 @@ body,
 }
 
 .dc-stepper {
-  align-items: start;
-  display: grid;
+  align-items: flex-start;
+  display: flex;
   gap: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: clamp(28px, 5vw, 58px) auto 0;
   max-width: 920px;
   position: relative;
 }
 
-.dc-stepper::before {
+.dc-stepper-line {
   background: #9cadb8;
-  content: "";
+  border-radius: 999px;
+  display: block;
+  flex: 1 1 70px;
   height: 3px;
-  left: 12%;
-  position: absolute;
-  right: 12%;
-  top: 25px;
+  margin-top: clamp(24px, 3.4vw, 35px);
+  min-width: 34px;
+  transition: background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.dc-stepper-line.is-complete {
+  background: var(--dqa-sage);
+  box-shadow: 0 0 0 1px rgba(79, 138, 88, 0.14);
 }
 
 .dc-stepper span {
   color: #667989;
   display: grid;
+  flex: 0 0 clamp(72px, 13vw, 128px);
   font-size: clamp(1rem, 2.3vw, 1.45rem);
   gap: 10px;
   justify-items: center;
+  min-width: 0;
   position: relative;
-  z-index: 1;
+  text-align: center;
 }
 
 .dc-stepper strong {
@@ -1544,10 +1551,10 @@ button.secondary {
     margin-top: 36px;
   }
 
-  .dc-stepper::before {
-    left: 10%;
-    right: 10%;
-    top: 22px;
+  .dc-stepper-line {
+    flex-basis: 26px;
+    margin-top: 24px;
+    min-width: 20px;
   }
 
   .dc-stepper strong {

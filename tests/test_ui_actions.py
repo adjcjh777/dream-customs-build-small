@@ -2,7 +2,13 @@ import json
 import inspect
 from datetime import date
 
-from dream_customs.ui.actions import answer_to_card_action, initial_mobile_state, skip_to_card_action, submit_dream_action
+from dream_customs.ui.actions import (
+    answer_to_card_action,
+    initial_mobile_state,
+    revise_card_action,
+    skip_to_card_action,
+    submit_dream_action,
+)
 import dream_customs.ui.app as ui_app
 from dream_customs.ui.app import _reset
 from dream_customs.ui.copy import DEFAULT_MOOD, PROCESSING_NOTE
@@ -357,3 +363,118 @@ def test_english_interpretation_uses_user_answer_before_tip():
 
     assert "overdue email" in interpretation_line.lower()
     assert "floor 14" in interpretation_line.lower()
+
+
+def test_prophecy_framing_is_grounded_before_and_after_tip():
+    state, view_json = submit_dream_action(
+        dream_text="I dreamed of a black wave and woke thinking: is this a sign something bad will happen?",
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+
+    assert view["status"] == "ask"
+    assert "prediction" in view["question"].lower()
+
+    _state, view_json = answer_to_card_action(
+        state,
+        "It left a tight feeling in my chest, and I want a grounded answer.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    combined = "\n".join([view["card_text"], view["card_html"]]).lower()
+
+    assert "not as evidence that something bad will happen" in combined
+    assert "do not test whether" in combined
+    assert "treat it as a prophecy" not in combined
+
+
+def test_clear_presentation_task_shapes_today_tip():
+    state, view_json = submit_dream_action(
+        dream_text=(
+            "I dreamed of cracked glass before a presentation. "
+            "I need to rehearse the first minute tonight."
+        ),
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+
+    assert view["status"] == "ask"
+    assert "presentation" in view["question"].lower()
+
+    _state, view_json = answer_to_card_action(
+        state,
+        "I need to rehearse the first minute tonight.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    combined = "\n".join([view["card_text"], view["card_html"]]).lower()
+
+    assert "presentation" in combined
+    assert "first minute" in combined
+    assert "cracked glass" in view["dream_anchors"]
+    assert "cracked gla" not in view["dream_anchors"]
+    assert "reasoning trail" in combined
+
+
+def test_low_context_skip_stays_low_confidence():
+    state, _view_json = submit_dream_action(
+        dream_text="red room, no door, woke nervous",
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+
+    _state, view_json = skip_to_card_action(
+        state,
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    combined = "\n".join([view["card_text"], view["card_html"]]).lower()
+
+    assert "not enough for a firm reading" in combined
+    assert "add one concrete detail" in combined
+    assert "elevator" not in combined
+
+
+def test_revise_card_returns_to_question_state_without_old_card():
+    state, _view_json = submit_dream_action(
+        dream_text="I dreamed the elevator buttons melted and the elevator never came.",
+        mood="Foggy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    state, _view_json = answer_to_card_action(
+        state,
+        "It may be asking me to slow down.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+
+    _state, view_json = revise_card_action(
+        state,
+        "Try another angle.",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+
+    assert view["status"] == "ask"
+    assert view["notice"]
+    assert view["question"]
+    assert view["card_text"] == ""

@@ -64,6 +64,8 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
             text += "\n追问记录: " + " / ".join(card.followup_questions)
         if card.user_answers:
             text += "\n用户回答: " + " / ".join(card.user_answers)
+        if card.followup_questions and card.user_answers:
+            text += "\n追问线索: 你的回答已进入今日小 Tips 的解读与行动建议。"
         text += "\n模型说明: 文本推理由 MiniCPM5-1B 路线生成；图片线索由 MiniCPM-V-4.6 路线理解。"
         return text
     lines = [
@@ -82,6 +84,8 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
         lines.append(f"Caring note: {card.caring_note}")
     if card.safety_note:
         lines.append(f"Safety note: {card.safety_note}")
+    if card.followup_questions and card.user_answers:
+        lines.append("Reasoning trail: Your follow-up answer shaped the interpretation and Today Tip.")
     lines.append("Model note: text via MiniCPM5-1B route; visual clues via MiniCPM-V-4.6 route.")
     return "\n".join(lines)
 
@@ -105,10 +109,19 @@ def _view_payload(
     session_language = normalize_language(getattr(session, "language", language))
     if session_language != language and session.phase != "empty":
         language = session_language
-    copy = copy_for(language)
-    card = session.sealed_tip or session.draft_tip
     error = _latest_error(session)
-    status = "error" if error else "tip" if session.sealed_tip else "ask" if session.question_history else "record"
+    if error:
+        status = "error"
+    elif session.phase == "ask" and session.question_history:
+        status = "ask"
+    elif session.sealed_tip:
+        status = "tip"
+    elif session.question_history:
+        status = "ask"
+    else:
+        status = "record"
+    copy = copy_for(language)
+    card = None if status == "ask" else session.sealed_tip or session.draft_tip
     payload = {
         "status": status,
         "phase": session.phase,

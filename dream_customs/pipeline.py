@@ -305,7 +305,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     )
     for match in pair_pattern.finditer(text):
         modifier, noun = match.groups()
-        phrase = f"{modifier} {noun.rstrip('s')}"
+        normalized_noun = noun[:-1] if noun.endswith("s") and not noun.endswith("ss") else noun
+        phrase = f"{modifier} {normalized_noun}"
         if modifier not in _ANCHOR_STOPWORDS:
             candidates.append(phrase)
 
@@ -407,6 +408,15 @@ def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
 def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str:
     if intake.main_question.strip():
         return intake.main_question.strip()
+    task = _task_focus(intake.merged_text(), language)
+    if task:
+        if not _is_zh(language):
+            return f"How can I make the {task} feel smaller and more doable today?"
+        return f"今天怎样把「{task}」变成更小、更能开始的一步？"
+    if _has_prophecy_frame(intake.merged_text()):
+        if not _is_zh(language):
+            return "How can I treat this dream as a feeling to notice, not a prediction?"
+        return "我怎样把这个梦当作一种感受来照顾，而不是当成预兆？"
     primary = _primary_anchor(intake, language)
     if not _is_zh(language):
         return f"What might the {primary} be asking me to notice today?"
@@ -451,6 +461,12 @@ def _answer_based_tiny_action(answers: str, language: str = "en") -> str:
         return "Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet."
     if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
         return "Set a five-minute timer, open the draft, and write only the next small heading or first sentence."
+    if "presentation" in lowered or "speech" in lowered or "rehearse" in lowered:
+        return "Set a five-minute timer and rehearse only the first minute, then stop and write one note for tomorrow."
+    if "deadline" in lowered or "application" in lowered:
+        return "Set a five-minute timer, open the application checklist, and mark only the next missing item."
+    if "apolog" in lowered:
+        return "Set a five-minute timer and draft one honest apology sentence without sending it yet."
     return ""
 
 
@@ -474,6 +490,12 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             f"For today, treat the {anchor} as a smaller doorway: open the draft "
             "and write only the next tiny piece."
         )
+    if "presentation" in lowered or "speech" in lowered or "rehearse" in lowered:
+        return f"For today, let the {anchor} narrow the work: rehearse only the first minute of the presentation."
+    if "deadline" in lowered or "application" in lowered:
+        return f"For today, let the {anchor} become a checklist: open the application and choose one missing item."
+    if "apolog" in lowered:
+        return f"For today, let the {anchor} become one repair step: draft a single apology sentence."
     return ""
 
 
@@ -502,6 +524,21 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
             f"Maybe the {anchor} is not asking you to finish the whole assignment at once. "
             "It is pointing to the gentler threshold: opening the draft and adding one small piece."
         )
+    if "presentation" in lowered or "speech" in lowered or "rehearse" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to perfect the whole presentation tonight. "
+            "It is pointing to the gentler threshold: rehearsing the first minute once."
+        )
+    if "deadline" in lowered or "application" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to finish the whole application in one push. "
+            "It is pointing to the gentler threshold: finding the next missing item."
+        )
+    if "apolog" in lowered:
+        return (
+            f"Maybe the {anchor} is not asking you to repair everything at once. "
+            "It is pointing to the gentler threshold: drafting one honest sentence."
+        )
     return ""
 
 
@@ -528,7 +565,7 @@ def _text_uses_anchor(text: str, anchors: List[str]) -> bool:
             continue
         if item in clean:
             return True
-        tokens = [token for token in re.split(r"[\s,，。:：;；、]+", item) if len(token) >= 2]
+        tokens = [token for token in re.split(r"[\s,，。:：;；、]+", item) if len(token) >= 3]
         if any(token in clean for token in tokens):
             return True
     return False
@@ -683,11 +720,20 @@ def _grounded_question(intake: DreamIntake, question: str, language: str = "en")
 def _question_for_declared_real_task(intake: DreamIntake, language: str = "en") -> str:
     merged = intake.merged_text().lower()
     primary = _primary_anchor(intake, language)
+    prophecy_question = _question_for_prophecy_frame(intake, language)
+    if prophecy_question:
+        return prophecy_question
     if not _is_zh(language):
         if "email" in merged:
             return f"When the {primary} shows up beside the overdue email, what would make opening that email feel smaller today?"
         if any(term in merged for term in ["assignment", "homework", "draft"]):
             return f"When the {primary} shows up beside the assignment, what is the smallest useful piece you could start today?"
+        if any(term in merged for term in ["presentation", "speech", "rehearse"]):
+            return f"When the {primary} shows up beside the presentation, what would make the first minute easier to rehearse?"
+        if any(term in merged for term in ["deadline", "application"]):
+            return f"When the {primary} shows up beside the deadline, what is the next missing item you can safely choose?"
+        if "apolog" in merged:
+            return f"When the {primary} shows up beside the apology, what is one honest sentence you could draft first?"
         if "message" in merged:
             return f"When the {primary} shows up beside that message, what is one sentence you could safely draft today?"
         return ""
@@ -695,9 +741,81 @@ def _question_for_declared_real_task(intake: DreamIntake, language: str = "en") 
         return f"当「{primary}」和那封邮件连在一起时，今天怎样才能让打开它这件事变小一点？"
     if "作业" in merged or "草稿" in merged:
         return f"当「{primary}」和作业连在一起时，今天最小、最安全的一步可以是什么？"
+    if "演讲" in merged or "汇报" in merged:
+        return f"当「{primary}」和演讲连在一起时，今晚只排练开头一分钟可以怎么做？"
+    if "申请" in merged or "截止" in merged:
+        return f"当「{primary}」和截止时间连在一起时，今天可以先确认哪一个缺口？"
+    if "道歉" in merged:
+        return f"当「{primary}」和道歉连在一起时，今天可以先写哪一句真诚草稿？"
     if "消息" in merged or "发消息" in merged:
         return f"当「{primary}」和那条消息连在一起时，今天可以先写哪一句草稿？"
     return ""
+
+
+def _has_prophecy_frame(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(
+        term in lowered
+        for term in [
+            "sign something bad",
+            "bad will happen",
+            "omen",
+            "prophecy",
+            "predict",
+            "预兆",
+            "征兆",
+            "坏事",
+            "会不会发生",
+        ]
+    )
+
+
+def _question_for_prophecy_frame(intake: DreamIntake, language: str = "en") -> str:
+    if not _has_prophecy_frame(intake.merged_text()):
+        return ""
+    primary = _primary_anchor(intake, language)
+    if not _is_zh(language):
+        return (
+            f"Rather than treating the {primary} as a prediction, what feeling did it leave in your body "
+            "when you woke up?"
+        )
+    return f"先不把「{primary}」当成预兆。醒来时，它在你身体里留下的最明显感受是什么？"
+
+
+def _task_focus(text: str, language: str = "en") -> str:
+    lowered = (text or "").lower()
+    if _is_zh(language):
+        for term in ["演讲", "汇报", "申请", "截止", "道歉", "作业", "草稿", "邮件", "消息"]:
+            if term in lowered:
+                return term
+        return ""
+    task_terms = [
+        ("presentation", ["presentation", "speech", "rehearse"]),
+        ("application deadline", ["application", "deadline"]),
+        ("apology", ["apolog"]),
+        ("assignment", ["assignment", "homework", "draft"]),
+        ("email", ["email"]),
+        ("message", ["message"]),
+    ]
+    for label, terms in task_terms:
+        if any(term in lowered for term in terms):
+            return label
+    return ""
+
+
+def _is_low_context_intake(intake: DreamIntake) -> bool:
+    merged = intake.merged_text()
+    dream_text = intake.dream_text.strip()
+    if not dream_text:
+        return False
+    cjk_count = sum(1 for char in dream_text if "\u4e00" <= char <= "\u9fff")
+    word_count = len(re.findall(r"[A-Za-z0-9'-]+", dream_text))
+    return (word_count and word_count <= 7) or (cjk_count and cjk_count <= 12)
+
+
+def _is_skip_answer(answers: str, language: str = "en") -> bool:
+    lowered = (answers or "").lower()
+    return "user chose to skip" in lowered or "用户选择跳过" in lowered
 
 
 def _grounded_followup_question(intake: DreamIntake, language: str = "en") -> str:
@@ -842,15 +960,40 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
     if answer_interpretation:
         polished.interpretation = answer_interpretation
+    elif _has_prophecy_frame(intake.merged_text()):
+        anchor = _answer_bridge_anchor(anchors)
+        polished.interpretation = (
+            f"Maybe the {anchor} is best treated as a fear-shaped image, not as evidence that something bad will happen."
+            if not _is_zh(language)
+            else f"也许「{anchor}」更适合被当作一种害怕的画面，而不是坏事会发生的证据。"
+        )
+    elif _is_low_context_intake(intake) and _is_skip_answer(answers, language):
+        anchor = _answer_bridge_anchor(anchors)
+        polished.interpretation = (
+            f"With only a few details, I would keep this very light: the {anchor} is one clue to notice, not enough for a firm reading."
+            if not _is_zh(language)
+            else f"目前线索很少，先把「{anchor}」当作一个可以继续补充的线索，而不是确定解读。"
+        )
     elif not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)
-    if (
-        answer_tip
-        and ("email" in (answers or "").lower() or "邮件" in (answers or "").lower())
-    ):
+    if answer_tip:
         polished.today_tip = answer_tip
+    elif _has_prophecy_frame(intake.merged_text()):
+        anchor = anchors[0]
+        polished.today_tip = (
+            f"For today, do not test whether the {anchor} is a sign. Name one ordinary worry it resembles, then choose one small calming step."
+            if not _is_zh(language)
+            else f"今天先不要验证「{anchor}」是不是预兆；写下它像哪一种普通担心，再选一个很小的安定动作。"
+        )
+    elif _is_low_context_intake(intake) and _is_skip_answer(answers, language):
+        anchor = anchors[0]
+        polished.today_tip = (
+            f"For today, keep the {anchor} as a note, not a conclusion: add one concrete detail before you act on the dream."
+            if not _is_zh(language)
+            else f"今天先把「{anchor}」当作记录，不当作结论：再补一个具体细节，然后再行动。"
+        )
     elif (
         not polished.today_tip.strip()
         or any(marker in polished.today_tip.lower() for marker in generic_tip_markers)
@@ -860,14 +1003,20 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.today_tip = _grounded_today_tip(intake, language)
     hard_action_markers = ["address it immediately", "fix it immediately", "solve it immediately"]
     answer_action = _answer_based_tiny_action(answers, language)
-    if answer_action and (
-        not polished.tiny_action.strip()
-        or _is_placeholder_anchor(polished.tiny_action)
-        or not _anchor_in_text(polished.tiny_action, anchors)
-        or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
-        or "email" in (answers or "").lower()
-    ):
+    if answer_action:
         polished.tiny_action = answer_action
+    elif _has_prophecy_frame(intake.merged_text()):
+        polished.tiny_action = (
+            "Spend five minutes writing: what did I feel, what ordinary worry could it echo, and what can I do safely today?"
+            if not _is_zh(language)
+            else "用 5 分钟写下：我醒来时感觉到了什么？它像哪种普通担心？今天我能安全做哪一小步？"
+        )
+    elif _is_low_context_intake(intake) and _is_skip_answer(answers, language):
+        polished.tiny_action = (
+            "Add one missing detail: color, body feeling, repeated object, or what happened just before waking."
+            if not _is_zh(language)
+            else "补一个缺失细节：颜色、身体感受、重复物件，或醒来前最后发生的事。"
+        )
     elif (
         not polished.tiny_action.strip()
         or _is_placeholder_anchor(polished.tiny_action)

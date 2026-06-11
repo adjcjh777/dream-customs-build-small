@@ -199,6 +199,36 @@ def test_generate_today_tip_adds_chinese_safety_note_for_hopeless_text():
     assert "可信任的人" in card.safety_note
 
 
+def test_chinese_short_and_sensitive_fragments_keep_real_anchors():
+    cases = [
+        ("昨晚梦见掉进海里。", ["海", "掉进海里"]),
+        ("昨晚梦到一个小孩找不到家。", ["小孩", "找不到家"]),
+        ("我总是自责，梦里不断重演过去犯的错误。", ["自责", "错误", "重演"]),
+        ("梦见有很多追逐场景，醒来心率很快。", ["追逐", "心率"]),
+    ]
+
+    for dream_text, expected_markers in cases:
+        card = generate_today_tip(
+            build_intake(dream_text=dream_text, mood="焦虑"),
+            "用户选择跳过这个追问。",
+            FakeTextClient(),
+            language="zh",
+        )
+        combined = "\n".join(
+            [
+                card.dream_summary,
+                ",".join(card.dream_anchors),
+                card.interpretation,
+                card.today_tip,
+                card.tiny_action,
+            ]
+        )
+
+        assert any(marker in combined for marker in expected_markers)
+        assert "梦里的那个细节" not in combined
+        assert "that dream detail" not in combined
+
+
 def test_generate_pact_polishes_unclear_model_output_into_daily_tip():
     class UnclearTextClient:
         def generate_pact(self, prompt):

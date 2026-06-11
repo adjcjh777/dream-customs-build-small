@@ -58,6 +58,22 @@ def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) 
 
 
 def _card_plain_text(card: TodayTipCard, language: str) -> str:
+    structured = json.dumps(
+        {
+            "dream_summary": card.dream_summary,
+            "main_question": card.main_question,
+            "dream_anchors": card.dream_anchors,
+            "followup_questions": card.followup_questions,
+            "user_answers": card.user_answers,
+            "interpretation": card.interpretation,
+            "today_tip": card.today_tip,
+            "tiny_action": card.tiny_action,
+            "caring_note": card.caring_note,
+            "safety_note": card.safety_note,
+        },
+        ensure_ascii=False,
+        indent=2,
+    )
     if language == "zh":
         text = card.to_plain_text()
         if card.followup_questions:
@@ -67,6 +83,7 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
         if card.followup_questions and card.user_answers:
             text += "\n追问线索: 你的回答已进入今日小 Tips 的解读与行动建议。"
         text += "\n模型说明: 文本推理由 MiniCPM5-1B 路线生成；图片线索由 MiniCPM-V-4.6 路线理解。"
+        text += f"\n\n结构化结果 JSON:\n{structured}"
         return text
     lines = [
         "Today Tip",
@@ -87,6 +104,7 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
     if card.followup_questions and card.user_answers:
         lines.append("Reasoning trail: Your follow-up answer shaped the interpretation and Today Tip.")
     lines.append("Model note: text via MiniCPM5-1B route; visual clues via MiniCPM-V-4.6 route.")
+    lines.extend(["", "Structured result JSON:", structured])
     return "\n".join(lines)
 
 

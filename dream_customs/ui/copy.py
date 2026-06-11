@@ -8,7 +8,7 @@ LANGUAGE_OPTIONS = [
 APP_COPY = {
     "en": {
         "title": "Dream QA",
-        "subtitle": "Record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.",
+        "subtitle": "A Thousand Token Wood-style dream Q&A: record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.",
         "brand_subtitle": "Dream Customs",
         "steps": ["Record", "Question", "Interpret", "Today Tip"],
         "notice_record": "Write a sentence, a few lines, or add image/voice clues. Text-only always works.",
@@ -64,7 +64,7 @@ APP_COPY = {
     },
     "zh": {
         "title": "梦境问答台",
-        "subtitle": "一步步整理梦境疑惑，回答或跳过温和追问，最后得到一个引用梦境细节的今日小 Tips。",
+        "subtitle": "Thousand Token Wood 式梦境问答：一步步整理梦境疑惑，回答或跳过温和追问，最后得到一个引用梦境细节的今日小 Tips。",
         "brand_subtitle": "Dream Customs",
         "steps": ["记录", "追问", "解读", "今日 Tip"],
         "notice_record": "写一句、几行，或上传图片/语音。Text-only 路径始终可用。",

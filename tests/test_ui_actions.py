@@ -100,6 +100,7 @@ def test_hero_subtitle_explains_app_instead_of_legacy_name():
     hero_html = ui_app._hero_html()
 
     assert "grounded Today Tip" in hero_html
+    assert "Thousand Token Wood" in hero_html
     assert "Dream Customs" not in hero_html
 
 
@@ -285,6 +286,8 @@ def test_mobile_mvp_zh_language_switch_keeps_chinese_today_tip():
     assert view["language"] == "zh"
     assert view["card_title"] == "今日小 Tips"
     assert "今日小 Tips" in view["card_html"]
+    assert "结构化结果 JSON" in view["card_text"]
+    assert '"dream_summary"' in view["card_text"]
 
 
 def test_mobile_mvp_answer_to_card_generates_today_tip():
@@ -309,6 +312,8 @@ def test_mobile_mvp_answer_to_card_generates_today_tip():
     assert "Follow-up questions:" in view["card_text"]
     assert "User answers:" in view["card_text"]
     assert "MiniCPM5-1B" in view["card_text"]
+    assert "Structured result JSON:" in view["card_text"]
+    assert '"today_tip"' in view["card_text"]
 
 
 def test_english_today_tip_has_no_chinese_anchor_leakage():

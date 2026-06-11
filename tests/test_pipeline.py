@@ -13,13 +13,14 @@ from dream_customs.pipeline import (
     draft_pact,
     generate_negotiation,
     generate_pact,
+    generate_today_tip,
     intake_from_modalities,
     revise_pact,
     seal_pact,
     skip_question,
 )
 from dream_customs.prompts import pact_prompt
-from dream_customs.schema import PactCard, VisionWitness
+from dream_customs.schema import PactCard, TodayTipCard, VisionWitness
 
 
 def test_dated_permit_id_uses_runtime_date_and_preserves_serial():
@@ -88,6 +89,55 @@ def test_generate_pact_adds_safety_note_for_distress():
     intake = build_intake(dream_text="I might hurt myself if I cannot sleep.")
     card, _html = generate_pact(intake, "", FakeTextClient())
     assert card.safety_note
+
+
+def test_generate_today_tip_repairs_placeholder_and_stale_model_anchors():
+    class StaleHostedTextClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I dreamed the elevator button melted and the floor number stayed on 14.",
+                main_question="What might that dream detail be asking me to notice today?",
+                dream_anchors=["that dream detail"],
+                followup_questions=["What did the elevator feel like?"],
+                user_answers=[],
+                interpretation="Maybe that dream detail points to a stuck point.",
+                today_tip="For today, borrow one action from that dream detail and write one line.",
+                tiny_action="Spend five minutes with that dream detail.",
+                caring_note="Noticing one dream detail is enough.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text="昨晚我梦见自己在一片大雪地里找不到出口，反复回头看到一扇红色的门却打不开。",
+        mood="Neutral",
+    )
+
+    card = generate_today_tip(intake, "", StaleHostedTextClient(), language="zh")
+    combined = "\n".join(
+        [
+            card.dream_summary,
+            card.main_question,
+            ",".join(card.dream_anchors),
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+        ]
+    )
+
+    assert "梦里的那个细节" not in combined
+    assert "that dream detail" not in combined
+    assert "电梯" not in combined
+    assert "红色" in combined or "雪地" in combined
+    assert card.dream_anchors[0] in {"红色的门", "红色门", "大雪地", "雪地"}
+
+
+def test_generate_today_tip_adds_chinese_safety_note_for_hopeless_text():
+    intake = build_intake(dream_text="我梦到站在高楼边缘，醒来后不想醒来，很绝望。")
+
+    card = generate_today_tip(intake, "", FakeTextClient(), language="zh")
+
+    assert card.safety_note
+    assert "可信任的人" in card.safety_note
 
 
 def test_generate_pact_polishes_unclear_model_output_into_daily_tip():

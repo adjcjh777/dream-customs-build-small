@@ -13,5 +13,13 @@ def test_chinese_severe_insomnia_escalates():
     assert needs_escalation("我已经很多天睡不着，感觉无法正常生活。")
 
 
+def test_chinese_hopeless_text_escalates():
+    assert needs_escalation("醒来后我不想醒来，很绝望，感觉自己撑不住。")
+
+
 def test_safety_note_mentions_professional_support():
     assert "professional support" in safety_note().lower()
+
+
+def test_chinese_safety_note_mentions_support():
+    assert "可信任的人" in safety_note("zh")

@@ -1,6 +1,17 @@
 from scripts.evaluate_agent_readiness import _agent_api_result, _load_agents_doc
 
 
+def test_gradio_api_info_alias_matches_agent_endpoint():
+    from fastapi.testclient import TestClient
+
+    from app import demo
+
+    response = TestClient(demo.app).get("/gradio_api/info")
+
+    assert response.status_code == 200
+    assert "/agent_dream_qa" in response.json()["named_endpoints"]
+
+
 def test_agents_doc_is_present_and_agent_facing():
     result = _load_agents_doc("agents.md", None, timeout=1)
 

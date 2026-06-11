@@ -100,6 +100,17 @@ _ANCHOR_STOPWORDS = {
 }
 
 _ZH_ANCHOR_MARKERS = [
+    "高楼边缘",
+    "高楼",
+    "边缘",
+    "红色的门",
+    "红色门",
+    "大雪地",
+    "雪地",
+    "地铁站",
+    "地铁",
+    "安全帽",
+    "男生",
     "电梯按钮",
     "融化的按钮",
     "按钮融化",
@@ -118,6 +129,17 @@ _ZH_ANCHOR_MARKERS = [
 ]
 
 _ZH_TO_EN_PHRASES = {
+    "高楼边缘": "high-rise edge",
+    "高楼": "high-rise",
+    "边缘": "edge",
+    "红色的门": "red door",
+    "红色门": "red door",
+    "大雪地": "snowfield",
+    "雪地": "snow",
+    "地铁站": "subway station",
+    "地铁": "subway",
+    "安全帽": "hard hat",
+    "男生": "young man",
     "电梯按钮": "elevator button",
     "融化的按钮": "melted button",
     "按钮融化": "melted button",
@@ -145,6 +167,26 @@ def _dedupe_preserve_order(items: List[str]) -> List[str]:
     return result
 
 
+_PLACEHOLDER_ANCHORS = {
+    "梦里的那个细节",
+    "梦里的细节",
+    "那个细节",
+    "dream detail",
+    "that dream detail",
+    "that that dream detail",
+    "the dream detail",
+}
+
+
+def _is_placeholder_anchor(text: str) -> bool:
+    clean = re.sub(r"\s+", " ", (text or "").strip().lower())
+    return not clean or clean in _PLACEHOLDER_ANCHORS or "dream detail" in clean or "梦里的那个细节" in clean
+
+
+def _remove_placeholder_anchors(items: List[str]) -> List[str]:
+    return [item for item in items if not _is_placeholder_anchor(item)]
+
+
 def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     raw_text = " ".join(
         [
@@ -167,7 +209,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"paper|papers|promise|promises|window|windows|suitcase|suitcases|"
         r"clerk|clerks|sunrise|elevator|elevators|button|buttons|hallway|"
         r"gate|gates|floor|floors|stamp|stamps|number|numbers|exam|exams|"
-        r"pencil|pencils|train|trains|door|doors|phone|phones|water|shoe|shoes|"
+        r"pencil|pencils|train|trains|door|doors|subway|station|stations|snow|snowfield|"
+        r"hat|hats|phone|phones|water|shoe|shoes|"
         r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains"
         r")\b"
     )
@@ -179,7 +222,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
 
     noun_pattern = re.compile(
         r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor|"
-        r"exam|pencil|train|door|phone|water|shoe|stairwell|room|key|note|rain|moon|curtain|sleep|dream)\b"
+        r"exam|pencil|train|door|subway|station|snow|snowfield|hat|phone|water|shoe|stairwell|"
+        r"room|key|note|rain|moon|curtain|sleep|dream)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
     candidates.extend(clue.lower() for clue in intake.visual_clues if clue.strip())
@@ -251,7 +295,9 @@ def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
         clean = clean[:69].rstrip() + "..."
     if not _is_zh(language):
         return clean if clean.lower().startswith(("i ", "you ")) else f"You dreamed about {clean}"
-    return f"你梦见{clean}" if not clean.startswith(("你", "我", "I ", "i ")) else clean
+    if clean.startswith(("你", "我", "I ", "i ")) or any(marker in clean[:12] for marker in ("梦见", "梦到")):
+        return clean
+    return f"你梦见{clean}"
 
 
 def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str:
@@ -350,7 +396,16 @@ def _anchor_in_text(text: str, anchors: List[str]) -> bool:
 
 def _text_uses_anchor(text: str, anchors: List[str]) -> bool:
     clean = (text or "").lower()
-    return any(anchor in clean for anchor in anchors)
+    for anchor in anchors:
+        item = anchor.lower().strip()
+        if not item or _is_placeholder_anchor(item):
+            continue
+        if item in clean:
+            return True
+        tokens = [token for token in re.split(r"[\s,，。:：;；、]+", item) if len(token) >= 2]
+        if any(token in clean for token in tokens):
+            return True
+    return False
 
 
 def _is_generic_visitor_name(text: str, intake: DreamIntake) -> bool:
@@ -589,7 +644,7 @@ def build_qa_state(
     answers: Optional[List[str]] = None,
     language: str = "en",
 ) -> DreamQAState:
-    anchors = _anchors_for_language(intake, language)
+    anchors = _remove_placeholder_anchors(_anchors_for_language(intake, language))
     return DreamQAState(
         dream_summary=_summary_from_intake(intake, language),
         main_question=_main_question_from_intake(intake, language),
@@ -602,8 +657,8 @@ def build_qa_state(
 
 def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
     polished = card.model_copy(deep=True)
-    intake_anchors = _anchors_for_language(intake, language)
-    card_anchors = (
+    intake_anchors = _remove_placeholder_anchors(_anchors_for_language(intake, language))
+    card_anchors = _remove_placeholder_anchors(
         polished.dream_anchors
         if _is_zh(language)
         else _dedupe_preserve_order([_english_anchor_text(anchor) for anchor in polished.dream_anchors])
@@ -613,11 +668,17 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     else:
         anchors = card_anchors or intake_anchors
     if not anchors:
-        anchors = [_primary_anchor(intake, language)]
+        anchors = _remove_placeholder_anchors([_primary_anchor(intake, language)])
+    if not anchors:
+        anchors = ["梦境片段" if _is_zh(language) else "dream fragment"]
     polished.dream_anchors = anchors
-    if not polished.dream_summary.strip():
+    if not polished.dream_summary.strip() or not _text_uses_anchor(polished.dream_summary, anchors):
         polished.dream_summary = _summary_from_intake(intake, language)
-    if not polished.main_question.strip():
+    if (
+        not polished.main_question.strip()
+        or _is_placeholder_anchor(polished.main_question)
+        or not _text_uses_anchor(polished.main_question, anchors)
+    ):
         polished.main_question = _main_question_from_intake(intake, language)
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
     if answer_interpretation:
@@ -634,6 +695,7 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     elif (
         not polished.today_tip.strip()
         or any(marker in polished.today_tip.lower() for marker in generic_tip_markers)
+        or _is_placeholder_anchor(polished.today_tip)
         or not _anchor_in_text(polished.today_tip, anchors)
     ):
         polished.today_tip = _grounded_today_tip(intake, language)
@@ -641,11 +703,18 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     answer_action = _answer_based_tiny_action(answers, language)
     if answer_action and (
         not polished.tiny_action.strip()
+        or _is_placeholder_anchor(polished.tiny_action)
+        or not _anchor_in_text(polished.tiny_action, anchors)
         or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
         or "email" in (answers or "").lower()
     ):
         polished.tiny_action = answer_action
-    elif not polished.tiny_action.strip() or any(marker in polished.tiny_action.lower() for marker in hard_action_markers):
+    elif (
+        not polished.tiny_action.strip()
+        or _is_placeholder_anchor(polished.tiny_action)
+        or not _anchor_in_text(polished.tiny_action, anchors)
+        or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
+    ):
         if _is_zh(language):
             polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
         else:
@@ -657,7 +726,7 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
             else "You do not have to solve the whole dream this morning; noticing one detail is enough."
         )
     merged = "\n".join([intake.merged_text(), answers or ""])
-    polished.safety_note = safety_note() if needs_escalation(merged) else ""
+    polished.safety_note = safety_note(language) if needs_escalation(merged) else ""
     if not _is_zh(language):
         polished = _clean_english_today_tip_language(polished)
     return polished

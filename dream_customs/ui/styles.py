@@ -970,6 +970,44 @@ a.built-with[href*="gradio.app"] {
   font-size: 0.82rem !important;
 }
 
+.dc-debug-panel,
+.dc-debug-panel .block,
+.dc-debug-panel .wrap,
+.dc-debug-panel .container,
+.dc-debug-panel .cm-editor,
+.dc-debug-panel .cm-scroller,
+.dc-debug-panel .cm-content,
+.dc-dev,
+.dc-dev .block,
+.dc-dev .wrap,
+.dc-dev .container,
+.dc-dev-advanced,
+.dc-dev-advanced .block,
+.dc-dev-advanced .wrap,
+.dc-dev-advanced .container {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.dc-debug-panel .cm-scroller,
+.dc-debug-panel pre {
+  overflow-x: auto !important;
+}
+
+.dc-debug-panel .cm-line,
+.dc-debug-panel .cm-content,
+.dc-debug-panel code,
+.dc-debug-panel pre {
+  overflow-wrap: anywhere !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+}
+
+.dc-debug-panel .cm-line {
+  max-width: 100% !important;
+}
+
 @keyframes dc-mic-pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(11, 91, 100, 0.32);

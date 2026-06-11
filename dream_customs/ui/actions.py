@@ -83,7 +83,7 @@ def _view_payload(
     card = session.sealed_tip or session.draft_tip
     error = _latest_error(session)
     status = "error" if error else "tip" if session.sealed_tip else "ask" if session.question_history else "record"
-    return {
+    payload = {
         "status": status,
         "phase": session.phase,
         "language": language,
@@ -96,6 +96,22 @@ def _view_payload(
         "notice": _notice_for_status(status, error, language),
         "debug": json.loads(_debug_json(session, text_backend, vision_backend, **settings)),
     }
+    if card:
+        payload.update(
+            {
+                "dream_summary": card.dream_summary,
+                "main_question": card.main_question,
+                "dream_anchors": card.dream_anchors,
+                "followup_questions": card.followup_questions,
+                "user_answers": card.user_answers,
+                "interpretation": card.interpretation,
+                "today_tip": card.today_tip,
+                "tiny_action": card.tiny_action,
+                "caring_note": card.caring_note,
+                "safety_note": card.safety_note,
+            }
+        )
+    return payload
 
 
 def _view(

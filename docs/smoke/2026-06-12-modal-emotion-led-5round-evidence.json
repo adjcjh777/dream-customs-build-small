@@ -1,0 +1,101 @@
+{
+  "generated_at": "2026-06-12T01:40:02.322834+00:00",
+  "cwd": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon",
+  "git_commit": "f51f11407c6fa7d41ba57c511b2cf683114e1442",
+  "git_branch": "bugfix/emotion-led-dream-qa",
+  "model": {
+    "modal_app": "dream-customs-minicpm-backend",
+    "endpoint_host": "cjh-12569--dream-customs-minicpm-backend-text.modal.run",
+    "text_model": "openbmb/MiniCPM5-1B",
+    "max_tokens_for_evidence": 220
+  },
+  "scope_note": "Direct Modal text endpoint evidence using the emotion-led prompt constraints from the local change. Full Gradio TodayTipCard JSON prompt was attempted but timed out/hung on the current Modal deployment, so this file preserves direct model replies instead of app-card schema replies.",
+  "secret_handling": "Modal secret was used inside the temporary Modal runner only; token value was not printed or written.",
+  "results": [
+    {
+      "round": 1,
+      "case_id": "sea-pressure-comfort",
+      "language": "zh",
+      "dream_text": "我梦到自己掉进海里，醒来很害怕。我想知道这是不是说明我快撑不住了？",
+      "user_answer": "我最近工作压力很大，真的很想被安慰一下。",
+      "modal_http_status": 200,
+      "modal_transport_ok": true,
+      "modal_elapsed_seconds": 26.44,
+      "modal_error": {
+        "type": "",
+        "message": ""
+      },
+      "modal_route_status": "ok",
+      "modal_route_error": "",
+      "modal_model_reply": "想理解的问题：用户最近工作压力很大，真的很想被安慰一下。\n\n一步步解读：用户提到“工作压力很大”和“很想被安慰”，这说明用户目前处于情绪低谷，需要关注自己的心理健康。梦到自己掉进海里，醒来后感到害怕，可能是因为现实中的压力和情绪影响睡眠或情绪状态。用户没有表现出害怕、难过、压力、自责或想被安慰的情绪，而是想被安慰，这可能是因为用户希望通过梦境来寻求情感支持。\n\n今日小 Tips：用户可以尝试在睡前写下当天的压力点，并思考如何调整心态，或者与信任的朋友倾诉。梦中的细节可能反映用户潜意识中的担忧或渴望，但不应过度解读。\n\n关心一句：用户需要关注自己的情绪和压力，及时寻求专业帮助或心理咨询。"
+    },
+    {
+      "round": 2,
+      "case_id": "ex-message-sadness",
+      "language": "zh",
+      "dream_text": "我梦到前任发消息又消失了，我醒来很难过，想知道是不是我还没走出来。",
+      "user_answer": "我不想要鸡汤，只想知道为什么这么难受。",
+      "modal_http_status": 200,
+      "modal_transport_ok": true,
+      "modal_elapsed_seconds": 5.82,
+      "modal_error": {
+        "type": "",
+        "message": ""
+      },
+      "modal_route_status": "ok",
+      "modal_route_error": "",
+      "modal_model_reply": "想理解的问题：用户梦到前任发消息又消失，醒来感到难过，想知道是否已走出过程。\n\n一步步解读：\n1. 梦到前任消失可能反映用户内心对这段关系的复杂感受。梦中的“消失”可能象征着情感上的断裂或未解决的矛盾。\n2. 用户感到“很难过”说明当前情绪状态可能与梦境中的经历有关，梦境往往承载着潜意识的信息。\n3. 用户想了解是否已走出过程，暗示用户可能正经历一段心理调整期，需要关注自己的情绪变化。\n\n今日小 Tips：梦中的具体细节是“前任发消息又消失”，这可能意味着用户在现实生活中遇到了沟通障碍或情感疏离，建议用户记录这些细节，以便更好地理解自己的情绪状态。\n\n关心一句：希望用户能耐心倾听自己的感受，并给予支持。"
+    },
+    {
+      "round": 3,
+      "case_id": "black-wave-prophecy",
+      "language": "en",
+      "dream_text": "I dreamed of a black wave and woke thinking: is this a sign something bad will happen?",
+      "user_answer": "It left a tight feeling in my chest, and I want a grounded answer.",
+      "modal_http_status": 200,
+      "modal_transport_ok": true,
+      "modal_elapsed_seconds": 7.24,
+      "modal_error": {
+        "type": "",
+        "message": ""
+      },
+      "modal_route_status": "ok",
+      "modal_route_error": "",
+      "modal_model_reply": "It sounds like you're feeling a bit overwhelmed by the news of your black wave dream, and I understand why you want a grounded answer. Here is a step-by-step interpretation based on the details you provided.\n\n**Step 1: Analyze the dream elements**\nYou described a \"black wave,\" which is a very specific and intense dream symbol. In dream analysis, a black wave often represents a sudden, overwhelming surge of emotion, stress, or anxiety that feels like a tidal wave crashing against your mind. It is rarely a literal wave in the ocean; instead, it usually signifies a sudden, intense emotional event that has a high intensity and a strong impact on your psyche.\n\n**Step 2: Assess the emotional reaction**\nYou mentioned feeling a \"tight feeling in my chest\" after the dream. This is a classic sign of anxiety or panic. When a black wave occurs, the brain's amygdala (the fear center) is activated, triggering a fight-or-flight response. This physical sensation of tightness is a direct result of the fear of the sudden, violent nature of the event."
+    },
+    {
+      "round": 4,
+      "case_id": "lost-child-guilt",
+      "language": "zh",
+      "dream_text": "我梦到一个小孩在地铁站找不到家，我一直追不上他，醒来很自责。",
+      "user_answer": "我最近总觉得没有照顾好家人，想知道这种内疚该怎么放一放。",
+      "modal_http_status": 200,
+      "modal_transport_ok": true,
+      "modal_elapsed_seconds": 4.75,
+      "modal_error": {
+        "type": "",
+        "message": ""
+      },
+      "modal_route_status": "ok",
+      "modal_route_error": "",
+      "modal_model_reply": "想理解的问题：用户醒来后感到内疚和自责，这可能源于对未尽责任的担忧。\n\n一步步解读：用户梦到小孩在地铁站找不到家，这可能象征着生活中未解决的问题或未完成的任务。用户一直追不上小孩，可能意味着在现实生活中感到被忽视或无法跟上他人的步伐。醒来后感到内疚和自责，可能是因为对未能提供足够支持或帮助的担忧。\n\n今日小 Tips：用户可以尝试在日常生活中多关注家人，表达关心和支持。也可以尝试与家人沟通，分享自己的感受和需求。\n\n关心一句：希望用户能够找到适合自己的方式来处理这些情绪，并从中找到力量和成长。"
+    },
+    {
+      "round": 5,
+      "case_id": "drowning-not-coping",
+      "language": "en",
+      "dream_text": "I dreamed I was drowning in dark water and woke scared. Does this mean I am not coping?",
+      "user_answer": "I need comfort, not productivity advice.",
+      "modal_http_status": 200,
+      "modal_transport_ok": true,
+      "modal_elapsed_seconds": 7.54,
+      "modal_error": {
+        "type": "",
+        "message": ""
+      },
+      "modal_route_status": "ok",
+      "modal_route_error": "",
+      "modal_model_reply": "I need comfort, not productivity advice.\n\nHere is a step-by-step interpretation based on the dream details you provided:\n\n1.  **Analyze the Dream Elements**: You were in \"dark water,\" which is a common symbol of confusion, danger, or emotional turmoil. Being \"drowning\" indicates a current crisis or fear of drowning, often linked to feelings of helplessness or anxiety. The fact that you were \"scared\" suggests the dreamer is currently feeling apprehension or panic about the situation.\n\n2.  **Assess the Emotional State**: The combination of being in a dangerous environment (dark water) and feeling scared is a classic sign of anxiety or panic. This state is often a reaction to real-life stressors, such as a recent traumatic event, financial stress, or a difficult conversation.\n\n3.  **Determine the Need for Support**: Since the dream occurred while you were \"scared,\" the dreamer is likely experiencing a heightened state of anxiety. This is a clear indication that they need immediate emotional comfort and reassurance rather than focusing on tasks or productivity.\n\n4."
+    }
+  ]
+}

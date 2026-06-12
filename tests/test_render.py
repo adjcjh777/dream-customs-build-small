@@ -95,10 +95,15 @@ def test_today_tip_card_prioritizes_tip_before_interpretation():
         )
     )
 
-    assert html.index("Today's small suggestion") < html.index("Maybe this dream is pointing to")
+    assert html.index("Today Tip") < html.index("Maybe this dream is pointing to")
+    assert "Morning Ticket" in html
+    assert "Because your dream kept returning to" in html
+    assert "dqa-anchor-chips" in html
+    assert "floor 14" in html
+    assert "How this was made small" in html
 
 
-def test_today_tip_card_renames_tiny_action_to_weird_little_thing():
+def test_today_tip_card_renames_tiny_action_to_five_minute_action():
     card = TodayTipCard(
         dream_summary="你梦见办公楼、电梯和一封迟迟没发出去的邮件。",
         main_question="为什么我总是卡在电梯口？",
@@ -114,7 +119,7 @@ def test_today_tip_card_renames_tiny_action_to_weird_little_thing():
     zh_html = render_today_tip_card(card, language="zh")
     en_html = render_today_tip_card(card, language="en")
 
-    assert "古怪的小事" in zh_html
-    assert "没试过的小事" not in zh_html
-    assert "Weird little thing" in en_html
-    assert "Tiny action" not in en_html
+    assert "5 分钟小行动" in zh_html
+    assert "古怪的小事" not in zh_html
+    assert "Tiny 5-minute action" in en_html
+    assert "Weird little thing" not in en_html

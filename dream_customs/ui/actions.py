@@ -86,7 +86,7 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
         text += f"\n\n结构化结果 JSON:\n{structured}"
         return text
     lines = [
-        "Today Tip",
+        "Morning Ticket",
         f"Dream summary: {card.dream_summary}",
         f"Question: {card.main_question}",
         f"Dream anchors: {', '.join(card.dream_anchors)}",
@@ -96,14 +96,14 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
         f"Today Tip: {card.today_tip}",
     ]
     if card.tiny_action:
-        lines.append(f"Weird little thing: {card.tiny_action}")
+        lines.append(f"Tiny 5-minute action: {card.tiny_action}")
     if card.caring_note:
         lines.append(f"Caring note: {card.caring_note}")
     if card.safety_note:
         lines.append(f"Safety note: {card.safety_note}")
     if card.followup_questions and card.user_answers:
         lines.append("Reasoning trail: Your follow-up answer shaped the interpretation and Today Tip.")
-    lines.append("Model note: text via MiniCPM5-1B route; visual clues via MiniCPM-V-4.6 route.")
+    lines.append("Small-model note: text via MiniCPM5-1B route; visual clues via MiniCPM-V-4.6 route.")
     lines.extend(["", "Structured result JSON:", structured])
     return "\n".join(lines)
 

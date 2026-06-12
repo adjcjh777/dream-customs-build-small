@@ -10,11 +10,11 @@ Dream QA / 梦境问答台 serves people who wake up with vivid, strange, or uns
 
 ## Product Purpose
 
-The product helps a user unpack a dream through a guided, step-by-step Q&A. It accepts text, image, and voice fragments, turns them into one structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one Today Tip.
+The product helps a user unpack a dream through a guided, step-by-step Q&A. It accepts text, image, and voice fragments, turns them into one structured dream intake, asks one gentle follow-up question, drafts a grounded interpretation, and ends with a screenshot-friendly Morning Ticket whose first payload is one Today Tip.
 
 The hackathon-facing experience is English-first. A visible `English / 中文` language control keeps the Chinese experience available without making judges start from a Chinese-only first screen.
 
-Success means the user receives something more useful than a one-shot interpretation: one clear today tip first, an optional tiny action, and then a non-certain explanation grounded in concrete dream details and the user's answer. The tip can be practical, playful, or simply caring, but it must feel connected to the dream.
+Success means the user receives something more useful than a one-shot interpretation: one clear today tip first, an optional tiny 5-minute action, and then a non-certain explanation grounded in concrete dream details and the user's answer. The ticket can be practical, playful, or simply caring, but it must feel connected to the dream.
 
 ## Brand Personality
 

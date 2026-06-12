@@ -10,7 +10,7 @@ Users who wake up from vivid dreams may feel unsettled, curious, or mentally clu
 
 ### Proposed Solution
 
-Dream QA is a Gradio app that accepts voice, image, and text dream fragments, normalizes them into a structured dream intake, asks gentle follow-up questions, drafts a grounded interpretation, and ends with one Today Tip.
+Dream QA is a Gradio app that accepts voice, image, and text dream fragments, normalizes them into a structured dream intake, asks one gentle follow-up question, drafts a grounded interpretation, and ends with a Morning Ticket whose first payload is one Today Tip.
 
 The repository and Space may continue to use `Dream Customs` as the deployed project name, but the product experience should no longer be built around permits, contraband, or sealed pact cards.
 
@@ -92,13 +92,13 @@ Acceptance criteria:
 - Skip path still generates a final tip.
 - Questions avoid clinical or diagnostic phrasing.
 
-#### Story 5: Today Tip Card
+#### Story 5: Morning Ticket
 
 As a user, I want a clear final result so that I leave with one small thing for today.
 
 Acceptance criteria:
 
-- Result includes dream summary, main question, today tip, optional tiny action, supporting interpretation, optional caring note, and safety note when needed.
+- Result includes dream summary, main question, today tip, optional tiny 5-minute action, supporting interpretation, optional caring note, and safety note when needed.
 - Result presents the Today Tip before supporting interpretation.
 - Result is readable on mobile and desktop.
 - Result avoids medical, prophetic, or deterministic framing.

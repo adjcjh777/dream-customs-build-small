@@ -4,7 +4,7 @@ Last updated: 2026-06-08
 
 ## 1. One-Line Concept
 
-Dream QA helps users unpack last night's dream step by step: they record a dream with text, image, or voice; the system asks one grounded follow-up question; then it gives a non-diagnostic, non-fatalistic interpretation draft and one gentle Today Tip.
+Dream QA helps users unpack last night's dream step by step: they record a dream with text, image, or voice; the system asks one grounded follow-up question; then it gives a non-diagnostic, non-fatalistic Morning Ticket with one gentle Today Tip first.
 
 The public hackathon demo is English-first because the event is international. Chinese remains available through the in-app `English / 中文` toggle.
 
@@ -168,7 +168,7 @@ Responsibilities:
 8. User answers, skips, adds detail, or asks for another angle.
 9. MiniCPM5-1B drafts a grounded interpretation.
 10. MiniCPM5-1B generates a final `TodayTipCard`.
-11. Gradio renders a mobile-readable result block and plain text.
+11. Gradio renders a mobile-readable Morning Ticket and plain text.
 
 ## 9. Output Contract
 
@@ -177,7 +177,7 @@ The final result must include:
 - Dream summary.
 - Main question.
 - One primary today tip.
-- Optional tiny action.
+- Optional tiny 5-minute action.
 - Supporting grounded interpretation.
 - Optional caring note.
 - Safety note if the input indicates severe distress.
@@ -232,7 +232,7 @@ Content:
 Content:
 
 - One primary today tip.
-- Optional tiny action.
+- Optional tiny 5-minute action.
 - Optional caring note.
 
 ### Screen 0: Language

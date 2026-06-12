@@ -49,7 +49,7 @@ Build a guided dream interpretation app, not a diagnosis app, not a fortune-tell
 
 Final positioning:
 
-> Dream QA helps you record a dream, answer or skip one gentle question, and leave with one grounded Today Tip.
+> Dream QA helps you record a dream, answer or skip one gentle question, and leave with one grounded Morning Ticket whose first payload is a Today Tip.
 
 2026-06-09 tone contract:
 

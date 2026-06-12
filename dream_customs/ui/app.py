@@ -42,6 +42,7 @@ from dream_customs.ui.copy import (
     default_mood_for,
     mood_options_for,
     normalize_language,
+    EXAMPLE_CHIPS,
     EXAMPLE_DREAMS,
     EXAMPLE_MOODS,
 )
@@ -650,7 +651,7 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
 
 
 def _active_step_for_status(status: str) -> int:
-    return {"record": 1, "error": 1, "ask": 2, "drafting": 3, "tip": 4}.get(status, 1)
+    return {"record": 1, "error": 1, "ask": 2, "drafting": 2, "tip": 3}.get(status, 1)
 
 
 def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
@@ -679,12 +680,14 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     <div class="dc-menu-mark" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="dc-brand-lockup">
       <div>
-        <h1>{copy['title']}</h1>
+        <p class="dc-hero-kicker">{copy['hero_kicker']}</p>
+        <h1>{copy['hero_title']}</h1>
         <p class="dc-brand-subtitle">{copy['subtitle']}</p>
       </div>
     </div>
-    <div class="dc-sun-mark" aria-hidden="true">☀</div>
+    <div class="dc-sun-mark" aria-hidden="true"></div>
   </div>
+  <p class="dc-hero-body">{copy['hero_body']}</p>
   <div class="dc-stepper" aria-label="Dream QA steps">
     {''.join(step_html)}
   </div>
@@ -699,6 +702,15 @@ def _section_title_html(number: int, text: str) -> str:
   <strong>{escape(text)}</strong>
 </div>
 """.strip()
+
+
+def _demo_chip_intro_html(language: str = DEFAULT_LANGUAGE) -> str:
+    message = (
+        "Or tap the 90-second demo trail:"
+        if normalize_language(language) == "en"
+        else "也可以点一个 90 秒演示线索："
+    )
+    return f'<p class="dc-demo-chip-intro">{escape(message)}</p>'
 
 
 def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
@@ -771,6 +783,26 @@ def _side_stamp_html(language: str = DEFAULT_LANGUAGE) -> str:
 """.strip()
 
 
+def _example_chip(selected_language: str, chip_key: str):
+    selected_language = normalize_language(selected_language)
+    chip = EXAMPLE_CHIPS[selected_language].get(chip_key)
+    if chip:
+        return chip
+    return EXAMPLE_DREAMS[selected_language], EXAMPLE_MOODS[selected_language]
+
+
+def _example_elevator(selected_language: str):
+    return _example_chip(selected_language, "elevator")
+
+
+def _example_floor14(selected_language: str):
+    return _example_chip(selected_language, "floor14")
+
+
+def _example_melting(selected_language: str):
+    return _example_chip(selected_language, "melting")
+
+
 def _dev_help_html(language: str = DEFAULT_LANGUAGE) -> str:
     return f"""
 <div class="dc-dev-help">
@@ -834,13 +866,29 @@ def build_demo() -> gr.Blocks:
                             )
                             _make_media_api_info_client_safe(audio_input)
                         field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
+                        demo_chip_intro = gr.HTML(_demo_chip_intro_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
-                            example_button = gr.Button(initial_copy["example_button"], variant="secondary")
                             submit_button = gr.Button(
                                 initial_copy["submit_button"],
                                 variant="primary",
                                 elem_classes=["dc-submit-button"],
                             )
+                            with gr.Row(elem_classes=["dc-demo-chip-row"]):
+                                example_button = gr.Button(
+                                    initial_copy["example_button"],
+                                    variant="secondary",
+                                    elem_classes=["dc-demo-chip"],
+                                )
+                                example_button_2 = gr.Button(
+                                    initial_copy["example_button_2"],
+                                    variant="secondary",
+                                    elem_classes=["dc-demo-chip"],
+                                )
+                                example_button_3 = gr.Button(
+                                    initial_copy["example_button_3"],
+                                    variant="secondary",
+                                    elem_classes=["dc-demo-chip"],
+                                )
                         processing_html = gr.HTML(_processing_html(DEFAULT_LANGUAGE))
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
@@ -1092,11 +1140,27 @@ def build_demo() -> gr.Blocks:
             show_api=False,
         )
 
-        def _example(selected_language):
-            selected_language = normalize_language(selected_language)
-            return EXAMPLE_DREAMS[selected_language], EXAMPLE_MOODS[selected_language]
-
-        example_button.click(_example, inputs=language, outputs=[dream_text, mood], api_name=False, show_api=False)
+        example_button.click(
+            _example_elevator,
+            inputs=[language],
+            outputs=[dream_text, mood],
+            api_name=False,
+            show_api=False,
+        )
+        example_button_2.click(
+            _example_floor14,
+            inputs=[language],
+            outputs=[dream_text, mood],
+            api_name=False,
+            show_api=False,
+        )
+        example_button_3.click(
+            _example_melting,
+            inputs=[language],
+            outputs=[dream_text, mood],
+            api_name=False,
+            show_api=False,
+        )
 
         def _language_ui(selected_language):
             selected_language = normalize_language(selected_language)
@@ -1111,7 +1175,10 @@ def build_demo() -> gr.Blocks:
                 _attachment_html(selected_language),
                 gr.update(label=copy["image_label"]),
                 _field_tip_html(selected_language),
+                _demo_chip_intro_html(selected_language),
                 gr.update(value=copy["example_button"]),
+                gr.update(value=copy["example_button_2"]),
+                gr.update(value=copy["example_button_3"]),
                 gr.update(value=copy["submit_button"]),
                 _processing_html(selected_language),
                 _question_markdown({"question": ""}, selected_language),
@@ -1145,7 +1212,10 @@ def build_demo() -> gr.Blocks:
                 attachment_html,
                 image_input,
                 field_tip_html,
+                demo_chip_intro,
                 example_button,
+                example_button_2,
+                example_button_3,
                 submit_button,
                 processing_html,
                 question_markdown,

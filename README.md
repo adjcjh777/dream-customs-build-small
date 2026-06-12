@@ -20,17 +20,19 @@ tags:
   - dream-journal
 ---
 
-# Dream QA / 梦境问答台
+# Dream QA / The Morning Question Desk
 
-A Build Small Hackathon Gradio app that helps users unpack a dream step by step and leave with one grounded tip for today.
+A Build Small Hackathon Gradio app that turns a fresh dream into one grounded Morning Ticket.
 
-The Hugging Face Space may still be named `Dream Customs` for continuity, but the current product direction is Dream QA: record a dream, answer or skip gentle follow-up questions, read a grounded interpretation draft, and receive a `今日小 Tips`.
+The Hugging Face Space may still be named `Dream Customs` for continuity, but the current product direction is Dream QA / 清晨问讯室: record a dream, answer or skip one gentle question, and receive a screenshot-friendly ticket with one `Today Tip`.
 
 The public hackathon demo is English-first for international judges. A visible in-app language toggle keeps the Chinese experience available as `中文`.
 
 ## Concept
 
-Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, asks a grounded follow-up question, and returns a Today Tip card: one practical or caring suggestion first, an optional tiny action, and a short non-certain supporting reflection.
+Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, extracts up to three concrete dream anchors, asks one grounded follow-up question, and returns a Morning Ticket: the Today Tip first, a tiny 5-minute action, and a short non-certain supporting reflection.
+
+The fastest demo path is the elevator story: `elevator -> floor 14 -> melting buttons -> overdue email -> write only the first sentence`.
 
 This is not a therapy, diagnosis, or prophecy product.
 
@@ -46,10 +48,10 @@ This is not a therapy, diagnosis, or prophecy product.
 ## User Flow
 
 1. Enter a dream by text, image, voice, or a mix.
-2. State or let the app infer the main question.
-3. Answer or skip one or more follow-up questions.
-4. Receive one Today Tip tied to concrete dream details and the user's answer.
-5. Read the supporting reflection if the user wants more context.
+2. Let the app surface the dream anchors.
+3. Answer or skip one follow-up question.
+4. Receive a Morning Ticket with one Today Tip tied to concrete dream details and the user's answer.
+5. Open the small-model note if the judge wants to see how MiniCPM-V and MiniCPM5-1B split the work.
 
 ## Language
 

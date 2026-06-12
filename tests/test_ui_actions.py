@@ -91,17 +91,30 @@ def test_hero_stepper_tracks_app_status():
     assert '<span class="dc-step is-complete"><strong>1</strong>' in ask_html
     assert '<i class="dc-stepper-line is-complete" aria-hidden="true"></i>' in ask_html
     assert '<span class="dc-step is-active" aria-current="step"><strong>2</strong>' in ask_html
-    assert '<span class="dc-step is-complete"><strong>3</strong>' in tip_html
-    assert '<span class="dc-step is-active" aria-current="step"><strong>4</strong>' in tip_html
-    assert tip_html.count("dc-stepper-line is-complete") == 3
+    assert '<span class="dc-step is-complete"><strong>2</strong>' in tip_html
+    assert '<span class="dc-step is-active" aria-current="step"><strong>3</strong>' in tip_html
+    assert tip_html.count("dc-stepper-line is-complete") == 2
+    assert "One Question" in tip_html
 
 
 def test_hero_subtitle_explains_app_instead_of_legacy_name():
     hero_html = ui_app._hero_html()
 
-    assert "grounded Today Tip" in hero_html
-    assert "Thousand Token Wood" in hero_html
+    assert "The Morning Question Desk" in hero_html
+    assert "What did the dream leave you asking?" in hero_html
+    assert "grounded Morning Ticket" in hero_html
     assert "Dream Customs" not in hero_html
+
+
+def test_composer_has_three_real_demo_chips():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert 'elem_classes=["dc-demo-chip-row"]' in source
+    assert source.count('elem_classes=["dc-demo-chip"]') == 3
+    assert "_example_elevator" in source
+    assert "_example_floor14" in source
+    assert "_example_melting" in source
+    assert ".dc-demo-chip-row" in CSS
 
 
 def test_side_panel_dropdown_hover_stays_readable():
@@ -152,6 +165,7 @@ def test_processing_note_is_story_copy_not_backend_jargon():
 
     assert "grounded question" in lowered
     assert "today tip" in lowered
+    assert "morning ticket" in lowered
     assert "model routes" not in lowered
     assert "fallback" not in lowered
     assert "token" not in lowered

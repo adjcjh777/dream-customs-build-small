@@ -25,32 +25,42 @@ def _phase_label(phase: str) -> str:
 
 def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
     is_zh = language == "zh"
-    anchors = "　".join(escape(anchor) for anchor in card.dream_anchors)
+    anchor_items = [anchor for anchor in card.dream_anchors[:3] if anchor.strip()]
+    anchors = "　".join(escape(anchor) for anchor in anchor_items)
+    anchor_chips = "".join(f"<span>{escape(anchor)}</span>" for anchor in anchor_items)
     questions = "".join(f"<li>{escape(question)}</li>" for question in card.followup_questions)
     answers = "".join(f"<li>{escape(answer)}</li>" for answer in card.user_answers)
     labels = {
-        "page": "今日小 Tips" if is_zh else "Today Tip",
-        "thanks": "谢谢你的分享。根据你的梦境，我们为你整理了今天的参考。"
+        "page": "清晨小票" if is_zh else "Morning Ticket",
+        "ticket": "今日小 Tips" if is_zh else "Today Tip",
+        "thanks": "这不是诊断，也不是预言；它只把梦境锚点整理成今天可以带走的一张小纸条。"
         if is_zh
-        else "Thanks for sharing this. Here is one grounded suggestion for today.",
+        else "Not a diagnosis, not a prophecy. Just one small note for today, grounded in the dream.",
         "interpretation": "补充解读" if is_zh else "Supporting reflection",
-        "today_tip": "今天的小建议" if is_zh else "Today's small suggestion",
-        "tiny_action": "古怪的小事" if is_zh else "Weird little thing",
-        "anchors": "关键词：" if is_zh else "Anchors:",
+        "today_tip": "今日小 Tips" if is_zh else "Today Tip",
+        "tiny_action": "5 分钟小行动" if is_zh else "Tiny 5-minute action",
+        "anchors": "梦境锚点" if is_zh else "Dream anchors",
+        "because": "因为这个梦一直回到：" if is_zh else "Because your dream kept returning to:",
         "history": "追问记录" if is_zh else "Question record",
         "safety_default": "这不是诊断，只是一个温和的今日参考。"
         if is_zh
         else "A gentle reflection for today, not a diagnosis or prophecy.",
         "safety_prefix": "这不是诊断。" if is_zh else "This is not a diagnosis. ",
         "highlight": "梦境细节" if is_zh else "dream detail",
+        "small_models": "小模型如何参与" if is_zh else "How this was made small",
+        "small_models_body": (
+            "MiniCPM-V 负责读取草图、便签和图片线索；MiniCPM5-1B 负责追问、解读草稿和今日小 Tips。"
+            if is_zh
+            else "MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket."
+        ),
     }
     tiny_action = (
-        f"<section class='dqa-result-card'><div class='dqa-card-icon'>□</div><div><h3>{labels['tiny_action']}</h3><p>{escape(card.tiny_action)}</p></div></section>"
+        f"<section class='dqa-ticket-row'><h3>{labels['tiny_action']}</h3><p>{escape(card.tiny_action)}</p></section>"
         if card.tiny_action
         else ""
     )
     caring_note = (
-        f"<div class='dqa-care-note'>♡ {escape(card.caring_note)}</div>"
+        f"<div class='dqa-care-note'><strong>{'关心一句' if is_zh else 'Care note'}</strong>{escape(card.caring_note)}</div>"
         if card.caring_note
         else ""
     )
@@ -68,28 +78,27 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
 <section class="dqa-tip-page" aria-label="{labels['page']}">
   <div class="dqa-tip-hero">
     <div>
-      <div class="dqa-sun">☼</div>
       <h2>{labels['page']}</h2>
       <p>{labels['thanks']}</p>
     </div>
   </div>
-  <article class="dqa-result-card is-primary-tip">
-    <div class="dqa-card-icon">☼</div>
-    <div>
+  <div class="dqa-anchor-chips" aria-label="{labels['anchors']}">{anchor_chips}</div>
+  <article class="dqa-morning-ticket">
+    <div class="dqa-ticket-topline"><span>{labels['because']}</span><strong>{anchors or labels['highlight']}</strong></div>
+    <section class="dqa-ticket-row is-primary-tip">
       <h3>{labels['today_tip']}</h3>
       <p>{escape(card.today_tip)}</p>
-      <div class="dqa-tip-highlight">★ {escape(card.dream_anchors[0] if card.dream_anchors else labels['highlight'])}</div>
-    </div>
-  </article>
-  {tiny_action}
-  <article class="dqa-result-card is-interpretation">
-    <div class="dqa-card-icon">☘</div>
-    <div>
+    </section>
+    {tiny_action}
+    <section class="dqa-ticket-row is-interpretation">
       <h3>{labels['interpretation']}</h3>
       <p>{escape(card.interpretation)}</p>
-      <div class="dqa-anchor-strip">{labels['anchors']} {anchors}</div>
-    </div>
+    </section>
   </article>
+  <details class="dqa-small-model-note">
+    <summary>{labels['small_models']}</summary>
+    <p>{labels['small_models_body']}</p>
+  </details>
   {qa_history}
   {safety}
   {caring_note}

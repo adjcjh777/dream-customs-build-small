@@ -519,6 +519,15 @@ body,
   margin: 12px 0 0;
 }
 
+.dc-field-tip.is-error {
+  background: rgba(255, 240, 235, 0.95);
+  border: 1px solid #efb19d;
+  border-radius: 10px;
+  color: #9f321c;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
 .dc-side-panel .wrap,
 .dc-side-panel .container,
 .dc-side-panel select {

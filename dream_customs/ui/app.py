@@ -431,6 +431,7 @@ def _updates(state: str, view_json: str):
         view_json,
         _hero_html(language, status),
         _notice_html(view),
+        _field_tip_html(language, view),
         _question_markdown(view, language),
         view.get("card_html", ""),
         view.get("card_text", ""),
@@ -721,8 +722,17 @@ def _attachment_html(language: str = DEFAULT_LANGUAGE) -> str:
 """.strip()
 
 
-def _field_tip_html(language: str = DEFAULT_LANGUAGE) -> str:
-    return f"<p class=\"dc-field-tip\">{escape(copy_for(language)['field_tip'])}</p>"
+def _field_tip_html(language: str = DEFAULT_LANGUAGE, view=None) -> str:
+    copy = copy_for(language)
+    view = view or {}
+    if view.get("status") == "error":
+        message = (
+            "Dream note needs at least one sentence, image, or voice clue before Continue."
+            if normalize_language(language) == "en"
+            else "梦境记录需要至少一句文字、图片或语音线索，然后再继续。"
+        )
+        return f'<p class="dc-field-tip is-error" role="alert">{escape(message)}</p>'
+    return f"<p class=\"dc-field-tip\">{escape(copy['field_tip'])}</p>"
 
 
 def _processing_html(language: str = DEFAULT_LANGUAGE) -> str:
@@ -955,6 +965,7 @@ def build_demo() -> gr.Blocks:
             view_state,
             hero_html,
             notice,
+            field_tip_html,
             question_markdown,
             card_html,
             card_text,

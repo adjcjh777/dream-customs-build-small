@@ -267,6 +267,35 @@ def test_mobile_mvp_empty_submit_stays_on_record_with_clear_error():
     assert json.loads(state)["phase"] == "error"
 
 
+def test_empty_submit_updates_inline_field_error_near_composer():
+    state, view_json = submit_dream_action(
+        dream_text="",
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    view = json.loads(view_json)
+    updates = ui_app._updates(state, view_json)
+    field_tip_html = updates[4]
+
+    assert view["status"] == "error"
+    assert "dc-field-tip is-error" in field_tip_html
+    assert 'role="alert"' in field_tip_html
+    assert "Dream note needs" in field_tip_html
+
+    ready_state, ready_view_json = submit_dream_action(
+        dream_text="I dreamed of a late elevator.",
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+    )
+    ready_updates = ui_app._updates(ready_state, ready_view_json)
+
+    assert "dc-field-tip is-error" not in ready_updates[4]
+
+
 def test_mobile_mvp_auto_switches_chinese_input_to_chinese_result():
     state, view_json = submit_dream_action(
         dream_text="梦里我在一片雾很大的森林里追着一只白色猫跑，周围有很多空白路牌。",

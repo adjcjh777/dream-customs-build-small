@@ -331,6 +331,15 @@ VOICE_JS = r"""
             ? "正在提取人物、地点、情绪和具体物件；如果生成较慢，通常需要十几秒。"
             : "Extracting people, places, feelings, and concrete objects. A slower run can take several seconds.",
         }
+      : mode === "question"
+      ? {
+          notice: isZh
+            ? "正在换一个追问角度。"
+            : "Asking from another angle.",
+          note: isZh
+            ? "正在保留你的回答和梦境锚点，只重新生成一个更贴近当下的追问。"
+            : "Keeping your answer and dream anchors while writing one more grounded question.",
+        }
       : {
           notice: isZh
             ? "正在把追问回答整理进今日小 Tips。"
@@ -366,6 +375,7 @@ VOICE_JS = r"""
     bindButton(".dc-submit-button", "submit");
     bindButton(".dc-answer-button", "tip");
     bindButton(".dc-tip-button", "tip");
+    bindButton(".dc-question-button", "question");
   };
 
   bindComposerControls();
@@ -859,12 +869,12 @@ def build_demo() -> gr.Blocks:
                             gentle_button = gr.Button(
                                 initial_copy["ask_again_button"],
                                 variant="secondary",
-                                elem_classes=["dc-tip-button"],
+                                elem_classes=["dc-question-button"],
                             )
                             weird_button = gr.Button(
                                 initial_copy["angle_button"],
                                 variant="secondary",
-                                elem_classes=["dc-tip-button"],
+                                elem_classes=["dc-question-button"],
                             )
                             copy_button = gr.Button(initial_copy["copy_button"], variant="secondary")
                             reset_button = gr.Button(initial_copy["reset_button"], variant="secondary")

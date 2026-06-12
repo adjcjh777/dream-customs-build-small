@@ -165,10 +165,13 @@ def test_long_running_buttons_show_processing_feedback():
 
     assert "elem_classes=[\"dc-submit-button\"]" in source
     assert "elem_classes=[\"dc-answer-button\"]" in source
-    assert source.count("elem_classes=[\"dc-tip-button\"]") >= 3
+    assert source.count("elem_classes=[\"dc-tip-button\"]") >= 1
+    assert source.count("elem_classes=[\"dc-question-button\"]") >= 2
     assert "bindProcessingButtons" in ui_app.VOICE_JS
     assert "setProcessingCopy" in ui_app.VOICE_JS
     assert "processingBound" in ui_app.VOICE_JS
+    assert "Asking from another angle" in ui_app.VOICE_JS
+    assert "one more grounded question" in ui_app.VOICE_JS
     assert "js=SUBMIT_PROCESSING_JS" not in source
     assert "js=TIP_PROCESSING_JS" not in source
     assert source.count("scroll_to_output=True") >= 5

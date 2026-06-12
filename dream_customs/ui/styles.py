@@ -1723,6 +1723,25 @@ button.secondary {
   border-left: 4px solid var(--dqa-amber);
 }
 
+.dc-question-anchor-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 4px;
+}
+
+.dc-question-anchor-strip span {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(152, 125, 69, 0.24);
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(88, 72, 40, 0.08);
+  color: var(--dqa-ink);
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.2;
+  padding: 8px 12px;
+}
+
 .dc-notice {
   background: rgba(233, 243, 231, 0.9);
   border: 1px solid rgba(79, 138, 88, 0.18);

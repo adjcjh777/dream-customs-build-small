@@ -173,6 +173,21 @@ def test_processing_note_is_story_copy_not_backend_jargon():
     assert "debug" not in lowered
 
 
+def test_question_stage_shows_anchor_chips_before_the_question():
+    html = ui_app._question_markdown(
+        {
+            "question": "When floor 14 shows up beside the overdue email, what would make opening it feel smaller?",
+            "dream_anchors": ["elevator", "floor 14", "melting button"],
+        },
+        "en",
+    )
+
+    assert "dc-question-anchor-strip" in html
+    assert html.index("elevator") < html.index("Morning Question Desk")
+    assert "floor 14" in html
+    assert "melting button" in html
+
+
 def test_long_running_buttons_show_processing_feedback():
     source = inspect.getsource(ui_app.build_demo)
     app_source = inspect.getsource(ui_app)
@@ -260,6 +275,7 @@ def test_mobile_mvp_submit_then_skip_generates_today_tip():
     assert view["status"] == "ask"
     assert view["question"]
     assert len(view["questions"]) == 1
+    assert view["dream_anchors"]
     assert "DC-DEMO-014" not in view["card_text"]
 
     state, view_json = skip_to_card_action(state)

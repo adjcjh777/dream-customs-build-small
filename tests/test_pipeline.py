@@ -79,6 +79,20 @@ def test_ask_questions_grounds_generic_question_in_dream_detail():
     assert "customs window" in session.question_history[0].lower() or "wet paper" in session.question_history[0].lower()
 
 
+def test_elevator_floor14_demo_anchors_are_clean_for_question_stage():
+    intake = build_intake(
+        dream_text=(
+            "I dreamed I kept missing an elevator. The button for floor 14 melted like wax. "
+            "I woke up anxious because it reminded me of an overdue email."
+        ),
+        mood="Uneasy",
+    )
+    state = build_qa_state(intake, language="en")
+
+    assert state.dream_anchors[:3] == ["elevator", "floor 14", "melted button"]
+    assert "for floor" not in state.dream_anchors
+
+
 def test_generate_pact_returns_card_and_html():
     intake = build_intake(dream_text="I missed an elevator.", mood="anxious")
     card, html = generate_pact(intake, "I want a small start.", FakeTextClient())

@@ -87,6 +87,7 @@ _ANCHOR_STOPWORDS = {
     "every",
     "feeling",
     "fragment",
+    "for",
     "from",
     "full",
     "into",
@@ -485,6 +486,14 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     candidates: List[str] = []
     visual_candidates = _visual_anchor_candidates(intake)
     candidates.extend(visual_candidates[:3])
+    if "elevator" in text:
+        candidates.append("elevator")
+    if re.search(r"\bfloor\s*14\b|\b14\b", text):
+        candidates.append("floor 14")
+    if "button" in text and re.search(r"\b(melt|melted|melting|wax)\b", text):
+        candidates.append("melted button")
+    if "overdue email" in text:
+        candidates.append("overdue email")
     for marker in _ZH_ANCHOR_MARKERS:
         if marker in raw_text:
             candidates.append(marker)

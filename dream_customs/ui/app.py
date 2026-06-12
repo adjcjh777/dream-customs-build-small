@@ -428,6 +428,14 @@ def _notice_html(view: dict) -> str:
 def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
     copy = copy_for(language)
     question = escape(view.get("question") or "")
+    anchor_items = [str(anchor).strip() for anchor in view.get("dream_anchors", [])[:3] if str(anchor).strip()]
+    anchor_label = "梦境锚点" if language == "zh" else "Dream anchors"
+    anchor_chips = "".join(f"<span>{escape(anchor)}</span>" for anchor in anchor_items)
+    anchor_strip = (
+        f"<div class='dc-question-anchor-strip' aria-label='{anchor_label}'>{anchor_chips}</div>"
+        if anchor_chips
+        else ""
+    )
     optional_question = (
         f"<p class='dc-question-original'><span>{copy['question_speaker']}</span>{question}</p>"
         if question
@@ -438,6 +446,7 @@ def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
   <span class="dc-question-kicker">{copy['question_kicker']}</span>
   <h2>{copy['question_title']}</h2>
   <p>{copy['question_body']}</p>
+  {anchor_strip}
   {optional_question}
   <p class="dc-question-note">{copy['question_note']}</p>
 </div>

@@ -1844,7 +1844,12 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.main_question = _main_question_from_intake(intake, language)
     emotion_interpretation = _emotion_led_interpretation(intake, answers, anchors, language)
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
-    if emotion_interpretation:
+    answer_tip = _answer_based_today_tip(answers, anchors[0], language)
+    answer_action = _answer_based_tiny_action(answers, language)
+    answer_should_shape_visible_tip = bool((answer_tip or answer_action) and not _needs_comfort(answers, language))
+    if answer_interpretation and answer_should_shape_visible_tip:
+        polished.interpretation = answer_interpretation
+    elif emotion_interpretation:
         polished.interpretation = emotion_interpretation
     elif answer_interpretation:
         polished.interpretation = answer_interpretation
@@ -1866,8 +1871,9 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
     emotion_tip = _emotion_led_today_tip(intake, answers, anchors, language)
-    answer_tip = _answer_based_today_tip(answers, anchors[0], language)
-    if emotion_tip:
+    if answer_tip and answer_should_shape_visible_tip:
+        polished.today_tip = answer_tip
+    elif emotion_tip:
         polished.today_tip = emotion_tip
     elif answer_tip:
         polished.today_tip = answer_tip
@@ -1894,8 +1900,9 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.today_tip = _grounded_today_tip(intake, language)
     hard_action_markers = ["address it immediately", "fix it immediately", "solve it immediately"]
     emotion_action = _emotion_led_tiny_action(intake, answers, anchors, language)
-    answer_action = _answer_based_tiny_action(answers, language)
-    if emotion_action:
+    if answer_action and answer_should_shape_visible_tip:
+        polished.tiny_action = answer_action
+    elif emotion_action:
         polished.tiny_action = emotion_action
     elif answer_action:
         polished.tiny_action = answer_action

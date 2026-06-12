@@ -247,6 +247,30 @@ def test_elevator_melted_button_stays_when_user_supplies_it():
     assert "电梯" in combined
 
 
+def test_generate_today_tip_uses_chinese_concrete_answer_in_visible_tip():
+    intake = build_intake(
+        dream_text=(
+            "昨晚梦见我在一栋很高的办公楼14层找一封迟迟没发出去的邮件。"
+            "电梯一直停在黑暗的走廊，我手里拿着一盏小台灯，感觉有点焦急。"
+            "醒来最想知道为什么梦里总是卡在电梯口。"
+        ),
+        mood="焦急",
+    )
+
+    card = generate_today_tip(
+        intake,
+        "我觉得那封邮件像是我一直拖着的一次工作沟通，也可能有一点道歉。今天可以先写第一句，不一定马上发出去。",
+        FakeTextClient(),
+        language="zh",
+    )
+    visible = "\n".join([card.interpretation, card.today_tip, card.tiny_action])
+
+    assert "邮件" in visible
+    assert "第一句" in visible or "第一句话" in visible
+    assert "不要求立刻发出" in visible or "不一定马上发" in visible
+    assert "融化" not in visible
+
+
 def test_generate_today_tip_follows_user_question_and_comfort_need_in_chinese():
     intake = build_intake(
         dream_text="我梦到自己掉进海里，醒来很害怕。我想知道这是不是说明我快撑不住了？",

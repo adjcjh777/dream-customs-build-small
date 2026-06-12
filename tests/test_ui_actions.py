@@ -174,6 +174,14 @@ def test_long_running_buttons_show_processing_feedback():
     assert "debug" not in ui_app.TIP_PROCESSING_JS.lower()
 
 
+def test_processing_js_preserves_numeric_settings_inputs():
+    for script in (ui_app.SUBMIT_PROCESSING_JS, ui_app.TIP_PROCESSING_JS):
+        assert "const settingsStart = values.length - 18" in script
+        assert "const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16])" in script
+        assert "Number(value)" in script
+        assert "return normalizeInputs(args)" in script
+
+
 def test_copy_result_button_writes_to_clipboard_with_fallback():
     source = inspect.getsource(ui_app.build_demo)
 

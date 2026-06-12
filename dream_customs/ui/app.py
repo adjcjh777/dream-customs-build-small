@@ -320,6 +320,21 @@ VOICE_JS = r"""
 
 SUBMIT_PROCESSING_JS = """
 (...args) => {
+  const normalizeInputs = (values) => {
+    const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
+    const settingsStart = values.length - 18;
+    return values.map((value, index) => {
+      const settingsIndex = index - settingsStart;
+      if (settingsStart >= 0 && numericSettings.has(settingsIndex)) {
+        if (value === "" || value === null || typeof value === "undefined") {
+          return value === "" ? null : value;
+        }
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : value;
+      }
+      return value;
+    });
+  };
   const isZh = args.includes("zh");
   const notice = isZh
     ? "正在整理梦境线索。下一步会生成一个贴着细节的温和追问。"
@@ -336,13 +351,28 @@ SUBMIT_PROCESSING_JS = """
     el.textContent = note;
     el.classList.add("is-active");
   });
-  return args;
+  return normalizeInputs(args);
 }
 """
 
 
 TIP_PROCESSING_JS = """
 (...args) => {
+  const normalizeInputs = (values) => {
+    const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
+    const settingsStart = values.length - 18;
+    return values.map((value, index) => {
+      const settingsIndex = index - settingsStart;
+      if (settingsStart >= 0 && numericSettings.has(settingsIndex)) {
+        if (value === "" || value === null || typeof value === "undefined") {
+          return value === "" ? null : value;
+        }
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : value;
+      }
+      return value;
+    });
+  };
   const isZh = args.includes("zh");
   const notice = isZh
     ? "正在把追问回答整理进今日小 Tips。"
@@ -359,7 +389,7 @@ TIP_PROCESSING_JS = """
     el.textContent = note;
     el.classList.add("is-active");
   });
-  return args;
+  return normalizeInputs(args);
 }
 """
 

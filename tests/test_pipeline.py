@@ -603,6 +603,38 @@ def test_visual_witness_clues_drive_questions_and_today_tip():
     assert "objects" not in combined
 
 
+def test_zh_text_and_image_keep_user_question_while_using_visual_anchors():
+    class SeaDreamVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="A dreamlike representation of a sea under night.",
+                objects=["stick figure", "wavy water", "crescent moon"],
+                visible_text=["dark sea dream"],
+                mood_cues=["small figure in a large dark place"],
+            )
+
+        def extract_clues(self, image_path):
+            return ["flat fallback should not win"]
+
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text="我醒来很害怕，这张草图是梦里最清楚的画面。我想知道为什么它让我这么慌。",
+        image_path="sea.png",
+        mood="害怕",
+        vision_client=SeaDreamVision(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+    card = generate_today_tip(session.intake, "", FakeTextClient(), language="zh")
+    combined = "\n".join([card.main_question, ",".join(card.dream_anchors), card.interpretation, card.today_tip])
+
+    assert "为什么它让我这么慌？" in card.main_question
+    assert any(anchor in card.dream_anchors for anchor in ["夜晚的海", "海浪", "月牙", "漆黑的海"])
+    assert "blue hallway" not in combined
+    assert "dreamlike representation" not in combined.lower()
+    assert "这么难受不是你反应过度" in card.interpretation
+
+
 def test_witness_failure_keeps_text_path_alive():
     class BrokenWitnessVision:
         def extract_witness(self, image_path):

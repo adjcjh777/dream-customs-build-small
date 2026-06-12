@@ -242,3 +242,44 @@ def test_hosted_vision_client_accepts_partial_witness_json():
     assert "Object: elevator button" in clues
     assert "Visible text: 14" in clues
     assert "Mood cue: cold" in clues
+
+
+def test_hosted_vision_client_extracts_modal_pipeline_assistant_content():
+    class StubHostedNestedVisionClient(HostedMiniCPMVisionClient):
+        def _post_image(self, image_path):
+            return {
+                "response": str(
+                    {
+                        "input_text": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "image", "path": "/tmp/demo.png"},
+                                    {"type": "text", "text": "Describe the sketch."},
+                                ],
+                            }
+                        ],
+                        "generated_text": [
+                            {"role": "user", "content": [{"type": "text", "text": "Describe the sketch."}]},
+                            {
+                                "role": "assistant",
+                                "content": (
+                                    '{"scene_summary":"A child is lost at a subway station.",'
+                                    '"objects":["child figure","subway sign","arrow"],'
+                                    '"visible_text":["SUBWAY","HOME ?"],'
+                                    '"spatial_relations":"child in front of sign",'
+                                    '"mood_cues":"lost or searching",'
+                                    '"uncertain_details":"where home is",'
+                                    '"surprising_detail":"the sign asks HOME ?"}'
+                                ),
+                            },
+                        ],
+                    }
+                )
+            }
+
+    clues = StubHostedNestedVisionClient(endpoint="https://example.test").extract_witness("demo.png").to_visual_clues()
+
+    assert "Scene: A child is lost at a subway station." in clues
+    assert "Object: child figure" in clues
+    assert "Visible text: HOME ?" in clues

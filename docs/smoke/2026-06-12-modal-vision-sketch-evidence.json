@@ -1,0 +1,76 @@
+{
+    "generated_at": "2026-06-12T01:53:21.674225+00:00",
+    "cwd": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon",
+    "git_commit": "ec0441abdecacf44918ca9eace7c2a57e6795d1b",
+    "git_branch": "bugfix/emotion-led-dream-qa",
+    "model": {
+        "modal_app": "dream-customs-minicpm-backend",
+        "vision_model": "openbmb/MiniCPM-V-4.6",
+        "endpoint_host": "cjh-12569--dream-customs-minicpm-backend-vision.modal.run"
+    },
+    "secret_handling": "Modal secret used only inside temporary Modal runner; no token printed or written.",
+    "results": [
+        {
+            "case_id": "sea",
+            "image_path": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/tmp/dream-sketches/dream_sketch_01_sea.png",
+            "expected_markers": [
+                "sea",
+                "wave",
+                "moon",
+                "person"
+            ],
+            "http_status": 200,
+            "transport_ok": true,
+            "elapsed_seconds": 25.48,
+            "route_error": "",
+            "raw_response": "{'input_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmpjyirmi6i.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}], 'generated_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmpjyirmi6i.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}, {'role': 'assistant', 'content': '\\n\\n{\\n  \"scene_summary\": \"A dreamlike representation of a sea under night\",\\n  \"objects\": [\"a stick figure\", \"wavy lines representing water\", \"a crescent moon\", \"a circular shape above the stick figure\"],\\n  \"visible_text\": [\"dark sea dream\"],\\n  \"spatial_relations\": \"the stick figure is on the water waves, with the moon in the upper right\",\\n  \"mood_cues\": \"calm and dreamy\",\\n  \"uncertain_details\": \"the exact emotions or states of the figure\",\\n  \"surprising_detail\": \"the stick figure has a curved line above its head, suggesting a sense of wonder or awareness\"\\n}'}]}",
+            "marker_hits": [
+                "sea",
+                "wave",
+                "moon"
+            ]
+        },
+        {
+            "case_id": "elevator",
+            "image_path": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/tmp/dream-sketches/dream_sketch_02_elevator.png",
+            "expected_markers": [
+                "elevator",
+                "button",
+                "14",
+                "melted"
+            ],
+            "http_status": 200,
+            "transport_ok": true,
+            "elapsed_seconds": 5.55,
+            "route_error": "",
+            "raw_response": "{'input_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmpc8qf8m8w.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}], 'generated_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmpc8qf8m8w.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}, {'role': 'assistant', 'content': '\\n\\n{\\n  \"scene_summary\": \"A conceptual visual representation of melted elevator buttons in a setting\",\\n  \"objects\": [\"melted elevator buttons\", \"two tall gray doors\"],\\n  \"visible_text\": [\"14\", \"melted elevator buttons\"],\\n  \"spatial_relations\": \"The melted buttons are to the right of the elevator doors\",\\n  \"mood_cues\": \"Suggests a malfunction or melting process\",\\n  \"uncertain_details\": \"The exact state or effects of the melted buttons are implied\",\\n  \"surprising_detail\": \"The buttons are depicted as colorful segments, indicating a melting or transition state\"\\n}'}]}",
+            "marker_hits": [
+                "elevator",
+                "button",
+                "14",
+                "melted"
+            ]
+        },
+        {
+            "case_id": "subway_child",
+            "image_path": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/tmp/dream-sketches/dream_sketch_03_subway_child.png",
+            "expected_markers": [
+                "subway",
+                "child",
+                "home",
+                "arrow"
+            ],
+            "http_status": 200,
+            "transport_ok": true,
+            "elapsed_seconds": 5.62,
+            "route_error": "",
+            "raw_response": "{'input_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmp38m34fjv.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}], 'generated_text': [{'role': 'user', 'content': [{'type': 'image', 'path': '/tmp/tmp38m34fjv.png'}, {'type': 'text', 'text': 'You are MiniCPM-V-4.6 acting as the visual witness for Dream QA. Describe only what is visible in this dream sketch. Return concise JSON with keys: scene_summary, objects, visible_text, spatial_relations, mood_cues, uncertain_details, surprising_detail. Do not diagnose the user.'}]}, {'role': 'assistant', 'content': '\\n\\n{\\n  \"scene_summary\": \"A simple sketch depicting a lost child at a subway station\",\\n  \"objects\": [\"a child figure\", \"a subway sign\", \"an arrow\"],\\n  \"visible_text\": [\"lost child at subway\", \"SUBWAY\", \"HOME ?\"],\\n  \"spatial_relations\": \"the child is in front of the subway sign, which has an arrow pointing to the right\",\\n  \"mood_cues\": \"suggests a situation of loss or search\",\\n  \"uncertain_details\": \"what the child is looking for or where home is\",\\n  \"surprising_detail\": \"the sign asks \\'HOME ?\\'\"\\n}'}]}",
+            "marker_hits": [
+                "subway",
+                "child",
+                "home",
+                "arrow"
+            ]
+        }
+    ]
+}

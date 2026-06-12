@@ -316,6 +316,38 @@ _ZH_TO_EN_PHRASES = {
     "梦境": "dream",
 }
 
+_EN_TO_ZH_PHRASES = {
+    "a dreamlike representation of a sea under night": "夜晚的海",
+    "dreamlike representation of a sea": "夜晚的海",
+    "sea under night": "夜晚的海",
+    "dark sea dream": "漆黑的海",
+    "dark sea": "漆黑的海",
+    "wavy water": "海浪",
+    "waves": "海浪",
+    "wave": "海浪",
+    "sea": "海",
+    "crescent moon": "月牙",
+    "moon": "月亮",
+    "stick figure": "小人",
+    "melted elevator buttons": "融化的电梯按钮",
+    "melted elevator button": "融化的电梯按钮",
+    "elevator buttons": "电梯按钮",
+    "elevator button": "电梯按钮",
+    "elevator doors": "电梯门",
+    "elevator": "电梯",
+    "button": "按钮",
+    "floor 14": "数字 14",
+    "number 14": "数字 14",
+    "lost child at subway station": "地铁站里迷路的小孩",
+    "lost child at subway": "地铁里迷路的小孩",
+    "subway station": "地铁站",
+    "subway": "地铁",
+    "child figure": "小孩",
+    "child": "小孩",
+    "home": "回家的方向",
+    "arrow": "箭头",
+}
+
 
 def _dedupe_preserve_order(items: List[str]) -> List[str]:
     seen = set()
@@ -474,10 +506,21 @@ def _english_anchor_text(text: str) -> str:
     return clean
 
 
+def _zh_anchor_text(text: str) -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip(" .,:;!?\"'()[]{}"))
+    if not clean:
+        return ""
+    lowered = clean.lower()
+    for source, target in sorted(_EN_TO_ZH_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
+        if source in lowered:
+            return target
+    return clean
+
+
 def _anchors_for_language(intake: DreamIntake, language: str = "en") -> List[str]:
     anchors = _extract_dream_anchors(intake)
     if _is_zh(language):
-        return anchors
+        return _dedupe_preserve_order([anchor for anchor in (_zh_anchor_text(anchor) for anchor in anchors) if anchor])
     localized = [_english_anchor_text(anchor) for anchor in anchors]
     return _dedupe_preserve_order([anchor for anchor in localized if anchor])
 

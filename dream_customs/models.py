@@ -1,4 +1,5 @@
 import base64
+import ast
 import json
 import os
 import re
@@ -549,7 +550,16 @@ def _hosted_text_from_response(payload: Dict[str, Any]) -> str:
     for key in ("response", "text", "generated_text", "output"):
         value = payload.get(key)
         if isinstance(value, str):
+            parsed = _python_literal_dict(value)
+            if parsed:
+                nested = _hosted_text_from_response(parsed)
+                if nested:
+                    return nested
             return value
+        if isinstance(value, list):
+            nested = _content_from_messages(value)
+            if nested:
+                return nested
     choices = payload.get("choices")
     if isinstance(choices, list) and choices:
         first = choices[0]
@@ -562,6 +572,32 @@ def _hosted_text_from_response(payload: Dict[str, Any]) -> str:
     data = payload.get("data")
     if isinstance(data, list) and data and isinstance(data[0], dict):
         return _hosted_text_from_response(data[0])
+    return ""
+
+
+def _python_literal_dict(text: str) -> Optional[Dict[str, Any]]:
+    try:
+        parsed = ast.literal_eval(text)
+    except (SyntaxError, ValueError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _content_from_messages(messages: List[Any]) -> str:
+    for item in reversed(messages):
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content")
+        if isinstance(content, str) and content.strip():
+            return content.strip()
+        if isinstance(content, list):
+            text_parts = [
+                str(part.get("text", "")).strip()
+                for part in content
+                if isinstance(part, dict) and str(part.get("text", "")).strip()
+            ]
+            if text_parts:
+                return "\n".join(text_parts)
     return ""
 
 

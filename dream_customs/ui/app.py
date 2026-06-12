@@ -364,6 +364,32 @@ TIP_PROCESSING_JS = """
 """
 
 
+COPY_RESULT_JS = """
+(text) => {
+  const value = text || "";
+  const showNotice = (message, isError = false) => {
+    document.querySelectorAll(".dc-notice").forEach((el) => {
+      el.textContent = message;
+      el.classList.toggle("is-error", isError);
+      el.classList.remove("is-processing");
+    });
+  };
+  if (!value.trim()) {
+    showNotice("Nothing to copy yet. Generate a Today Tip first. / 还没有可复制结果，请先生成今日小 Tips。", true);
+    return value;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(value)
+      .then(() => showNotice("Result copied. / 已复制结果。"))
+      .catch(() => showNotice("Copy was blocked by the browser. Use the Copy button inside the text box. / 浏览器阻止复制时，请使用文本框内置 Copy。", true));
+  } else {
+    showNotice("This browser blocked direct copy. Use the Copy button inside the text box. / 浏览器阻止复制时，请使用文本框内置 Copy。", true);
+  }
+  return value;
+}
+"""
+
+
 def _load_view(view_json: str) -> dict:
     try:
         return json.loads(view_json or "{}")
@@ -1003,7 +1029,14 @@ def build_demo() -> gr.Blocks:
             scroll_to_output=True,
             show_api=False,
         )
-        copy_button.click(lambda text: text, inputs=card_text, outputs=card_text, api_name=False, show_api=False)
+        copy_button.click(
+            lambda text: text,
+            inputs=card_text,
+            outputs=card_text,
+            api_name=False,
+            js=COPY_RESULT_JS,
+            show_api=False,
+        )
         reset_button.click(
             _reset,
             inputs=[language, text_backend, vision_backend] + settings_inputs,

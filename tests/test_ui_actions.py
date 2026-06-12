@@ -174,6 +174,16 @@ def test_long_running_buttons_show_processing_feedback():
     assert "debug" not in ui_app.TIP_PROCESSING_JS.lower()
 
 
+def test_copy_result_button_writes_to_clipboard_with_fallback():
+    source = inspect.getsource(ui_app.build_demo)
+
+    assert "js=COPY_RESULT_JS" in source
+    assert "navigator.clipboard.writeText" in ui_app.COPY_RESULT_JS
+    assert "Result copied" in ui_app.COPY_RESULT_JS
+    assert "text box" in ui_app.COPY_RESULT_JS
+    assert "return value" in ui_app.COPY_RESULT_JS
+
+
 def test_mobile_reset_restores_calm_mood():
     settings_values = [
         "",

@@ -317,6 +317,12 @@ _ZH_TO_EN_PHRASES = {
 }
 
 _EN_TO_ZH_PHRASES = {
+    "a simple sketch of a person standing on wavy": "海浪上的小人",
+    "simple sketch of a person standing on wavy": "海浪上的小人",
+    "person standing on wavy": "海浪上的小人",
+    "wavy lines representing water": "海浪",
+    "wavy lines": "海浪",
+    "wavy": "海浪",
     "a dreamlike representation of a sea under night": "夜晚的海",
     "dreamlike representation of a sea": "夜晚的海",
     "sea under night": "夜晚的海",
@@ -514,6 +520,8 @@ def _zh_anchor_text(text: str) -> str:
     for source, target in sorted(_EN_TO_ZH_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
         if source in lowered:
             return target
+    if re.search(r"[A-Za-z]", clean) and not re.search(r"[\u4e00-\u9fff]", clean):
+        return ""
     return clean
 
 

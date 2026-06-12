@@ -9,6 +9,7 @@ Goal: verify whether Dream QA can use MiniCPM-V-4.6 to understand uploaded dream
 - Subway child sketch: `docs/smoke/assets/dream_sketch_03_subway_child.png`
 - Raw Modal evidence: `docs/smoke/2026-06-12-modal-vision-sketch-evidence.json`
 - Chrome local paste screenshot: `docs/smoke/assets/2026-06-12-chrome-local-image-paste-fallback.png`
+- Chrome configured local Modal screenshot: `docs/smoke/assets/2026-06-12-chrome-local-modal-sea-tip.png`
 
 ## Chrome Local Upload Check
 
@@ -21,6 +22,15 @@ Result:
 - Submitting the local page without Modal endpoint/token configured did not prove real MiniCPM-V behavior. The follow-up used fallback/demo visual clues (`melted elevator button`) instead of the pasted sea sketch.
 
 Interpretation: the local Gradio image UI can receive images, but a local browser smoke without configured hosted endpoint/token only verifies upload plumbing. It must not be treated as evidence that MiniCPM-V understood the image.
+
+Correction after local runtime config check:
+
+- The machine already had `/tmp/dream-customs-runtime.json` configured with text, vision, ASR, and hosted token values.
+- Starting the app with `python app.py` does not auto-load that file.
+- Starting with `.venv/bin/python scripts/local_space_mirror.py --port 7871` does auto-load it and prints only configuration booleans.
+- Chrome Debug confirmed `text_endpoint_configured: true`, `vision_endpoint_configured: true`, `asr_endpoint_configured: true`, and `hosted_token_configured: true`.
+- Re-running the sea sketch through Chrome paste plus Chinese text produced real MiniCPM-V image clues: stick figure, wavy water, crescent moon, visible text `dark sea dream`.
+- Final user-visible result preserved the user's question `为什么它让我这么慌？` and used Chinese anchors `小人`, `月牙`, `漆黑的海`, `草图`. The bad English anchor `a simple sketch of a person standing on wavy` no longer appeared after the follow-up fix.
 
 ## Real MiniCPM-V-4.6 Route
 

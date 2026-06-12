@@ -178,6 +178,75 @@ def test_generate_today_tip_keeps_answer_history_and_removes_placeholder_text():
     assert "does not indicate any real-life concerns" not in combined
 
 
+def test_elevator_floor_14_without_melted_button_does_not_invent_example_detail():
+    class ContaminatedElevatorClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="你梦见电梯按钮像蜡一样融化，楼层数字停在 14。",
+                main_question="为什么梦里总是卡在电梯口？",
+                dream_anchors=["电梯", "融化的按钮", "数字 14"],
+                followup_questions=["电梯、融化的按钮和数字 14 里，哪一个最像你最近卡住的感觉？"],
+                user_answers=[],
+                interpretation="第二层，梦里的「电梯、融化的按钮和数字 14」也许把这种感受变成了画面。",
+                today_tip="今天不要逼自己抵达所有楼层；先把「电梯、融化的按钮和数字 14」变成一个只按一次的按钮。",
+                tiny_action="用 5 分钟写一个只按这一层的按钮。",
+                caring_note="不用解决所有楼层。",
+                safety_note="",
+            )
+
+    dream_text = (
+        "昨晚梦见我在一栋很高的办公楼14层找一封迟迟没发出去的邮件。"
+        "电梯一直停在黑暗的走廊，我手里拿着一盏小台灯，感觉有点焦急。"
+        "醒来最想知道为什么梦里总是卡在电梯口。"
+    )
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text=dream_text,
+        mood="焦急",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+    session = ask_questions(session, FakeTextClient(), language="zh")
+
+    card = generate_today_tip(
+        session.intake,
+        "我觉得那封邮件像是我一直拖着的一次工作沟通。",
+        ContaminatedElevatorClient(),
+        language="zh",
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join(
+        [
+            session.question_history[0],
+            card.dream_summary,
+            card.main_question,
+            ",".join(card.dream_anchors),
+            "\n".join(card.followup_questions),
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    )
+
+    assert "融化" not in combined
+    assert "像蜡" not in combined
+    assert "电梯" in combined
+    assert "14" in combined
+    assert "邮件" in combined or "办公楼" in combined or "台灯" in combined
+
+
+def test_elevator_melted_button_stays_when_user_supplies_it():
+    intake = build_intake(dream_text="我梦见电梯按钮融化，数字停在 14。", mood="焦虑")
+
+    card = generate_today_tip(intake, "用户选择跳过这个追问。", FakeTextClient(), language="zh")
+    combined = "\n".join([card.dream_summary, ",".join(card.dream_anchors), card.interpretation, card.today_tip])
+
+    assert "融化" in combined
+    assert "电梯" in combined
+
+
 def test_generate_today_tip_follows_user_question_and_comfort_need_in_chinese():
     intake = build_intake(
         dream_text="我梦到自己掉进海里，醒来很害怕。我想知道这是不是说明我快撑不住了？",

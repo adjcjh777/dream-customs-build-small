@@ -175,10 +175,14 @@ _ZH_ANCHOR_MARKERS = [
     "家门",
     "旧家",
     "楼顶",
+    "办公楼",
+    "高的办公楼",
     "漆黑的走廊",
     "漆黑走廊",
     "黑暗走廊",
     "走廊",
+    "邮件",
+    "迟迟没发出去的邮件",
     "教室",
     "老师",
     "交作业",
@@ -194,10 +198,15 @@ _ZH_ANCHOR_MARKERS = [
     "安全帽",
     "男生",
     "电梯按钮",
+    "电梯口",
+    "小台灯",
+    "台灯",
     "融化的按钮",
     "按钮融化",
     "数字 14",
     "数字14",
+    "14 层",
+    "14层",
     "老楼",
     "桥",
     "水",
@@ -285,10 +294,14 @@ _ZH_TO_EN_PHRASES = {
     "家门": "home door",
     "旧家": "old home",
     "楼顶": "rooftop",
+    "办公楼": "office building",
+    "高的办公楼": "tall office building",
     "漆黑的走廊": "dark hallway",
     "漆黑走廊": "dark hallway",
     "黑暗走廊": "dark hallway",
     "走廊": "hallway",
+    "邮件": "email",
+    "迟迟没发出去的邮件": "unsent email",
     "教室": "classroom",
     "老师": "teacher",
     "交作业": "assignment",
@@ -304,10 +317,15 @@ _ZH_TO_EN_PHRASES = {
     "安全帽": "hard hat",
     "男生": "young man",
     "电梯按钮": "elevator button",
+    "电梯口": "elevator doorway",
+    "小台灯": "small desk lamp",
+    "台灯": "desk lamp",
     "融化的按钮": "melted button",
     "按钮融化": "melted button",
     "数字 14": "floor 14",
     "数字14": "floor 14",
+    "14 层": "floor 14",
+    "14层": "floor 14",
     "楼层数字": "floor number",
     "楼层": "floor",
     "老楼": "old apartment building",
@@ -567,6 +585,53 @@ def _clean_placeholder_phrase(text: str) -> str:
     return clean.strip()
 
 
+def _clean_unsupported_melted_detail(
+    text: str,
+    intake: DreamIntake,
+    anchors: List[str],
+    language: str = "en",
+    answers: str = "",
+) -> str:
+    if not text or _source_mentions_melted_detail(intake, answers):
+        return text
+    replacement = _story_anchor_phrase(intake, _without_unsupported_melted_anchors(anchors, intake, answers), language, answers)
+    if _is_zh(language):
+        clean = re.sub(r"电梯[、，, ]+融化的(?:电梯)?按钮[和、，, ]+数字\s*14", replacement, text)
+        clean = re.sub(r"电梯[、，, ]+融化的(?:电梯)?按钮[和、，, ]+14\s*层", replacement, clean)
+        clean = re.sub(r"电梯[、，, ]+融化的(?:电梯)?按钮[和、，, ]+楼层数字", replacement, clean)
+        clean = re.sub(r"(?:电梯)?按钮像蜡一样融化[，,、和 ]*", replacement, clean)
+        clean = re.sub(r"融化的(?:电梯)?按钮", replacement, clean)
+        clean = re.sub(r"(?:按钮)?像蜡一样融化", replacement, clean)
+        clean = clean.replace("按钮融化", replacement).replace("融化", replacement)
+        clean = re.sub(rf"(?:{re.escape(replacement)}[、，, ]*){{2,}}", replacement, clean)
+        return re.sub(r"\s+", " ", clean).strip()
+    clean = re.sub(
+        r"the elevator,\s*the melted button,\s*and floor 14",
+        replacement,
+        text,
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(
+        r"the elevator,\s*melted button,\s*and floor 14",
+        replacement,
+        clean,
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(
+        r"its button melted like wax,\s*and\s*",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(r"the melted (?:elevator )?button", replacement, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"melted (?:elevator )?button", replacement, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"(?:button|buttons) melted like wax", replacement, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\bmelted\b|\bwax\b|\bwaxy\b", replacement, clean, flags=re.IGNORECASE)
+    clean = re.sub(rf"(?:{re.escape(replacement)}[,\s]*){{2,}}", replacement, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\s+", " ", clean)
+    return clean.strip()
+
+
 def _primary_anchor(intake: DreamIntake, language: str = "en") -> str:
     anchors = _anchors_for_language(intake, language)
     if anchors:
@@ -594,6 +659,25 @@ def _story_text(intake: DreamIntake, answers: str = "") -> str:
         ]
         if part and part.strip()
     ).lower()
+
+
+def _source_mentions_melted_detail(intake: DreamIntake, answers: str = "") -> bool:
+    text = _story_text(intake, answers)
+    return any(term in text for term in ["融化", "像蜡", "蜡", "melt", "melted", "melting", "wax", "waxy"])
+
+
+def _without_unsupported_melted_anchors(
+    anchors: List[str],
+    intake: DreamIntake,
+    answers: str = "",
+) -> List[str]:
+    if _source_mentions_melted_detail(intake, answers):
+        return anchors
+    return [
+        anchor
+        for anchor in anchors
+        if not any(term in anchor.lower() for term in ["融化", "melt", "wax"])
+    ]
 
 
 def _contains_any(text: str, terms: List[str]) -> bool:
@@ -632,13 +716,39 @@ def _join_anchors(anchors: List[str], language: str = "en", limit: int = 3) -> s
     return ", ".join(visible[:-1]) + f", and {visible[-1]}"
 
 
+def _stuck_elevator_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str = "en", answers: str = "") -> str:
+    clean_anchors = _without_unsupported_melted_anchors(anchors, intake, answers)
+    if not clean_anchors:
+        clean_anchors = anchors
+    priority_groups = (
+        ("电梯", "elevator"),
+        ("14", "floor 14"),
+        ("走廊", "hallway", "corridor"),
+        ("邮件", "email"),
+        ("台灯", "lamp"),
+        ("按钮", "button"),
+    )
+    ordered: List[str] = []
+    for group in priority_groups:
+        for anchor in clean_anchors:
+            lowered = anchor.lower()
+            if anchor not in ordered and any(term in lowered for term in group):
+                ordered.append(anchor)
+    for anchor in clean_anchors:
+        if anchor not in ordered:
+            ordered.append(anchor)
+    fallback = "电梯" if _is_zh(language) else "the elevator"
+    return _join_anchors(ordered or [fallback], language)
+
+
 def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str = "en", answers: str = "") -> str:
     theme = _dream_theme(intake, answers)
+    if theme == "stuck_elevator":
+        return _stuck_elevator_anchor_phrase(intake, anchors, language, answers)
     if _is_zh(language):
         themed = {
             "lost_home": "地铁站里迷路的小孩和回家的方向",
             "dark_water": "夜晚的海、海浪和月牙下的小人",
-            "stuck_elevator": "电梯、融化的按钮和数字 14",
             "library_signal": "旧图书馆、红色楼梯和那张便签",
             "message_loss": "那条消息、前任和突然消失",
             "chased": "森林、白色猫和空白路牌",
@@ -649,7 +759,6 @@ def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str 
         themed = {
             "lost_home": "the lost child, the subway, and the way home",
             "dark_water": "the dark water, the waves, and the small figure under the moon",
-            "stuck_elevator": "the elevator, the melted button, and floor 14",
             "library_signal": "the old library, the red staircase, and the note",
             "message_loss": "the message, the former partner, and the disappearance",
             "chased": "the chase, the call for help, and the missing route",
@@ -1498,7 +1607,7 @@ def _decomposition_question(
                 "最后只确认今天的需要：你更想要安定身体，还是想理解为什么会这么慌？",
             ],
             "stuck_elevator": [
-                "电梯、按钮或数字 14 里，哪一个最像你最近卡住的感觉？",
+                f"在「{story_anchor}」里，哪一个细节最像你最近卡住的感觉？",
                 "这个卡住更像“来不及开始”，还是“已经按了按钮却没有回应”？",
                 "最后只确认今天的需要：你想要一个小行动，还是先要一句能让压力降下来的话？",
             ],
@@ -1531,8 +1640,8 @@ def _decomposition_question(
                 "Last check before the tip: do you need help calming your body, or understanding why the image felt so intense?",
             ],
             "stuck_elevator": [
-                "Which detail feels closest to your current stuck point: the elevator, the melted button, or floor 14?",
-                "Does the stuckness feel more like being late to start, or like pressing the button and getting no response?",
+                f"Which detail in {story_anchor} feels closest to your current stuck point?",
+                "Does the stuckness feel more like being late to start, or like trying something and getting no response?",
                 "Last check before the tip: would one small action help most, or a sentence that lowers the pressure first?",
             ],
         }
@@ -1685,16 +1794,22 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     answer_lines = [line.strip() for line in (answers or "").splitlines() if line.strip()]
     if answer_lines:
         polished.user_answers = answer_lines
-    intake_anchors = _remove_placeholder_anchors(_anchors_for_language(intake, language))
+    intake_anchors = _without_unsupported_melted_anchors(
+        _remove_placeholder_anchors(_anchors_for_language(intake, language)),
+        intake,
+        answers,
+    )
     card_anchors = _remove_placeholder_anchors(
         polished.dream_anchors
         if _is_zh(language)
         else _dedupe_preserve_order([_english_anchor_text(anchor) for anchor in polished.dream_anchors])
     )
+    card_anchors = _without_unsupported_melted_anchors(card_anchors, intake, answers)
     if intake_anchors and not any(_text_uses_anchor(anchor, intake_anchors) for anchor in card_anchors):
         anchors = intake_anchors
     else:
         anchors = card_anchors or intake_anchors
+    anchors = _without_unsupported_melted_anchors(anchors, intake, answers)
     if not anchors:
         anchors = _remove_placeholder_anchors([_primary_anchor(intake, language)])
     if not anchors:
@@ -1709,7 +1824,13 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         "caring_note",
         "safety_note",
     ):
-        setattr(polished, field, _clean_placeholder_phrase(getattr(polished, field)))
+        cleaned_field = _clean_placeholder_phrase(getattr(polished, field))
+        cleaned_field = _clean_unsupported_melted_detail(cleaned_field, intake, anchors, language, answers)
+        setattr(polished, field, cleaned_field)
+    polished.followup_questions = [
+        _clean_unsupported_melted_detail(_clean_placeholder_phrase(question), intake, anchors, language, answers)
+        for question in polished.followup_questions
+    ]
     if not polished.dream_summary.strip() or _is_placeholder_anchor(polished.dream_summary) or not _text_uses_anchor(polished.dream_summary, anchors):
         polished.dream_summary = _summary_from_intake(intake, language)
     explicit_question = _extract_explicit_user_question(intake, answers, language)

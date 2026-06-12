@@ -542,6 +542,29 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
     assert session.sealed_pact == session.draft_pact
 
 
+def test_force_another_question_keeps_chinese_answer_snippet_readable():
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text="我梦见自己卡在电梯口，14 层的灯一直亮着。",
+        mood="焦急",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+    session = ask_questions(session, FakeTextClient(), language="zh")
+    session = answer_question(
+        session,
+        "我觉得那封邮件像是我一直拖着的一次工作沟通，也可能有一点道歉。今天可以先写第一句，不一定马上发出去。",
+        language="zh",
+    )
+    session = ask_questions(session, FakeTextClient(), force_another=True, language="zh")
+
+    latest = session.question_history[-1]
+    assert "今天可。" not in latest
+    assert "第一句" in latest or "工作沟通" in latest
+    assert "我把你的回答也放进来了" in latest
+
+
 def test_draft_pact_falls_back_to_legacy_generate_pact_client():
     class LegacyPactOnlyClient:
         def generate_pact(self, prompt):

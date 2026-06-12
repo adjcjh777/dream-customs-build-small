@@ -184,6 +184,15 @@ def test_copy_result_button_writes_to_clipboard_with_fallback():
     assert "return value" in ui_app.COPY_RESULT_JS
 
 
+def test_another_angle_copy_is_explicitly_question_focused():
+    from dream_customs.ui.copy import copy_for
+
+    assert copy_for("en")["ask_again_button"] == "Ask one more question"
+    assert copy_for("en")["angle_button"] == "Ask from another angle"
+    assert copy_for("zh")["ask_again_button"] == "再追问一下"
+    assert copy_for("zh")["angle_button"] == "换个追问角度"
+
+
 def test_mobile_reset_restores_calm_mood():
     settings_values = [
         "",

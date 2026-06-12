@@ -780,9 +780,16 @@ def _answer_snippet(answers: str, language: str = "en") -> str:
         return ""
     clean = re.sub(r"\s+", " ", lines[-1]).strip(" ：:「」\"'()[]{}")
     if _is_zh(language):
-        return clean[:34].rstrip("，。；、 ")
+        if len(clean) <= 72:
+            return clean.rstrip("，。；、 ")
+        prefix = clean[:72].rstrip("，；、 ")
+        sentence_breaks = [prefix.rfind(mark) for mark in ("。", "！", "？", "；")]
+        break_at = max(sentence_breaks)
+        if break_at >= 24:
+            return prefix[: break_at + 1].strip("，；、 ")
+        return prefix.rstrip("，；、 ") + "..."
     words = clean.split()
-    return " ".join(words[:14])
+    return " ".join(words[:22])
 
 
 def _anchor_with_article(anchor: str) -> str:

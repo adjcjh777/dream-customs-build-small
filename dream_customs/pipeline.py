@@ -19,6 +19,8 @@ from dream_customs.render import render_pact_card, render_today_tip_card
 from dream_customs.safety import needs_escalation, safety_note
 from dream_customs.schema import CustomsSession, DreamIntake, DreamQAState, EvidenceItem, PactCard, TimelineEvent, TodayTipCard
 
+MAX_DREAM_DECOMPOSITION_QUESTIONS = 3
+
 
 def _normalize_language(language: str = "en") -> str:
     return "zh" if language == "zh" else "en"
@@ -577,6 +579,103 @@ def _secondary_anchor(intake: DreamIntake, language: str = "en") -> str:
     return anchors[1] if len(anchors) > 1 else _primary_anchor(intake, language)
 
 
+def _story_text(intake: DreamIntake, answers: str = "") -> str:
+    return "\n".join(
+        part
+        for part in [
+            intake.dream_text,
+            intake.voice_transcript,
+            " ".join(intake.visual_clues),
+            intake.mood,
+            intake.main_question,
+            intake.uncertainty,
+            intake.user_context,
+            answers or "",
+        ]
+        if part and part.strip()
+    ).lower()
+
+
+def _contains_any(text: str, terms: List[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
+    text = _story_text(intake, answers)
+    if _contains_any(text, ["小孩", "child", "找不到家", "lost", "home", "回家", "地铁", "subway"]):
+        return "lost_home"
+    if _contains_any(text, ["海", "海浪", "水", "月牙", "moon", "sea", "wave", "water", "dark sea"]):
+        return "dark_water"
+    if _contains_any(text, ["电梯", "按钮", "14", "elevator", "button", "floor"]):
+        return "stuck_elevator"
+    if _contains_any(text, ["图书馆", "楼梯", "便签", "call home", "library", "staircase", "sticky note"]):
+        return "library_signal"
+    if _contains_any(text, ["前任", "消息", "消失", "former partner", "ex", "message", "disappear"]):
+        return "message_loss"
+    if _contains_any(text, ["追", "被追", "chase", "chased", "running away"]):
+        return "chased"
+    if _contains_any(text, ["考试", "作业", "教室", "老师", "exam", "assignment", "classroom", "teacher", "homework"]):
+        return "school_pressure"
+    if _contains_any(text, ["路牌", "两条路", "大雾", "找不到路", "sign", "two roads", "fog", "lost road"]):
+        return "road_choice"
+    return "open"
+
+
+def _join_anchors(anchors: List[str], language: str = "en", limit: int = 3) -> str:
+    visible = [anchor for anchor in anchors[:limit] if anchor]
+    if not visible:
+        return "梦境片段" if _is_zh(language) else "dream fragments"
+    if _is_zh(language):
+        return "、".join(visible)
+    if len(visible) == 1:
+        return visible[0]
+    return ", ".join(visible[:-1]) + f", and {visible[-1]}"
+
+
+def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str = "en", answers: str = "") -> str:
+    theme = _dream_theme(intake, answers)
+    if _is_zh(language):
+        themed = {
+            "lost_home": "地铁站里迷路的小孩和回家的方向",
+            "dark_water": "夜晚的海、海浪和月牙下的小人",
+            "stuck_elevator": "电梯、融化的按钮和数字 14",
+            "library_signal": "旧图书馆、红色楼梯和那张便签",
+            "message_loss": "那条消息、前任和突然消失",
+            "chased": "森林、白色猫和空白路牌",
+            "school_pressure": "教室、作业和来不及交上的感觉",
+            "road_choice": "雾里的路牌和两条路",
+        }
+    else:
+        themed = {
+            "lost_home": "the lost child, the subway, and the way home",
+            "dark_water": "the dark water, the waves, and the small figure under the moon",
+            "stuck_elevator": "the elevator, the melted button, and floor 14",
+            "library_signal": "the old library, the red staircase, and the note",
+            "message_loss": "the message, the former partner, and the disappearance",
+            "chased": "the chase, the call for help, and the missing route",
+            "school_pressure": "the classroom, the assignment, and the late feeling",
+            "road_choice": "the foggy sign and the two roads",
+        }
+    if theme == "chased" and anchors:
+        return _join_anchors(anchors, language)
+    return themed.get(theme) or _join_anchors(anchors, language)
+
+
+def _answer_snippet(answers: str, language: str = "en") -> str:
+    lines = [
+        line.strip()
+        for line in (answers or "").splitlines()
+        if line.strip() and not _is_skip_answer(line, language)
+    ]
+    if not lines:
+        return ""
+    clean = re.sub(r"\s+", " ", lines[-1]).strip(" ：:「」\"'()[]{}")
+    if _is_zh(language):
+        return clean[:34].rstrip("，。；、 ")
+    words = clean.split()
+    return " ".join(words[:14])
+
+
 def _anchor_with_article(anchor: str) -> str:
     clean = (anchor or "").strip()
     if clean.lower().startswith(("the ", "a ", "an ")):
@@ -780,7 +879,7 @@ def _emotion_led_interpretation(intake: DreamIntake, answers: str, anchors: List
     question = _extract_explicit_user_question(intake, answers, language)
     labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
     emotion = _emotion_phrase(labels, language)
-    anchor = _answer_bridge_anchor(anchors)
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
     direct = _direct_question_reassurance(question, labels, language)
     if _is_zh(language):
         opener = f"你问的是「{question}」。" if question else ""
@@ -802,27 +901,100 @@ def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str]
         return ""
     if _has_prophecy_frame(_user_supplied_text(intake, answers)):
         return ""
-    labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
-    emotion = _emotion_phrase(labels, language)
-    anchor = anchors[0]
+    theme = _dream_theme(intake, answers)
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    answer_snippet = _answer_snippet(answers, language)
     if _is_zh(language):
+        if theme == "lost_home":
+            extra = f"如果刚才的回答里「{answer_snippet}」最重，就从它开始。" if answer_snippet else ""
+            return (
+                f"今天先顺着「{anchor}」照顾那种需要被带路的感觉，而不是急着解释梦的含义。"
+                f"{extra}给今天补一个很小的“路标”：问一个人、查一个入口，或写下下一站在哪里。"
+            )
+        if theme == "dark_water":
+            return (
+                f"今天先把「{anchor}」当成醒来后还在身体里的浪，不当成危险证明。"
+                "先选一个让自己回到岸边的动作：开灯、洗脸、发一句“我醒来有点慌，先缓一下”。"
+            )
+        if theme == "stuck_elevator":
+            return (
+                f"今天不要逼自己抵达所有楼层；先把「{anchor}」变成一个只按一次的按钮。"
+                "只确认当前最卡的一层是什么，再允许自己停在那里做一个很小动作。"
+            )
+        if theme == "library_signal":
+            return (
+                f"今天把「{anchor}」当成一张提醒你回到安定处的便签。"
+                "不用立刻整理完整答案，只挑一个让你有“回家感”的人、物或角落，靠近它五分钟。"
+            )
+        if theme == "message_loss":
+            return (
+                f"今天先把「{anchor}」看成一段还没被好好收起的联系。"
+                "不用真的发出去，先写一封不发送的回信，让那句没说完的话有地方停靠。"
+            )
         return (
-            f"今天先把「{anchor}」当作{emotion}的形状，而不是结论：写一句“我现在被什么淹到/刺痛”，"
-            "再写一句“我此刻可以抓住的一个小安定”。"
+            f"今天的小建议是：先别把「{anchor}」解释成结论；把它当成梦递过来的线索，"
+            "问问它在替你保护哪一种感受，再给那种感受一个很小的照顾动作。"
+        )
+    if theme == "lost_home":
+        extra = f" If your answer points to \"{answer_snippet}\", start there." if answer_snippet else ""
+        return (
+            f"For today, treat {anchor} as a need for guidance, not as a verdict about you.{extra} "
+            "Add one tiny wayfinding marker: ask one person, check one entrance, or name the next stop."
+        )
+    if theme == "dark_water":
+        return (
+            f"For today, treat {anchor} as a wave still in your body, not proof of danger. "
+            "Choose one shore-like action: turn on a light, wash your face, or tell someone you woke up unsettled."
+        )
+    if theme == "stuck_elevator":
+        return (
+            f"For today, do not make yourself reach every floor. Let {anchor} become one button: "
+            "name the stuck floor, then do only one small action there."
+        )
+    if theme == "library_signal":
+        return (
+            f"For today, treat {anchor} like a note pointing you back to steadiness. "
+            "Pick one person, place, or object that feels like home and spend five minutes near it."
+        )
+    if theme == "message_loss":
+        return (
+            f"For today, treat {anchor} as an unfinished contact, not a demand to reopen everything. "
+            "Write one unsent reply so the unsaid sentence has somewhere to rest."
         )
     return (
-        f"For today, treat the {anchor} as the shape of {emotion}, not a verdict: write one line naming "
-        "what feels heavy, then one line naming a small steady thing you can hold now."
+        f"For today, do not turn {anchor} into a fixed conclusion. Treat it as a clue about one feeling "
+        "that needs care, then give that feeling one small caring action."
     )
 
 
 def _emotion_led_tiny_action(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
     if not _should_use_emotion_led_response(intake, answers, language):
         return ""
-    anchor = anchors[0]
+    theme = _dream_theme(intake, answers)
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
     if _is_zh(language):
-        return f"用 5 分钟写两行：1.「{anchor}」让我最难受的是…… 2. 现在我能给自己的一点安定是……"
-    return f"Spend five minutes writing two lines: 1. The {anchor} hurts most because... 2. One steady thing I can offer myself now is..."
+        if theme == "lost_home":
+            return f"用 5 分钟给「{anchor}」画一张三格小路线：我在找什么、我能问谁或查哪里、今天只走到哪一站。"
+        if theme == "dark_water":
+            return f"用 5 分钟做一个“上岸”动作：看着「{anchor}」，说出三个房间里的真实物件，再喝一口水或开一盏灯。"
+        if theme == "stuck_elevator":
+            return f"用 5 分钟写一个“只按这一层”的按钮：今天卡在哪一层、我能做的最小动作、做完就停。"
+        if theme == "library_signal":
+            return f"用 5 分钟把「{anchor}」改写成一张现实便签：我现在可以回到哪里，或联系谁，让自己稳一点。"
+        if theme == "message_loss":
+            return f"用 5 分钟写一封不发送的短信草稿，开头只写：梦里的「{anchor}」让我想承认的是……"
+        return f"用 5 分钟做一个三格便签：梦里的「{anchor}」最亮的细节、它带出的感受、今天能照顾它的一小步。"
+    if theme == "lost_home":
+        return f"Spend five minutes making a three-box route for {anchor}: what I am looking for, who or where I can ask, and the next stop only."
+    if theme == "dark_water":
+        return f"Spend five minutes doing one shore action for {anchor}: name three real objects in the room, then drink water or turn on a light."
+    if theme == "stuck_elevator":
+        return f"Spend five minutes making a one-floor button for {anchor}: the stuck floor, the smallest action, and permission to stop after it."
+    if theme == "library_signal":
+        return f"Spend five minutes turning {anchor} into a real note: where can I return, or who can I contact, to feel steadier?"
+    if theme == "message_loss":
+        return f"Spend five minutes drafting one unsent message that begins: what {anchor} makes me want to admit is..."
+    return f"Spend five minutes making three boxes for {anchor}: brightest detail, feeling it carries, and one small care step for today."
 
 
 def _emotion_led_caring_note(intake: DreamIntake, answers: str, language: str = "en") -> str:
@@ -871,12 +1043,31 @@ def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
 
 
 def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
-    primary = _primary_anchor(intake, language)
+    anchors = _anchors_for_language(intake, language)
+    primary = anchors[0] if anchors else _primary_anchor(intake, language)
+    anchor = _story_anchor_phrase(intake, anchors, language)
+    theme = _dream_theme(intake)
     if not _is_zh(language):
+        if theme == "lost_home":
+            return f"For today, let {anchor} become a small wayfinding cue: choose one place to ask, one entrance to check, or one next stop to name."
+        if theme == "dark_water":
+            return f"For today, let {anchor} become a shore cue: name what felt too large, then choose one ordinary thing that helps your body feel here again."
+        if theme == "library_signal":
+            return f"For today, let {anchor} become a note back to steadiness: choose one person, place, or object that feels like home and spend five minutes near it."
+        if theme == "message_loss":
+            return f"For today, let {anchor} become one unsent sentence, not a full conversation: write what is still tender and let it rest."
         return (
             f"For today, borrow one action from {_anchor_with_article(primary)}: open the task, write only the first line, "
             "and let that be enough for now."
         )
+    if theme == "lost_home":
+        return f"今天先让「{anchor}」变成一个小路标：只确认一个可以问的人、一个可以查的入口，或一个下一站。"
+    if theme == "dark_water":
+        return f"今天先让「{anchor}」变成一个上岸提示：说出那个太大的感受，再选一件能让身体回到当下的小事。"
+    if theme == "library_signal":
+        return f"今天先让「{anchor}」变成一张回到安定处的便签：靠近一个有回家感的人、地方或物件五分钟。"
+    if theme == "message_loss":
+        return f"今天先让「{anchor}」变成一句不发送的话，而不是一整场对话：写下还柔软的那句，然后让它停在那里。"
     return f"今天先从「{primary}」借一个动作：只做最小的第一步，不急着把整件事完成。"
 
 
@@ -1258,6 +1449,143 @@ def _grounded_followup_question(intake: DreamIntake, language: str = "en") -> st
     return f"如果「{primary}」能递给你一个更小的第一步，今天那一步会是什么？"
 
 
+def _first_input_focus_sentence(intake: DreamIntake, language: str = "en") -> str:
+    explicit_question = _extract_explicit_user_question(intake, "", language)
+    labels = _emotion_labels_from_text(_user_supplied_text(intake, "", include_mood=True), language)
+    emotion = _emotion_phrase(labels, language)
+    anchors = _anchors_for_language(intake, language)
+    story_anchor = _story_anchor_phrase(intake, anchors, language)
+    if _is_zh(language):
+        if explicit_question and labels:
+            return f"你最在意的是「{explicit_question}」，而且醒来后的{emotion}需要先被接住。"
+        if explicit_question:
+            return f"你最在意的是「{explicit_question}」，不是只想听一个固定象征解释。"
+        if labels:
+            return f"这个梦留下的{emotion}比符号本身更重要，我会先顺着感受看。"
+        return f"核心线索先落在「{story_anchor}」上，我会先确认它和你今天的需要怎么连起来。"
+    if explicit_question and labels:
+        return f"your main question is \"{explicit_question}\", and the {emotion} after waking needs to be met first."
+    if explicit_question:
+        return f"your main question is \"{explicit_question}\", not a generic symbol reading."
+    if labels:
+        return f"the {emotion} after waking matters more than a fixed symbol meaning."
+    return f"the strongest trail begins with {story_anchor}, so I will connect it to what you may need today."
+
+
+def _decomposition_question(
+    intake: DreamIntake,
+    existing_count: int,
+    answers: str,
+    model_question: str,
+    language: str = "en",
+) -> str:
+    anchors = _anchors_for_language(intake, language)
+    story_anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    theme = _dream_theme(intake, answers)
+    declared_question = _question_for_declared_real_task(intake, language) if existing_count == 0 else ""
+    if declared_question:
+        return declared_question
+    if _is_zh(language):
+        stage_questions = {
+            "lost_home": [
+                "梦里那个迷路的小孩，更像是你自己需要被带路，还是某件现实里暂时找不到家的事？",
+                "如果把地铁站或回家方向看成一个场景，最让你心里一紧的是“没人带路”“找不到入口”，还是“怕把谁弄丢”？",
+                "最后只确认今天的需要：你更想被安慰一下，还是想得到一个很小的找路动作？",
+            ],
+            "dark_water": [
+                "醒来后最强的是害怕、孤单、喘不过气，还是别的身体感受？",
+                "画面里的海浪、月牙或小人，哪一个最像你醒来后还忘不掉的部分？",
+                "最后只确认今天的需要：你更想要安定身体，还是想理解为什么会这么慌？",
+            ],
+            "stuck_elevator": [
+                "电梯、按钮或数字 14 里，哪一个最像你最近卡住的感觉？",
+                "这个卡住更像“来不及开始”，还是“已经按了按钮却没有回应”？",
+                "最后只确认今天的需要：你想要一个小行动，还是先要一句能让压力降下来的话？",
+            ],
+            "library_signal": [
+                "旧图书馆、楼梯或便签里，哪一个最像梦在提醒你别忽略的线索？",
+                "那张便签或“回家”的感觉，更像想联系某个人，还是想回到一种安定状态？",
+                "最后只确认今天的需要：你想整理一个现实线索，还是先给自己一点回家的感觉？",
+            ],
+            "message_loss": [
+                "那条消息最刺痛你的地方，是它出现了、消失了，还是它来自某个具体的人？",
+                "这个梦更像在问“我还在等什么”，还是在问“我该怎么照顾还没放下的部分”？",
+                "最后只确认今天的需要：你想要一句安慰，还是一个不打扰别人的小行动？",
+            ],
+        }
+        fallback = [
+            f"在「{story_anchor}」里，醒来后最强烈的感受是什么？",
+            f"如果只选一个细节继续看，你会选「{story_anchor}」里的哪一处？为什么？",
+            "最后只确认今天的需要：你更想被安慰、被提醒，还是得到一个很小的行动？",
+        ]
+    else:
+        stage_questions = {
+            "lost_home": [
+                "Does the lost child feel more like a part of you that needs guidance, or like a real situation that has no clear way home yet?",
+                "In the subway and way-home scene, what tightens most: nobody guiding you, no visible entrance, or fear of losing someone?",
+                "Last check before the tip: would comfort help most today, or one tiny way-finding action?",
+            ],
+            "dark_water": [
+                "After waking, was the strongest feeling fear, loneliness, breathlessness, or something else in your body?",
+                "Which image stays with you most: the waves, the moon, or the small figure?",
+                "Last check before the tip: do you need help calming your body, or understanding why the image felt so intense?",
+            ],
+            "stuck_elevator": [
+                "Which detail feels closest to your current stuck point: the elevator, the melted button, or floor 14?",
+                "Does the stuckness feel more like being late to start, or like pressing the button and getting no response?",
+                "Last check before the tip: would one small action help most, or a sentence that lowers the pressure first?",
+            ],
+        }
+        fallback = [
+            f"In {story_anchor}, what feeling stayed strongest after waking?",
+            f"If we keep only one detail from {story_anchor}, which one matters most, and why?",
+            "Last check before the tip: do you want comfort, a reminder, or one very small action?",
+        ]
+    candidates = stage_questions.get(theme, fallback)
+    index = min(max(existing_count, 0), MAX_DREAM_DECOMPOSITION_QUESTIONS - 1)
+    question = candidates[index] if index < len(candidates) else model_question
+    if question:
+        return question
+    return model_question or _grounded_followup_question(intake, language)
+
+
+def _compose_decomposition_response(
+    intake: DreamIntake,
+    existing_count: int,
+    question: str,
+    answers: str,
+    language: str = "en",
+) -> str:
+    anchors = _anchors_for_language(intake, language)
+    story_anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    answer_snippet = _answer_snippet(answers, language)
+    if _is_zh(language):
+        if existing_count == 0:
+            focus = _first_input_focus_sentence(intake, language)
+            return (
+                f"我先听到的是：{focus}\n\n"
+                f"我会把这个梦拆成三层来看：醒来后的感受、梦里最抓人的画面（{story_anchor}）、"
+                "以及它今天想帮你照顾的需要。\n\n"
+                f"先问一个会影响最后建议的问题：{question}"
+            )
+        if existing_count == 1:
+            prefix = f"我把你的回答也放进来了：{answer_snippet}。" if answer_snippet else "我再补一层具体画面。"
+            return f"{prefix} 这一轮只看「{story_anchor}」里最关键的连接：{question}"
+        return f"最后只确认一个方向，之后我就生成今日小 Tips：{question}"
+    if existing_count == 0:
+        focus = _first_input_focus_sentence(intake, language)
+        return (
+            f"What I hear first is that {focus}\n\n"
+            f"I will unpack this in three layers: the feeling after waking, the concrete image ({story_anchor}), "
+            f"and what it may be asking you to care for today.\n\n"
+            f"One question that will shape the final tip: {question}"
+        )
+    if existing_count == 1:
+        prefix = f"I am adding your answer: {answer_snippet}." if answer_snippet else "I will add one more concrete layer."
+        return f"{prefix} For this round, I am looking at the key link in {story_anchor}: {question}"
+    return f"One last direction check, then I will write the Today Tip: {question}"
+
+
 def _polish_card_for_daily_use(card: PactCard, intake: DreamIntake, answers: str) -> PactCard:
     polished = card.model_copy(deep=True)
     merged = "\n".join([intake.merged_text(), answers or ""])
@@ -1468,10 +1796,30 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         or not _anchor_in_text(polished.tiny_action, anchors)
         or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
     ):
+        anchor_phrase = _story_anchor_phrase(intake, anchors, language, answers)
+        theme = _dream_theme(intake, answers)
         if _is_zh(language):
-            polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
+            if theme == "lost_home":
+                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」补一张小路标：我在找什么、能问哪里、下一站是什么。"
+            elif theme == "dark_water":
+                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」找一个上岸动作：看见三个真实物件，再做一件让身体安定的小事。"
+            elif theme == "library_signal":
+                polished.tiny_action = f"用 5 分钟把「{anchor_phrase}」变成现实便签：今天我可以靠近哪一个安定来源？"
+            elif theme == "message_loss":
+                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」写一句不发送的话，然后把手机放下。"
+            else:
+                polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
         else:
-            polished.tiny_action = f"Spend five minutes writing the first small step connected to the {anchors[0]}."
+            if theme == "lost_home":
+                polished.tiny_action = f"Spend five minutes adding a small route marker for {anchor_phrase}: what I seek, where I can ask, and the next stop."
+            elif theme == "dark_water":
+                polished.tiny_action = f"Spend five minutes finding a shore action for {anchor_phrase}: name three real objects, then do one grounding thing."
+            elif theme == "library_signal":
+                polished.tiny_action = f"Spend five minutes turning {anchor_phrase} into a real note: which steady source can I move closer to today?"
+            elif theme == "message_loss":
+                polished.tiny_action = f"Spend five minutes writing one unsent sentence for {anchor_phrase}, then put the phone down."
+            else:
+                polished.tiny_action = f"Spend five minutes writing the first small step connected to the {anchors[0]}."
     emotion_caring_note = _emotion_led_caring_note(intake, answers, language)
     if emotion_caring_note:
         polished.caring_note = emotion_caring_note
@@ -1819,6 +2167,29 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
         )
         return next_session
 
+    existing_count = len(next_session.question_history)
+    if existing_count >= MAX_DREAM_DECOMPOSITION_QUESTIONS:
+        next_session.phase = "ask"
+        next_session.qa_state = build_qa_state(
+            next_session.intake,
+            questions=next_session.question_history,
+            answers=next_session.answer_history,
+            language=language,
+        )
+        next_session.events.append(
+            _event(
+                "assistant",
+                "线索已经足够" if _is_zh(language) else "Enough context gathered",
+                (
+                    "我已经问到 3 个核心问题了；现在更适合生成今日小 Tips，而不是继续追问。"
+                    if _is_zh(language)
+                    else "I have asked three core questions; it is better to generate the Today Tip than keep questioning."
+                ),
+                status="ready",
+            )
+        )
+        return next_session
+
     prompt = (
         followup_question_prompt(next_session.intake, next_session.question_history, next_session.answer_history, language)
         if force_another
@@ -1850,7 +2221,23 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
         deduped_questions = [_grounded_followup_question(next_session.intake, language)]
     fresh_questions = deduped_questions
 
-    next_session.question_history.extend(fresh_questions[:3])
+    model_question = fresh_questions[0] if fresh_questions else _grounded_followup_question(next_session.intake, language)
+    focused_question = _decomposition_question(
+        next_session.intake,
+        existing_count,
+        next_session.answers_text(),
+        model_question,
+        language,
+    )
+    visible_question = _compose_decomposition_response(
+        next_session.intake,
+        existing_count,
+        focused_question,
+        next_session.answers_text(),
+        language,
+    )
+    if visible_question not in next_session.question_history:
+        next_session.question_history.append(visible_question)
     next_session.phase = "ask"
     next_session.qa_state = build_qa_state(
         next_session.intake,
@@ -1862,10 +2249,12 @@ def ask_questions(session: CustomsSession, text_client, force_another: bool = Fa
     next_session.events.append(
         _event(
             "assistant",
-            ("梦境助手追问" if len(fresh_questions) == 1 else "梦境助手追问清单")
-            if _is_zh(language)
-            else ("Dream QA question" if len(fresh_questions) == 1 else "Dream QA questions"),
-            "\n".join(fresh_questions[:3]),
+            "梦境助手理解与追问" if _is_zh(language) and existing_count == 0 else (
+                "梦境助手追问" if _is_zh(language) else (
+                    "Dream QA understanding and question" if existing_count == 0 else "Dream QA question"
+                )
+            ),
+            visible_question,
             meta=str(negotiation.get("visitor_name", "")),
             status="question",
         )

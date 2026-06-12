@@ -413,13 +413,21 @@ def test_ask_answer_skip_draft_revise_and_seal_actions():
     )
     session = ask_questions(session, FakeTextClient())
     assert session.phase == "ask"
-    assert len(session.question_history) == 3
+    assert len(session.question_history) == 1
+    assert "three layers" in session.question_history[0]
 
     session = answer_question(session, "I want one small start.")
     assert session.answer_history[-1] == "I want one small start."
 
     session = ask_questions(session, FakeTextClient(), force_another=True)
-    assert len(session.question_history) == 4
+    assert len(session.question_history) == 2
+    assert "For this round" in session.question_history[-1]
+
+    session = ask_questions(session, FakeTextClient(), force_another=True)
+    assert len(session.question_history) == 3
+
+    session = ask_questions(session, FakeTextClient(), force_another=True)
+    assert len(session.question_history) == 3
 
     session = skip_question(session)
     assert "skip" in session.answer_history[-1].lower()
@@ -637,6 +645,53 @@ def test_zh_text_and_image_keep_user_question_while_using_visual_anchors():
     assert "a simple sketch" not in combined.lower()
     assert "dreamlike representation" not in combined.lower()
     assert "这么难受不是你反应过度" in card.interpretation
+
+
+def test_zh_first_response_and_tip_follow_story_and_image_not_template():
+    class LostChildVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="A child figure stands inside a subway station with arrows pointing toward HOME.",
+                objects=["child figure", "subway station", "arrows"],
+                visible_text=["HOME"],
+                mood_cues=["lost", "small figure in a large station"],
+            )
+
+        def extract_clues(self, image_path):
+            return ["flat fallback should not win"]
+
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text="我梦见一个小孩在地铁站找不到家，我醒来很害怕，想知道为什么这个画面让我这么难受。",
+        image_path="lost-child.png",
+        mood="害怕",
+        vision_client=LostChildVision(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+    session = ask_questions(session, FakeTextClient(), language="zh")
+    first_response = session.question_history[0]
+
+    assert "我先听到的是" in first_response
+    assert "三层" in first_response
+    assert "小孩" in first_response
+    assert "回家" in first_response or "地铁" in first_response
+
+    session = answer_question(session, "更像我自己最近不知道该往哪里走，也很想有人带一下。", language="zh")
+    card = generate_today_tip(
+        session.intake,
+        session.answers_text(),
+        FakeTextClient(),
+        language="zh",
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join([card.interpretation, card.today_tip, card.tiny_action, card.caring_note])
+
+    assert "小孩" in combined
+    assert "回家" in combined or "地铁" in combined or "路标" in combined
+    assert "需要被带路" in card.today_tip or "路标" in card.today_tip
+    assert "写两行" not in combined
+    assert "当作害怕的形状" not in combined
 
 
 def test_witness_failure_keeps_text_path_alive():

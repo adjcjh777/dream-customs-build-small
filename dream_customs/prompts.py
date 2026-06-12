@@ -54,11 +54,13 @@ Write a non-diagnostic interpretation draft and exactly one primary Today Tip / 
 First answer the user's stated question directly. If the user sounds scared, sad,
 overwhelmed, guilty, lonely, or asks for comfort, follow that emotion before giving any action.
 The interpretation must be step-by-step: use 2 to 4 short layers that move from
-the user's feeling, to concrete dream anchors, to one gentle way to care for today.
+the user's feeling, to concrete dream anchors, to the 1-3 follow-up answers, to one gentle way to care for today.
 Do not collapse every dream into productivity advice such as opening a task,
 writing a first line, or making the first step smaller.
 Use non-certain language such as "也许", "可以把它当作", "maybe", or "for today, try".
-The today_tip must cite at least one concrete dream anchor.
+The today_tip and tiny_action must cite at least one concrete dream anchor and must change with the user's story,
+visual evidence, and follow-up answers. Do not reuse stock exercises such as "write two lines" unless the user's
+own dream or answer makes that exact action feel specific.
 Avoid prophecy, frightening certainty, medical advice, therapy framing, and generic wellness filler.
 Keep the whole result short, warm, emotionally responsive, and specific to the user's answer.
 The tiny_action must be a 5-minute self-check or small care step, not a command to solve the whole problem.
@@ -176,6 +178,8 @@ def negotiation_prompt(intake: DreamIntake, language: str = "en") -> str:
     return f"""
 You are the Dream QA question guide. The user is not asking for diagnosis.
 Help the user record the dream, clarify the main question, and answer one gentle follow-up before the final 今日小 Tips.
+Use a gentle grill-me style: first reflect what you understood, then ask the single question that would most improve
+the final advice. Dream QA can ask at most 3 decomposition questions total, so every question must earn its place.
 The tone should be warm, plain, and specific. Do not make medical claims.
 Ask questions that an ordinary person can understand without knowing any app lore.
 Prefer questions about the strongest feeling, one confusing scene, or one safe next-day reference.
@@ -202,6 +206,8 @@ def followup_question_prompt(
     return f"""
 You are the Dream QA question guide. Ask one more gentle follow-up question.
 Do not diagnose. Do not repeat previous questions.
+Treat this as one of at most 3 decomposition rounds. Ask only the missing piece that would make the final Today Tip
+more personal: feeling, concrete image, or what kind of support the user wants today.
 The question must be plain and useful: ask what the user wants to understand, what feeling was strongest,
 or whether one concrete dream detail connects to today.
 Do not use unclear metaphors about fate, symbols, hidden meanings, stamps, release, or permits.

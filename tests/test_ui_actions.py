@@ -163,25 +163,21 @@ def test_long_running_buttons_show_processing_feedback():
     source = inspect.getsource(ui_app.build_demo)
     app_source = inspect.getsource(ui_app)
 
-    assert "js=SUBMIT_PROCESSING_JS" in source
-    assert source.count("js=TIP_PROCESSING_JS") >= 4
+    assert "elem_classes=[\"dc-submit-button\"]" in source
+    assert "elem_classes=[\"dc-answer-button\"]" in source
+    assert source.count("elem_classes=[\"dc-tip-button\"]") >= 3
+    assert "bindProcessingButtons" in ui_app.VOICE_JS
+    assert "setProcessingCopy" in ui_app.VOICE_JS
+    assert "processingBound" in ui_app.VOICE_JS
+    assert "js=SUBMIT_PROCESSING_JS" not in source
+    assert "js=TIP_PROCESSING_JS" not in source
     assert source.count("scroll_to_output=True") >= 5
     assert "Reading the dream details" in app_source
     assert "Folding the follow-up answer" in app_source
     assert ".dc-notice.is-processing" in CSS
     assert ".dc-processing-note.is-active" in CSS
-    assert "endpoint" not in ui_app.SUBMIT_PROCESSING_JS.lower()
-    assert "debug" not in ui_app.TIP_PROCESSING_JS.lower()
-
-
-def test_processing_js_preserves_numeric_settings_inputs():
-    for script in (ui_app.SUBMIT_PROCESSING_JS, ui_app.TIP_PROCESSING_JS):
-        assert "const settingsStart = values.length - 18" in script
-        assert "const nearSettingsStart = Math.max(0, values.length - 20)" in script
-        assert "const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16])" in script
-        assert "const isNumberLikeSetting" in script
-        assert "Number(value)" in script
-        assert "return normalizeInputs(args)" in script
+    assert "endpoint" not in ui_app.VOICE_JS.lower()
+    assert "debug" not in ui_app.VOICE_JS.lower()
 
 
 def test_copy_result_button_writes_to_clipboard_with_fallback():

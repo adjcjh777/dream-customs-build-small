@@ -309,101 +309,68 @@ VOICE_JS = r"""
   const bindComposerControls = () => {
     bindVoiceButton();
     bindAttachmentButton();
+    bindProcessingButtons();
+  };
+
+  const currentLanguage = () => {
+    const micButton = document.querySelector(".dc-mic-button");
+    if (micButton?.dataset.language) {
+      return micButton.dataset.language;
+    }
+    return document.body.innerText.includes("梦境问答台") ? "zh" : "en";
+  };
+
+  const setProcessingCopy = (mode) => {
+    const isZh = currentLanguage() === "zh";
+    const copy = mode === "submit"
+      ? {
+          notice: isZh
+            ? "正在整理梦境线索。下一步会生成一个贴着细节的温和追问。"
+            : "Reading the dream details. Next, Dream QA will ask one grounded question.",
+          note: isZh
+            ? "正在提取人物、地点、情绪和具体物件；如果生成较慢，通常需要十几秒。"
+            : "Extracting people, places, feelings, and concrete objects. A slower run can take several seconds.",
+        }
+      : {
+          notice: isZh
+            ? "正在把追问回答整理进今日小 Tips。"
+            : "Folding the follow-up answer into the Today Tip.",
+          note: isZh
+            ? "正在检查梦境锚点、你的回答和安全边界，然后生成一个可复制结果。"
+            : "Checking dream anchors, your answer, and safety boundaries before writing the copyable result.",
+        };
+
+    document.querySelectorAll(".dc-notice").forEach((el) => {
+      el.textContent = copy.notice;
+      el.classList.remove("is-error");
+      el.classList.add("is-processing");
+    });
+    document.querySelectorAll(".dc-processing-note").forEach((el) => {
+      el.textContent = copy.note;
+      el.classList.add("is-active");
+    });
+  };
+
+  const bindProcessingButtons = () => {
+    const bindButton = (selector, mode) => {
+      document.querySelectorAll(selector).forEach((root) => {
+        const button = root.matches("button") ? root : root.querySelector("button");
+        if (!button || button.dataset.processingBound === "true") {
+          return;
+        }
+        button.dataset.processingBound = "true";
+        button.addEventListener("click", () => setProcessingCopy(mode));
+      });
+    };
+
+    bindButton(".dc-submit-button", "submit");
+    bindButton(".dc-answer-button", "tip");
+    bindButton(".dc-tip-button", "tip");
   };
 
   bindComposerControls();
   const observer = new MutationObserver(bindComposerControls);
   observer.observe(document.body, { childList: true, subtree: true });
-}
-"""
-
-
-SUBMIT_PROCESSING_JS = """
-(...args) => {
-  const normalizeInputs = (values) => {
-    const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
-    const settingsStart = values.length - 18;
-    const nearSettingsStart = Math.max(0, values.length - 20);
-    return values.map((value, index) => {
-      const settingsIndex = index - settingsStart;
-      const isDeclaredNumericSetting = settingsStart >= 0 && numericSettings.has(settingsIndex);
-      const isNumberLikeSetting =
-        index >= nearSettingsStart &&
-        typeof value === "string" &&
-        value.trim() !== "" &&
-        Number.isFinite(Number(value));
-      if (isDeclaredNumericSetting || isNumberLikeSetting) {
-        if (value === "" || value === null || typeof value === "undefined") {
-          return value === "" ? null : value;
-        }
-        const numberValue = Number(value);
-        return Number.isFinite(numberValue) ? numberValue : value;
-      }
-      return value;
-    });
-  };
-  const isZh = args.includes("zh");
-  const notice = isZh
-    ? "正在整理梦境线索。下一步会生成一个贴着细节的温和追问。"
-    : "Reading the dream details. Next, Dream QA will ask one grounded question.";
-  const note = isZh
-    ? "正在提取人物、地点、情绪和具体物件；如果生成较慢，通常需要十几秒。"
-    : "Extracting people, places, feelings, and concrete objects. A slower run can take several seconds.";
-  document.querySelectorAll(".dc-notice").forEach((el) => {
-    el.textContent = notice;
-    el.classList.remove("is-error");
-    el.classList.add("is-processing");
-  });
-  document.querySelectorAll(".dc-processing-note").forEach((el) => {
-    el.textContent = note;
-    el.classList.add("is-active");
-  });
-  return normalizeInputs(args);
-}
-"""
-
-
-TIP_PROCESSING_JS = """
-(...args) => {
-  const normalizeInputs = (values) => {
-    const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
-    const settingsStart = values.length - 18;
-    const nearSettingsStart = Math.max(0, values.length - 20);
-    return values.map((value, index) => {
-      const settingsIndex = index - settingsStart;
-      const isDeclaredNumericSetting = settingsStart >= 0 && numericSettings.has(settingsIndex);
-      const isNumberLikeSetting =
-        index >= nearSettingsStart &&
-        typeof value === "string" &&
-        value.trim() !== "" &&
-        Number.isFinite(Number(value));
-      if (isDeclaredNumericSetting || isNumberLikeSetting) {
-        if (value === "" || value === null || typeof value === "undefined") {
-          return value === "" ? null : value;
-        }
-        const numberValue = Number(value);
-        return Number.isFinite(numberValue) ? numberValue : value;
-      }
-      return value;
-    });
-  };
-  const isZh = args.includes("zh");
-  const notice = isZh
-    ? "正在把追问回答整理进今日小 Tips。"
-    : "Folding the follow-up answer into the Today Tip.";
-  const note = isZh
-    ? "正在检查梦境锚点、你的回答和安全边界，然后生成一个可复制结果。"
-    : "Checking dream anchors, your answer, and safety boundaries before writing the copyable result.";
-  document.querySelectorAll(".dc-notice").forEach((el) => {
-    el.textContent = notice;
-    el.classList.remove("is-error");
-    el.classList.add("is-processing");
-  });
-  document.querySelectorAll(".dc-processing-note").forEach((el) => {
-    el.textContent = note;
-    el.classList.add("is-active");
-  });
-  return normalizeInputs(args);
 }
 """
 
@@ -859,7 +826,11 @@ def build_demo() -> gr.Blocks:
                         field_tip_html = gr.HTML(_field_tip_html(DEFAULT_LANGUAGE))
                         with gr.Row(elem_classes=["dc-submit-row"]):
                             example_button = gr.Button(initial_copy["example_button"], variant="secondary")
-                            submit_button = gr.Button(initial_copy["submit_button"], variant="primary")
+                            submit_button = gr.Button(
+                                initial_copy["submit_button"],
+                                variant="primary",
+                                elem_classes=["dc-submit-button"],
+                            )
                         processing_html = gr.HTML(_processing_html(DEFAULT_LANGUAGE))
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-question"]) as question_group:
@@ -871,14 +842,30 @@ def build_demo() -> gr.Blocks:
                             value="",
                         )
                         with gr.Row(elem_classes=["dc-question-actions"]):
-                            answer_button = gr.Button(initial_copy["answer_button"], variant="primary")
-                            skip_button = gr.Button(initial_copy["skip_button"], variant="secondary")
+                            answer_button = gr.Button(
+                                initial_copy["answer_button"],
+                                variant="primary",
+                                elem_classes=["dc-answer-button"],
+                            )
+                            skip_button = gr.Button(
+                                initial_copy["skip_button"],
+                                variant="secondary",
+                                elem_classes=["dc-tip-button"],
+                            )
 
                     with gr.Group(visible=False, elem_classes=["dc-stage", "dc-card"]) as card_group:
                         card_html = gr.HTML("")
                         with gr.Row(elem_classes=["dc-actions"]):
-                            gentle_button = gr.Button(initial_copy["ask_again_button"], variant="secondary")
-                            weird_button = gr.Button(initial_copy["angle_button"], variant="secondary")
+                            gentle_button = gr.Button(
+                                initial_copy["ask_again_button"],
+                                variant="secondary",
+                                elem_classes=["dc-tip-button"],
+                            )
+                            weird_button = gr.Button(
+                                initial_copy["angle_button"],
+                                variant="secondary",
+                                elem_classes=["dc-tip-button"],
+                            )
                             copy_button = gr.Button(initial_copy["copy_button"], variant="secondary")
                             reset_button = gr.Button(initial_copy["reset_button"], variant="secondary")
                         card_text = gr.Textbox(
@@ -1044,7 +1031,6 @@ def build_demo() -> gr.Blocks:
             inputs=[dream_text, image_input, audio_input, mood, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
-            js=SUBMIT_PROCESSING_JS,
             scroll_to_output=True,
             show_api=False,
         )
@@ -1053,7 +1039,6 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, answer_text, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
-            js=TIP_PROCESSING_JS,
             scroll_to_output=True,
             show_api=False,
         )
@@ -1062,7 +1047,6 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
-            js=TIP_PROCESSING_JS,
             scroll_to_output=True,
             show_api=False,
         )
@@ -1071,7 +1055,6 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, gr.State("softer"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
-            js=TIP_PROCESSING_JS,
             scroll_to_output=True,
             show_api=False,
         )
@@ -1080,7 +1063,6 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, gr.State("stranger"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
-            js=TIP_PROCESSING_JS,
             scroll_to_output=True,
             show_api=False,
         )

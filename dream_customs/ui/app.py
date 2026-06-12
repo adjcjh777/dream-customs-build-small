@@ -323,9 +323,16 @@ SUBMIT_PROCESSING_JS = """
   const normalizeInputs = (values) => {
     const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
     const settingsStart = values.length - 18;
+    const nearSettingsStart = Math.max(0, values.length - 20);
     return values.map((value, index) => {
       const settingsIndex = index - settingsStart;
-      if (settingsStart >= 0 && numericSettings.has(settingsIndex)) {
+      const isDeclaredNumericSetting = settingsStart >= 0 && numericSettings.has(settingsIndex);
+      const isNumberLikeSetting =
+        index >= nearSettingsStart &&
+        typeof value === "string" &&
+        value.trim() !== "" &&
+        Number.isFinite(Number(value));
+      if (isDeclaredNumericSetting || isNumberLikeSetting) {
         if (value === "" || value === null || typeof value === "undefined") {
           return value === "" ? null : value;
         }
@@ -361,9 +368,16 @@ TIP_PROCESSING_JS = """
   const normalizeInputs = (values) => {
     const numericSettings = new Set([6, 7, 8, 9, 10, 11, 14, 15, 16]);
     const settingsStart = values.length - 18;
+    const nearSettingsStart = Math.max(0, values.length - 20);
     return values.map((value, index) => {
       const settingsIndex = index - settingsStart;
-      if (settingsStart >= 0 && numericSettings.has(settingsIndex)) {
+      const isDeclaredNumericSetting = settingsStart >= 0 && numericSettings.has(settingsIndex);
+      const isNumberLikeSetting =
+        index >= nearSettingsStart &&
+        typeof value === "string" &&
+        value.trim() !== "" &&
+        Number.isFinite(Number(value));
+      if (isDeclaredNumericSetting || isNumberLikeSetting) {
         if (value === "" || value === null || typeof value === "undefined") {
           return value === "" ? null : value;
         }

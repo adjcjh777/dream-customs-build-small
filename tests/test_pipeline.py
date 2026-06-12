@@ -178,6 +178,73 @@ def test_generate_today_tip_keeps_answer_history_and_removes_placeholder_text():
     assert "does not indicate any real-life concerns" not in combined
 
 
+def test_generate_today_tip_follows_user_question_and_comfort_need_in_chinese():
+    intake = build_intake(
+        dream_text="我梦到自己掉进海里，醒来很害怕。我想知道这是不是说明我快撑不住了？",
+        mood="害怕",
+    )
+
+    card = generate_today_tip(intake, "我最近工作压力很大，真的很想被安慰一下。", FakeTextClient(), language="zh")
+    combined = "\n".join(
+        [
+            card.main_question,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    )
+
+    assert "撑不住" in card.main_question
+    assert "海" in combined
+    assert "压力" in combined or "害怕" in combined
+    assert "第一层" in card.interpretation and "第二层" in card.interpretation
+    assert "太脆弱" in card.caring_note
+    assert "电梯" not in combined
+    assert "只打开那件事" not in combined
+
+
+def test_generate_today_tip_answers_sad_relationship_question_without_productivity_template():
+    intake = build_intake(
+        dream_text="我梦到前任发消息又消失了，我醒来很难过，想知道是不是我还没走出来。",
+        mood="难过",
+    )
+
+    card = generate_today_tip(intake, "我不想要鸡汤，只想知道为什么这么难受。", FakeTextClient(), language="zh")
+    combined = "\n".join([card.main_question, card.interpretation, card.today_tip, card.caring_note])
+
+    assert "为什么这么难受" in card.main_question or "没走出来" in card.main_question
+    assert "难受" in combined or "难过" in combined
+    assert "消息" in combined
+    assert "第一句话" not in combined
+    assert "打开任务" not in combined
+
+
+def test_generate_today_tip_keeps_english_emotional_question_from_becoming_task_advice():
+    intake = build_intake(
+        dream_text="I dreamed I was drowning in dark water and woke scared. Does this mean I am not coping?",
+        mood="scared",
+    )
+
+    card = generate_today_tip(intake, "I need comfort, not productivity advice.", FakeTextClient(), language="en")
+    combined = "\n".join(
+        [
+            card.main_question,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert "not coping" in card.main_question.lower()
+    assert "water" in combined
+    assert "first" in card.interpretation.lower() and "second" in card.interpretation.lower()
+    assert "not weak" in combined or "comforted" in combined
+    assert "open the task" not in combined
+    assert "first line" not in combined
+
+
 def test_generate_today_tip_adds_safety_note_for_repeated_insomnia_without_self_harm():
     intake = build_intake(
         dream_text="我昨晚反复梦见自己在一条漆黑的走廊里走，醒来后心跳很快，已经连续3晚都睡不好。",

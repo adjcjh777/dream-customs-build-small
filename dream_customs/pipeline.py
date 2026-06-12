@@ -108,6 +108,12 @@ _ZH_ANCHOR_MARKERS = [
     "掉进海",
     "海里",
     "海",
+    "前任发消息",
+    "发消息又消失",
+    "发消息",
+    "消息",
+    "前任",
+    "消失",
     "小孩找不到家",
     "小孩",
     "找不到家",
@@ -210,6 +216,12 @@ _ZH_TO_EN_PHRASES = {
     "掉进海": "falling into the sea",
     "海里": "sea",
     "海": "sea",
+    "前任发消息": "former partner sending a message",
+    "发消息又消失": "message that disappeared",
+    "发消息": "sending a message",
+    "消息": "message",
+    "前任": "former partner",
+    "消失": "disappearing",
     "小孩找不到家": "child unable to find home",
     "小孩": "child",
     "找不到家": "unable to find home",
@@ -543,9 +555,241 @@ def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
     return f"你梦见{clean}"
 
 
+def _user_supplied_text(intake: DreamIntake, answers: str = "", include_mood: bool = False) -> str:
+    parts = [
+        intake.dream_text,
+        intake.voice_transcript,
+        intake.main_question,
+        intake.uncertainty,
+        intake.user_context,
+        answers or "",
+    ]
+    if include_mood:
+        parts.append(intake.mood)
+    return "\n".join(part.strip() for part in parts if part and part.strip())
+
+
+def _question_sentence_candidates(text: str) -> List[str]:
+    pieces = re.split(r"[。！？!?\n\r]+|(?<=\.)\s+|[，,；;]", text or "")
+    return [piece.strip(" ：:「」\"'()[]{}") for piece in pieces if piece.strip()]
+
+
+def _clean_user_question(text: str, language: str = "en") -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip(" ：:「」\"'()[]{}"))
+    if not clean:
+        return ""
+    if _is_zh(language):
+        clean = re.sub(r"^(我)?(醒来后)?(最)?(想知道|想问|在想|担心|害怕)[：:，,\s]*", "", clean)
+        clean = re.sub(r"^(只)?想知道[：:，,\s]*", "", clean)
+        clean = clean.strip(" ：:「」\"'()[]{}")
+        return clean if clean.endswith(("?", "？")) else f"{clean}？"
+    clean = re.sub(
+        r"^(i\s+)?(woke\s+up\s+)?(want\s+to\s+know|wonder|am\s+wondering|need\s+to\s+know|worry|fear)\s*(if|whether|why|what|how)?\s*",
+        lambda match: (match.group(4) or "").strip() + " ",
+        clean,
+        flags=re.IGNORECASE,
+    ).strip()
+    clean = clean[0].upper() + clean[1:] if clean else ""
+    if clean and not clean.endswith("?") and re.match(r"^(why|what|how|does|do|did|is|am|are|can|could|should|would)\b", clean, re.IGNORECASE):
+        clean += "?"
+    return clean
+
+
+def _extract_explicit_user_question(intake: DreamIntake, answers: str = "", language: str = "en") -> str:
+    if intake.main_question.strip():
+        return _clean_user_question(intake.main_question, language)
+    text = _user_supplied_text(intake, answers)
+    if _is_zh(language):
+        markers = (
+            "为什么",
+            "是不是",
+            "会不会",
+            "怎么办",
+            "我该",
+            "能不能",
+            "代表",
+            "说明",
+            "预兆",
+            "征兆",
+            "想知道",
+            "想问",
+            "撑不住",
+            "走出来",
+            "这么难受",
+        )
+    else:
+        markers = (
+            "why",
+            "what should",
+            "how should",
+            "does this mean",
+            "do i",
+            "am i",
+            "is this",
+            "could this",
+            "can this",
+            "should i",
+            "i wonder",
+            "want to know",
+            "not coping",
+            "cope",
+            "a sign",
+            "omen",
+        )
+    for sentence in _question_sentence_candidates(text):
+        lowered = sentence.lower()
+        if _is_skip_answer(sentence, language):
+            continue
+        if any(marker in lowered for marker in markers):
+            return _clean_user_question(sentence, language)
+    return ""
+
+
+def _emotion_labels_from_text(text: str, language: str = "en") -> List[str]:
+    lowered = (text or "").lower()
+    if _is_zh(language):
+        groups = [
+            ("害怕", ["害怕", "吓", "恐惧", "心慌", "心跳很快", "惊醒"]),
+            ("压力", ["压力", "撑不住", "扛不住", "崩溃", "压垮", "焦虑", "太累", "疲惫"]),
+            ("难过", ["难过", "难受", "伤心", "失落", "想哭", "委屈", "孤独"]),
+            ("自责", ["自责", "内疚", "愧疚", "后悔", "责怪自己"]),
+            ("需要安慰", ["安慰", "被安慰", "抱抱", "关心", "陪陪", "鸡汤"]),
+        ]
+    else:
+        groups = [
+            ("fear", ["scared", "afraid", "terrified", "panic", "panicked", "frightened"]),
+            ("pressure", ["overwhelmed", "not coping", "can't cope", "cannot cope", "burned out", "too much", "anxious"]),
+            ("sadness", ["sad", "grief", "hurt", "lonely", "heartbroken", "upset"]),
+            ("guilt", ["guilty", "ashamed", "blame myself", "regret"]),
+            ("comfort", ["comfort", "reassurance", "not productivity", "not advice", "not a pep talk"]),
+        ]
+    labels: List[str] = []
+    for label, terms in groups:
+        if any(term in lowered for term in terms):
+            labels.append(label)
+    return _dedupe_preserve_order(labels)
+
+
+def _emotion_phrase(labels: List[str], language: str = "en") -> str:
+    if not labels:
+        return "这个感受" if _is_zh(language) else "this feeling"
+    if _is_zh(language):
+        return "、".join(labels)
+    if len(labels) == 1:
+        return labels[0]
+    return ", ".join(labels[:-1]) + f", and {labels[-1]}"
+
+
+def _needs_comfort(text: str, language: str = "en") -> bool:
+    lowered = (text or "").lower()
+    if _is_zh(language):
+        return any(term in lowered for term in ["安慰", "被安慰", "抱抱", "关心", "别催", "不是鸡汤"])
+    return any(term in lowered for term in ["comfort", "reassurance", "not productivity", "not a pep talk", "not advice"])
+
+
+def _should_use_emotion_led_response(intake: DreamIntake, answers: str, language: str = "en") -> bool:
+    user_text = _user_supplied_text(intake, answers)
+    explicit_question = _extract_explicit_user_question(intake, answers, language)
+    labels = _emotion_labels_from_text(user_text, language)
+    if _is_low_context_intake(intake) and _is_skip_answer(answers, language) and not explicit_question and not _needs_comfort(user_text, language):
+        return False
+    return bool(explicit_question or labels or _needs_comfort(user_text, language))
+
+
+def _direct_question_reassurance(question: str, labels: List[str], language: str = "en") -> str:
+    lowered = (question or "").lower()
+    if _is_zh(language):
+        if any(term in lowered for term in ["撑不住", "扛不住", "崩溃"]):
+            return "它不等于你一定撑不住了；更像是在提醒你，最近的压力已经值得被认真照顾。"
+        if "走出来" in lowered:
+            return "它不急着证明你有没有走出来；更像是在说明这段难受还需要一点被看见的时间。"
+        if any(term in lowered for term in ["预兆", "征兆", "坏事", "会不会发生"]):
+            return "它不适合被当作预兆；我们先把它当作醒来后仍在身体里的担心来照顾。"
+        if any(term in lowered for term in ["我是不是", "是不是我"]):
+            return "它不是给你贴标签的证据；它更像是在把一个需要被接住的感受放到你面前。"
+        if "为什么" in lowered or "这么难受" in lowered:
+            return "这么难受不是你反应过度；梦可能只是把还没放下的感受放大给你看。"
+        emotion = _emotion_phrase(labels, language)
+        return f"你提到的{emotion}不是小事，它值得先被接住，而不是立刻被解释掉。"
+    if any(term in lowered for term in ["not coping", "cope", "coping", "falling apart"]):
+        return "This does not prove you are failing to cope; it may be showing that your pressure deserves care before answers."
+    if "sign" in lowered or "omen" in lowered or "bad will happen" in lowered:
+        return "This is safer to treat as a fear to care for, not as evidence that something bad will happen."
+    if "am i" in lowered or "does this mean i" in lowered:
+        return "This dream is not evidence for a label about you; it is one feeling asking to be met gently."
+    if "why" in lowered:
+        return "The ache makes sense; the dream may be enlarging a feeling that has not had enough room yet."
+    emotion = _emotion_phrase(labels, language)
+    return f"The {emotion} you named deserves to be met first, not explained away too quickly."
+
+
+def _emotion_led_interpretation(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    if not _should_use_emotion_led_response(intake, answers, language):
+        return ""
+    question = _extract_explicit_user_question(intake, answers, language)
+    labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
+    emotion = _emotion_phrase(labels, language)
+    anchor = _answer_bridge_anchor(anchors)
+    direct = _direct_question_reassurance(question, labels, language)
+    if _is_zh(language):
+        opener = f"你问的是「{question}」。" if question else ""
+        return (
+            f"{opener}{direct} 第一层，先承认醒来后的{emotion}是真实的，不需要被责怪。"
+            f"第二层，梦里的「{anchor}」也许把这种感受变成了一个可以看的画面。"
+            "第三层，今天不急着找唯一答案，先给自己一个能站稳的小支点。"
+        )
+    opener = f"You asked, \"{question}\" " if question else ""
+    return (
+        f"{opener}{direct} First, let the {emotion} be real without blaming yourself. "
+        f"Second, the {_anchor_with_article(anchor)} may be the dream's concrete shape for that feeling. "
+        "Third, for today the goal is not to solve the whole dream, but to give yourself one steadier place to stand."
+    )
+
+
+def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    if not _should_use_emotion_led_response(intake, answers, language):
+        return ""
+    if _has_prophecy_frame(_user_supplied_text(intake, answers)):
+        return ""
+    labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
+    emotion = _emotion_phrase(labels, language)
+    anchor = anchors[0]
+    if _is_zh(language):
+        return (
+            f"今天先把「{anchor}」当作{emotion}的形状，而不是结论：写一句“我现在被什么淹到/刺痛”，"
+            "再写一句“我此刻可以抓住的一个小安定”。"
+        )
+    return (
+        f"For today, treat the {anchor} as the shape of {emotion}, not a verdict: write one line naming "
+        "what feels heavy, then one line naming a small steady thing you can hold now."
+    )
+
+
+def _emotion_led_tiny_action(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    if not _should_use_emotion_led_response(intake, answers, language):
+        return ""
+    anchor = anchors[0]
+    if _is_zh(language):
+        return f"用 5 分钟写两行：1.「{anchor}」让我最难受的是…… 2. 现在我能给自己的一点安定是……"
+    return f"Spend five minutes writing two lines: 1. The {anchor} hurts most because... 2. One steady thing I can offer myself now is..."
+
+
+def _emotion_led_caring_note(intake: DreamIntake, answers: str, language: str = "en") -> str:
+    if not _should_use_emotion_led_response(intake, answers, language):
+        return ""
+    labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
+    emotion = _emotion_phrase(labels, language)
+    if _is_zh(language):
+        return f"你不是太脆弱，也不是需要被催着立刻想通；这份{emotion}可以先被轻轻接住。"
+    return f"You are not weak for feeling {emotion}; you do not have to turn it into a lesson before you are comforted."
+
+
 def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str:
     if intake.main_question.strip():
-        return intake.main_question.strip()
+        return _clean_user_question(intake.main_question, language)
+    explicit_question = _extract_explicit_user_question(intake, "", language)
+    if explicit_question:
+        return explicit_question
     task = _task_focus(intake.merged_text(), language)
     if task:
         if not _is_zh(language):
@@ -1089,14 +1333,20 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         setattr(polished, field, _clean_placeholder_phrase(getattr(polished, field)))
     if not polished.dream_summary.strip() or _is_placeholder_anchor(polished.dream_summary) or not _text_uses_anchor(polished.dream_summary, anchors):
         polished.dream_summary = _summary_from_intake(intake, language)
-    if (
+    explicit_question = _extract_explicit_user_question(intake, answers, language)
+    if explicit_question:
+        polished.main_question = explicit_question
+    elif (
         not polished.main_question.strip()
         or _is_placeholder_anchor(polished.main_question)
         or not _text_uses_anchor(polished.main_question, anchors)
     ):
         polished.main_question = _main_question_from_intake(intake, language)
+    emotion_interpretation = _emotion_led_interpretation(intake, answers, anchors, language)
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
-    if answer_interpretation:
+    if emotion_interpretation:
+        polished.interpretation = emotion_interpretation
+    elif answer_interpretation:
         polished.interpretation = answer_interpretation
     elif _has_prophecy_frame(intake.merged_text()):
         anchor = _answer_bridge_anchor(anchors)
@@ -1115,8 +1365,11 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     elif not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
+    emotion_tip = _emotion_led_today_tip(intake, answers, anchors, language)
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)
-    if answer_tip:
+    if emotion_tip:
+        polished.today_tip = emotion_tip
+    elif answer_tip:
         polished.today_tip = answer_tip
     elif _has_prophecy_frame(intake.merged_text()):
         anchor = anchors[0]
@@ -1140,8 +1393,11 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     ):
         polished.today_tip = _grounded_today_tip(intake, language)
     hard_action_markers = ["address it immediately", "fix it immediately", "solve it immediately"]
+    emotion_action = _emotion_led_tiny_action(intake, answers, anchors, language)
     answer_action = _answer_based_tiny_action(answers, language)
-    if answer_action:
+    if emotion_action:
+        polished.tiny_action = emotion_action
+    elif answer_action:
         polished.tiny_action = answer_action
     elif _has_prophecy_frame(intake.merged_text()):
         polished.tiny_action = (
@@ -1165,7 +1421,10 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
             polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
         else:
             polished.tiny_action = f"Spend five minutes writing the first small step connected to the {anchors[0]}."
-    if not polished.caring_note.strip():
+    emotion_caring_note = _emotion_led_caring_note(intake, answers, language)
+    if emotion_caring_note:
+        polished.caring_note = emotion_caring_note
+    elif not polished.caring_note.strip():
         polished.caring_note = (
             "你不需要一醒来就解决整个梦，先把一个细节照亮就很好。"
             if _is_zh(language)

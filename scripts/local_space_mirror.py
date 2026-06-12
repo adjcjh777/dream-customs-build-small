@@ -9,53 +9,23 @@ import os
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
-SPACE_ID = "build-small-hackathon/dream-customs"
-DEFAULT_RUNTIME_ENV_JSON = Path("/tmp/dream-customs-runtime.json")
-RUNTIME_ENV_KEYS = {
-    "DREAM_CUSTOMS_TEXT_ENDPOINT",
-    "DREAM_CUSTOMS_VISION_ENDPOINT",
-    "DREAM_CUSTOMS_ASR_ENDPOINT",
-    "DREAM_CUSTOMS_HOSTED_TOKEN",
-}
+root = str(ROOT)
+if root not in sys.path:
+    sys.path.insert(0, root)
+
+from dream_customs.runtime_env import (
+    DEFAULT_RUNTIME_ENV_JSON,
+    SPACE_ID,
+    configured_env,
+    load_runtime_env_json,
+)
 
 
 def _repo_root_on_path() -> None:
     root = str(ROOT)
     if root not in sys.path:
         sys.path.insert(0, root)
-
-
-def _configured_env() -> dict:
-    return {
-        "space_id": os.getenv("SPACE_ID", SPACE_ID),
-        "text_endpoint_configured": bool(os.getenv("DREAM_CUSTOMS_TEXT_ENDPOINT", "").strip()),
-        "vision_endpoint_configured": bool(os.getenv("DREAM_CUSTOMS_VISION_ENDPOINT", "").strip()),
-        "asr_endpoint_configured": bool(os.getenv("DREAM_CUSTOMS_ASR_ENDPOINT", "").strip()),
-        "hosted_token_configured": bool(os.getenv("DREAM_CUSTOMS_HOSTED_TOKEN", "").strip()),
-    }
-
-
-def load_runtime_env_json(path: Path) -> dict:
-    if not path.exists():
-        return {"loaded": False, "path": str(path), "reason": "missing"}
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        return {"loaded": False, "path": str(path), "reason": exc.__class__.__name__}
-
-    loaded_keys = []
-    for key in sorted(RUNTIME_ENV_KEYS):
-        value = str(data.get(key, "")).strip()
-        if value:
-            os.environ[key] = value
-            loaded_keys.append(key)
-    return {
-        "loaded": bool(loaded_keys),
-        "path": str(path),
-        "configured_keys": loaded_keys,
-    }
 
 
 def mirror_manifest(host: str, port: int) -> dict:
@@ -72,7 +42,7 @@ def mirror_manifest(host: str, port: int) -> dict:
             "vision": DEFAULT_VISION_BACKEND,
             "asr": DEFAULT_ASR_BACKEND,
         },
-        "env": _configured_env(),
+        "env": configured_env(SPACE_ID),
         "notes": [
             "Uses the same app.py/build_demo path as the Hugging Face Space.",
             "Missing hosted endpoint secrets fall back to deterministic demo behavior.",

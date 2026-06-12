@@ -5,9 +5,11 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from dream_customs import zerogpu  # noqa: F401
+from dream_customs.runtime_env import auto_load_runtime_env_json
 from dream_customs.ui.app import build_demo
 
 
+auto_load_runtime_env_json()
 demo = build_demo()
 
 

@@ -159,6 +159,21 @@ def test_processing_note_is_story_copy_not_backend_jargon():
     assert "debug" not in lowered
 
 
+def test_long_running_buttons_show_processing_feedback():
+    source = inspect.getsource(ui_app.build_demo)
+    app_source = inspect.getsource(ui_app)
+
+    assert "js=SUBMIT_PROCESSING_JS" in source
+    assert source.count("js=TIP_PROCESSING_JS") >= 4
+    assert source.count("scroll_to_output=True") >= 5
+    assert "Reading the dream details" in app_source
+    assert "Folding the follow-up answer" in app_source
+    assert ".dc-notice.is-processing" in CSS
+    assert ".dc-processing-note.is-active" in CSS
+    assert "endpoint" not in ui_app.SUBMIT_PROCESSING_JS.lower()
+    assert "debug" not in ui_app.TIP_PROCESSING_JS.lower()
+
+
 def test_mobile_reset_restores_calm_mood():
     settings_values = [
         "",

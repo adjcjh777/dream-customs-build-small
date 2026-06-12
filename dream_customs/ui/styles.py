@@ -612,6 +612,39 @@ button.secondary {
   max-width: 44rem;
 }
 
+.dc-processing-note.is-active {
+  background: rgba(244, 201, 94, 0.16);
+  border: 1px solid rgba(191, 133, 35, 0.28);
+  border-radius: 10px;
+  color: var(--dc-ink);
+  padding: 10px 12px 10px 36px;
+  position: relative;
+}
+
+.dc-processing-note.is-active::before {
+  animation: dc-processing-pulse 1.1s ease-in-out infinite;
+  background: var(--dc-sage);
+  border-radius: 999px;
+  content: "";
+  height: 10px;
+  left: 14px;
+  position: absolute;
+  top: 16px;
+  width: 10px;
+}
+
+@keyframes dc-processing-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .dc-processing-note::before {
   color: var(--dc-coral-dark);
   content: "While the stamp dries: ";
@@ -751,6 +784,12 @@ button.secondary {
   background: #fff0eb;
   border-color: #efb19d;
   color: #9f321c;
+}
+
+.dc-notice.is-processing {
+  background: rgba(244, 201, 94, 0.18);
+  border-color: rgba(191, 133, 35, 0.32);
+  color: var(--dc-ink);
 }
 
 .dc-pass-card {

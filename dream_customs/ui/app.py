@@ -318,6 +318,52 @@ VOICE_JS = r"""
 """
 
 
+SUBMIT_PROCESSING_JS = """
+(...args) => {
+  const isZh = args.includes("zh");
+  const notice = isZh
+    ? "正在整理梦境线索。下一步会生成一个贴着细节的温和追问。"
+    : "Reading the dream details. Next, Dream QA will ask one grounded question.";
+  const note = isZh
+    ? "正在提取人物、地点、情绪和具体物件；如果生成较慢，通常需要十几秒。"
+    : "Extracting people, places, feelings, and concrete objects. A slower run can take several seconds.";
+  document.querySelectorAll(".dc-notice").forEach((el) => {
+    el.textContent = notice;
+    el.classList.remove("is-error");
+    el.classList.add("is-processing");
+  });
+  document.querySelectorAll(".dc-processing-note").forEach((el) => {
+    el.textContent = note;
+    el.classList.add("is-active");
+  });
+  return args;
+}
+"""
+
+
+TIP_PROCESSING_JS = """
+(...args) => {
+  const isZh = args.includes("zh");
+  const notice = isZh
+    ? "正在把追问回答整理进今日小 Tips。"
+    : "Folding the follow-up answer into the Today Tip.";
+  const note = isZh
+    ? "正在检查梦境锚点、你的回答和安全边界，然后生成一个可复制结果。"
+    : "Checking dream anchors, your answer, and safety boundaries before writing the copyable result.";
+  document.querySelectorAll(".dc-notice").forEach((el) => {
+    el.textContent = notice;
+    el.classList.remove("is-error");
+    el.classList.add("is-processing");
+  });
+  document.querySelectorAll(".dc-processing-note").forEach((el) => {
+    el.textContent = note;
+    el.classList.add("is-active");
+  });
+  return args;
+}
+"""
+
+
 def _load_view(view_json: str) -> dict:
     try:
         return json.loads(view_json or "{}")
@@ -917,6 +963,8 @@ def build_demo() -> gr.Blocks:
             inputs=[dream_text, image_input, audio_input, mood, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
+            js=SUBMIT_PROCESSING_JS,
+            scroll_to_output=True,
             show_api=False,
         )
         answer_button.click(
@@ -924,6 +972,8 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, answer_text, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
+            js=TIP_PROCESSING_JS,
+            scroll_to_output=True,
             show_api=False,
         )
         skip_button.click(
@@ -931,6 +981,8 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
+            js=TIP_PROCESSING_JS,
+            scroll_to_output=True,
             show_api=False,
         )
         gentle_button.click(
@@ -938,6 +990,8 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, gr.State("softer"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
+            js=TIP_PROCESSING_JS,
+            scroll_to_output=True,
             show_api=False,
         )
         weird_button.click(
@@ -945,6 +999,8 @@ def build_demo() -> gr.Blocks:
             inputs=[session_state, gr.State("stranger"), language, text_backend, vision_backend] + settings_inputs,
             outputs=outputs,
             api_name=False,
+            js=TIP_PROCESSING_JS,
+            scroll_to_output=True,
             show_api=False,
         )
         copy_button.click(lambda text: text, inputs=card_text, outputs=card_text, api_name=False, show_api=False)

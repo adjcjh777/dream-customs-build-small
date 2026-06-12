@@ -106,7 +106,7 @@ class TodayTipCard(BaseModel):
             f"今日小 Tips: {self.today_tip}",
         ]
         if self.tiny_action:
-            lines.append(f"没试过的小事: {self.tiny_action}")
+            lines.append(f"古怪的小事: {self.tiny_action}")
         if self.caring_note:
             lines.append(f"关心一句: {self.caring_note}")
         if self.safety_note:

@@ -35,7 +35,7 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
         else "Thanks for sharing this. Here is one grounded suggestion for today.",
         "interpretation": "补充解读" if is_zh else "Supporting reflection",
         "today_tip": "今天的小建议" if is_zh else "Today's small suggestion",
-        "tiny_action": "没试过的小事" if is_zh else "Tiny action",
+        "tiny_action": "古怪的小事" if is_zh else "Weird little thing",
         "anchors": "关键词：" if is_zh else "Anchors:",
         "history": "追问记录" if is_zh else "Question record",
         "safety_default": "这不是诊断，只是一个温和的今日参考。"

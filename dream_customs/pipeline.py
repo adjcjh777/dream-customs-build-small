@@ -1023,94 +1023,106 @@ def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str]
     if _is_zh(language):
         if theme == "lost_home":
             extra = f"如果刚才的回答里「{answer_snippet}」最重，就从它开始。" if answer_snippet else ""
-            return (
-                f"今天先顺着「{anchor}」照顾那种需要被带路的感觉，而不是急着解释梦的含义。"
-                f"{extra}给今天补一个很小的“路标”：问一个人、查一个入口，或写下下一站在哪里。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」翻译成现实里需要带路的一件事，先不急着解释梦的含义。",
+                    f"{extra}今天只补一个现实路标：问一个人、查一个入口，或写下下一站在哪里。",
+                ],
+                language,
             )
         if theme == "dark_water":
-            return (
-                f"今天先把「{anchor}」当成醒来后还在身体里的浪，不当成危险证明。"
-                "先选一个让自己回到岸边的动作：开灯、洗脸、发一句“我醒来有点慌，先缓一下”。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」当成醒来后还留在身体里的感觉，不当成危险证明。",
+                    "先选一个现实里的上岸动作：开灯、洗脸，或发一句“我醒来有点慌，先缓一下”。",
+                ],
+                language,
             )
         if theme == "stuck_elevator":
-            return (
-                f"今天不要逼自己抵达所有楼层；先把「{anchor}」变成一个只按一次的按钮。"
-                "只确认当前最卡的一层是什么，再允许自己停在那里做一个很小动作。"
+            return _numbered_suggestions(
+                [
+                    f"从「{anchor}」找出现实里最像卡在入口的一件事：是开始、等待回应，还是怕来不及。",
+                    "把它拆成两步：先确认卡点，再只做一个今天真的能完成的入口动作。",
+                ],
+                language,
             )
         if theme == "library_signal":
-            return (
-                f"今天把「{anchor}」当成一张提醒你回到安定处的便签。"
-                "不用立刻整理完整答案，只挑一个让你有“回家感”的人、物或角落，靠近它五分钟。"
+            return _numbered_suggestions(
+                [
+                    f"让「{anchor}」指向现实里能让你稳定一点的来源。",
+                    "不用立刻整理完整答案，只挑一个有“回家感”的人、物或角落，靠近它五分钟。",
+                ],
+                language,
             )
         if theme == "message_loss":
-            return (
-                f"今天先把「{anchor}」看成一段还没被好好收起的联系。"
-                "不用真的发出去，先写一封不发送的回信，让那句没说完的话有地方停靠。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」看成现实里一段还没被好好收起的联系。",
+                    "不用真的联系对方，先写一封不发送的回信，让那句没说完的话有地方停靠。",
+                ],
+                language,
             )
-        return (
-            f"今天的小建议是：先别把「{anchor}」解释成结论；把它当成梦递过来的线索，"
-            "问问它在替你保护哪一种感受，再给那种感受一个很小的照顾动作。"
+        return _numbered_suggestions(
+            [
+                f"先别把「{anchor}」解释成结论，把它当成现实生活里一个需要照顾的线索。",
+                "问问它像今天哪一种感受，再给那种感受一个真的能做的小照顾。",
+            ],
+            language,
         )
     if theme == "lost_home":
         extra = f" If your answer points to \"{answer_snippet}\", start there." if answer_snippet else ""
-        return (
-            f"For today, treat {anchor} as a need for guidance, not as a verdict about you.{extra} "
-            "Add one tiny wayfinding marker: ask one person, check one entrance, or name the next stop."
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into a waking-life need for guidance, not a verdict about you.",
+                f"{extra}Add one real wayfinding marker: ask one person, check one entrance, or name the next stop.",
+            ],
+            language,
         )
     if theme == "dark_water":
-        return (
-            f"For today, treat {anchor} as a wave still in your body, not proof of danger. "
-            "Choose one shore-like action: turn on a light, wash your face, or tell someone you woke up unsettled."
+        return _numbered_suggestions(
+            [
+                f"Treat {anchor} as a body feeling after waking, not proof of danger.",
+                "Choose one real shore-like action: turn on a light, wash your face, or tell someone you woke unsettled.",
+            ],
+            language,
         )
     if theme == "stuck_elevator":
-        return (
-            f"For today, do not make yourself reach every floor. Let {anchor} become one button: "
-            "name the stuck floor, then do only one small action there."
+        return _numbered_suggestions(
+            [
+                f"Use {anchor} to locate the real-life entrance where you feel stuck: starting, waiting, or being late.",
+                "Split it in two: name the stuck point, then choose one waking-life doorway action for today.",
+            ],
+            language,
         )
     if theme == "library_signal":
-        return (
-            f"For today, treat {anchor} like a note pointing you back to steadiness. "
-            "Pick one person, place, or object that feels like home and spend five minutes near it."
+        return _numbered_suggestions(
+            [
+                f"Let {anchor} point to a real source of steadiness.",
+                "Pick one person, place, or object that feels like home and spend five minutes near it.",
+            ],
+            language,
         )
     if theme == "message_loss":
-        return (
-            f"For today, treat {anchor} as an unfinished contact, not a demand to reopen everything. "
-            "Write one unsent reply so the unsaid sentence has somewhere to rest."
+        return _numbered_suggestions(
+            [
+                f"Treat {anchor} as an unfinished contact in real life, not a demand to reopen everything.",
+                "Write one private unsent reply so the unsaid sentence has somewhere to rest.",
+            ],
+            language,
         )
-    return (
-        f"For today, do not turn {anchor} into a fixed conclusion. Treat it as a clue about one feeling "
-        "that needs care, then give that feeling one small caring action."
+    return _numbered_suggestions(
+        [
+            f"Do not turn {anchor} into a fixed conclusion; translate it into one waking-life feeling.",
+            "Give that feeling one small caring action you can actually do today.",
+        ],
+        language,
     )
 
 
 def _emotion_led_tiny_action(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
     if not _should_use_emotion_led_response(intake, answers, language):
         return ""
-    theme = _dream_theme(intake, answers)
-    anchor = _story_anchor_phrase(intake, anchors, language, answers)
-    if _is_zh(language):
-        if theme == "lost_home":
-            return f"用 5 分钟给「{anchor}」画一张三格小路线：我在找什么、我能问谁或查哪里、今天只走到哪一站。"
-        if theme == "dark_water":
-            return f"用 5 分钟做一个“上岸”动作：看着「{anchor}」，说出三个房间里的真实物件，再喝一口水或开一盏灯。"
-        if theme == "stuck_elevator":
-            return f"用 5 分钟写一个“只按这一层”的按钮：今天卡在哪一层、我能做的最小动作、做完就停。"
-        if theme == "library_signal":
-            return f"用 5 分钟把「{anchor}」改写成一张现实便签：我现在可以回到哪里，或联系谁，让自己稳一点。"
-        if theme == "message_loss":
-            return f"用 5 分钟写一封不发送的短信草稿，开头只写：梦里的「{anchor}」让我想承认的是……"
-        return f"用 5 分钟做一个三格便签：梦里的「{anchor}」最亮的细节、它带出的感受、今天能照顾它的一小步。"
-    if theme == "lost_home":
-        return f"Spend five minutes making a three-box route for {anchor}: what I am looking for, who or where I can ask, and the next stop only."
-    if theme == "dark_water":
-        return f"Spend five minutes doing one shore action for {anchor}: name three real objects in the room, then drink water or turn on a light."
-    if theme == "stuck_elevator":
-        return f"Spend five minutes making a one-floor button for {anchor}: the stuck floor, the smallest action, and permission to stop after it."
-    if theme == "library_signal":
-        return f"Spend five minutes turning {anchor} into a real note: where can I return, or who can I contact, to feel steadier?"
-    if theme == "message_loss":
-        return f"Spend five minutes drafting one unsent message that begins: what {anchor} makes me want to admit is..."
-    return f"Spend five minutes making three boxes for {anchor}: brightest detail, feeling it carries, and one small care step for today."
+    return _weird_little_action(intake, answers, anchors, language)
 
 
 def _emotion_led_caring_note(intake: DreamIntake, answers: str, language: str = "en") -> str:
@@ -1119,6 +1131,7 @@ def _emotion_led_caring_note(intake: DreamIntake, answers: str, language: str = 
     labels = _emotion_labels_from_text(_user_supplied_text(intake, answers), language)
     emotion = _emotion_phrase(labels, language)
     if _is_zh(language):
+        emotion = "感受" if emotion == "这个感受" else emotion
         return f"你不是太脆弱，也不是需要被催着立刻想通；这份{emotion}可以先被轻轻接住。"
     return f"You are not weak for feeling {emotion}; you do not have to turn it into a lesson before you are comforted."
 
@@ -1158,6 +1171,97 @@ def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
     )
 
 
+def _numbered_suggestions(items: List[str], language: str = "en") -> str:
+    cleaned = [item.strip() for item in items if item and item.strip()]
+    return " ".join(f"{index}. {item}" for index, item in enumerate(cleaned[:3], start=1))
+
+
+def _seeded_option(options: List[str], intake: DreamIntake, answers: str = "") -> str:
+    if not options:
+        return ""
+    seed_text = _story_text(intake, answers)
+    seed = sum(ord(char) for char in seed_text)
+    return options[seed % len(options)]
+
+
+def _weird_little_action(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    theme = _dream_theme(intake, answers)
+    if _is_zh(language):
+        options_by_theme = {
+            "lost_home": [
+                f"拿一张纸画一个写着「{anchor}」的小站牌，把钥匙或一枚硬币从站牌左边挪到右边，像真的给它过一站。",
+                f"在门边放一张写着「下一站」的便签，再把鞋尖对准它三秒；只做这一下，提醒身体已经回到现实地面。",
+            ],
+            "dark_water": [
+                f"把一杯水放在桌边当「{anchor}」的海，再把一小片纸从杯子旁挪到“岸上”；挪完说出房间里三个真实物件。",
+                f"用手指在桌面画一条看不见的海岸线，把一个小物件从「{anchor}」那侧推到自己这侧，像给醒来的身体靠岸。",
+            ],
+            "stuck_elevator": [
+                "找一张便利贴，画一个只到“草稿层”的电梯按钮，贴在电脑旁；用手指按一下，再只写邮件第一句话。",
+                "在纸上画三枚电梯按钮：14、草稿、暂停；闭眼按一下“草稿”，然后打开邮件写第一句话。",
+                "把一张纸立在键盘旁当电梯门，画个「邮件草稿层」按钮；按一下纸门，再写一句就合上。",
+            ],
+            "library_signal": [
+                f"做一张迷你借书卡，书名写「{anchor}」，到期日写“今晚不追讨”；把它夹进一本书里，像把梦暂存进图书馆。",
+                f"把一张便签折成小楼梯，写上「{anchor}」后让一支笔从第一阶滑到第二阶；今天只允许它上这一阶。",
+            ],
+            "message_loss": [
+                f"把手机旁边放一张小纸片当“消息降落伞”，写上「{anchor}」的一个词；让纸片从手机边滑下来，今天不真的发送。",
+                f"画一个迷你信号塔，塔顶写「{anchor}」；把手机倒扣三十秒，像给没发出的消息临时下班。",
+            ],
+            "school_pressure": [
+                f"把一支笔横放成教室门槛，在纸上写「{anchor}」和一个超小标题；让笔滚过门槛，表示今天只进门不考试。",
+                f"给自己做一张假的迟到证，理由写「{anchor}」；盖一个手指印，然后只补草稿里的一个标题。",
+            ],
+            "road_choice": [
+                f"用两支笔摆成两条路，把写着「{anchor}」的小纸条放在中间；闭眼转一下纸条，先走它指到的那一个 30 秒。",
+                f"在纸上画一个空白路牌，写两个现实选项；用一枚硬币当雾灯照一下其中一个，今天只查那个入口。",
+            ],
+        }
+        default_options = [
+            f"拿一张纸把「{anchor}」画成一个现实开关，真的用指尖按一下；按完只做一个不超过一分钟的小动作。",
+            f"找一个桌面小物件给「{anchor}」当临时替身，把它移动一厘米；移动完再决定今天最小的现实动作。",
+        ]
+        return _seeded_option(options_by_theme.get(theme, default_options), intake, answers)
+    options_by_theme = {
+        "lost_home": [
+            f"Draw a tiny station sign labeled {anchor}, then move a key or coin from the left side of the sign to the right as if it really crossed one stop.",
+            f"Put a note by the door that says Next stop, point your shoes at it for three seconds, and let that be the whole odd action.",
+        ],
+        "dark_water": [
+            f"Place a cup of water on the table as {anchor}, then move a scrap of paper from beside the cup to a dry shore and name three real objects in the room.",
+            f"Trace an invisible shoreline on the table and push one small object from the {anchor} side back toward you.",
+        ],
+        "stuck_elevator": [
+            "Draw an elevator button labeled Draft Floor on a sticky note, press it once with your finger, then write only the first sentence of the email.",
+            "Draw three elevator buttons on paper: 14, Draft, Pause. Close your eyes, press Draft once, then open the email for one sentence.",
+            "Stand a piece of paper beside the keyboard like elevator doors, draw an Email Draft button, press it once, write one sentence, and close the paper doors.",
+        ],
+        "library_signal": [
+            f"Make a tiny library card titled {anchor}, set the due date to Not tonight, and tuck it into a book.",
+            f"Fold a note into a small staircase, write {anchor} on it, and slide a pen from the first step to the second; today it only gets one step.",
+        ],
+        "message_loss": [
+            f"Put a paper scrap beside your phone as a message parachute, write one word from {anchor}, and let it slide down from the phone without sending anything.",
+            f"Draw a tiny signal tower with {anchor} at the top, then place your phone face down for thirty seconds so the unsent message can clock out.",
+        ],
+        "school_pressure": [
+            f"Lay a pen across the page as a classroom threshold, write {anchor} and one tiny heading, then roll the pen over the threshold.",
+            f"Make a fake late pass with {anchor} as the reason, stamp it with your fingertip, and add only one heading to the draft.",
+        ],
+        "road_choice": [
+            f"Place two pens like two roads, put a note labeled {anchor} between them, spin the note once, and check only the entrance it points to.",
+            f"Draw a blank road sign with two real options, then use a coin as a fog light to choose which entrance to inspect today.",
+        ],
+    }
+    default_options = [
+        f"Draw {anchor} as a real button on paper, press it once, then do one physical action that takes under a minute.",
+        f"Choose one desk object as a stand-in for {anchor}, move it one centimeter, then name the smallest waking-life action it points to.",
+    ]
+    return _seeded_option(options_by_theme.get(theme, default_options), intake, answers)
+
+
 def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
     anchors = _anchors_for_language(intake, language)
     primary = anchors[0] if anchors else _primary_anchor(intake, language)
@@ -1165,48 +1269,130 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
     theme = _dream_theme(intake)
     if not _is_zh(language):
         if theme == "lost_home":
-            return f"For today, let {anchor} become a small wayfinding cue: choose one place to ask, one entrance to check, or one next stop to name."
+            return _numbered_suggestions(
+                [
+                    f"Translate {anchor} into waking life: name the place where you most need guidance.",
+                    "Choose one real wayfinding move today: ask one person, check one entrance, or name the next stop.",
+                ],
+                language,
+            )
         if theme == "dark_water":
-            return f"For today, let {anchor} become a shore cue: name what felt too large, then choose one ordinary thing that helps your body feel here again."
+            return _numbered_suggestions(
+                [
+                    f"Treat {anchor} as a body feeling after waking, not as proof of danger.",
+                    "Pick one real shore-like action: turn on a light, wash your face, or tell someone you woke unsettled.",
+                ],
+                language,
+            )
         if theme == "library_signal":
-            return f"For today, let {anchor} become a note back to steadiness: choose one person, place, or object that feels like home and spend five minutes near it."
+            return _numbered_suggestions(
+                [
+                    f"Let {anchor} point to a real source of steadiness.",
+                    "Spend five minutes near one person, place, or object that gives you a home-base feeling.",
+                ],
+                language,
+            )
         if theme == "message_loss":
-            return f"For today, let {anchor} become one unsent sentence, not a full conversation: write what is still tender and let it rest."
+            return _numbered_suggestions(
+                [
+                    f"Translate {anchor} into one real sentence you have not said yet.",
+                    "Write it somewhere private; do not decide today whether it needs to be sent.",
+                ],
+                language,
+            )
+        if theme == "stuck_elevator":
+            return _numbered_suggestions(
+                [
+                    f"Use {anchor} to spot the real-life place where you feel stuck at the entrance.",
+                    "Choose one waking-life doorway action today: open the draft, check one fact, or ask one person.",
+                ],
+                language,
+            )
         return (
-            f"For today, borrow one action from {_anchor_with_article(primary)}: open the task, write only the first line, "
-            "and let that be enough for now."
+            _numbered_suggestions(
+                [
+                    f"Treat {_anchor_with_article(primary)} as a clue for waking life, not an instruction from the dream.",
+                    "Name one ordinary situation it resembles and choose one small action you can actually do today.",
+                ],
+                language,
+            )
         )
     if theme == "lost_home":
-        return f"今天先让「{anchor}」变成一个小路标：只确认一个可以问的人、一个可以查的入口，或一个下一站。"
+        return _numbered_suggestions(
+            [
+                f"把「{anchor}」翻译成现实里需要带路的一件事。",
+                "今天只做一个现实路标：问一个人、查一个入口，或写下下一站。",
+            ],
+            language,
+        )
     if theme == "dark_water":
-        return f"今天先让「{anchor}」变成一个上岸提示：说出那个太大的感受，再选一件能让身体回到当下的小事。"
+        return _numbered_suggestions(
+            [
+                f"把「{anchor}」当成醒来后身体还记得的感觉，不当成危险证明。",
+                "在现实里选一个上岸动作：开灯、洗脸，或告诉一个人“我醒来有点慌”。",
+            ],
+            language,
+        )
     if theme == "library_signal":
-        return f"今天先让「{anchor}」变成一张回到安定处的便签：靠近一个有回家感的人、地方或物件五分钟。"
+        return _numbered_suggestions(
+            [
+                f"让「{anchor}」指向现实里能让你稳定一点的人、地方或物件。",
+                "今天靠近它五分钟，不急着整理完整答案。",
+            ],
+            language,
+        )
     if theme == "message_loss":
-        return f"今天先让「{anchor}」变成一句不发送的话，而不是一整场对话：写下还柔软的那句，然后让它停在那里。"
-    return f"今天先从「{primary}」借一个动作：只做最小的第一步，不急着把整件事完成。"
+        return _numbered_suggestions(
+            [
+                f"把「{anchor}」翻译成现实里一句还没说出口的话。",
+                "先把它写在私密处，今天不急着决定要不要发出。",
+            ],
+            language,
+        )
+    if theme == "stuck_elevator":
+        return _numbered_suggestions(
+            [
+                f"从「{anchor}」找出现实里最像“卡在门口”的一件事。",
+                "今天只选一个醒着能做的入口动作：打开草稿、查一个信息，或问一个人。",
+            ],
+            language,
+        )
+    return _numbered_suggestions(
+        [
+            f"把「{primary}」当成现实生活的线索，不当成梦里给你的命令。",
+            "说出它像今天哪件普通小事，再选一个真的能做的小动作。",
+        ],
+        language,
+    )
 
 
-def _answer_based_tiny_action(answers: str, language: str = "en") -> str:
+def _answer_based_tiny_action(
+    answers: str,
+    intake: DreamIntake,
+    anchors: List[str],
+    language: str = "en",
+) -> str:
     lowered = (answers or "").lower()
-    if _is_zh(language):
-        if "邮件" in lowered or "email" in lowered:
-            return "给自己 5 分钟，只打开那封邮件，写下第一句话；今天不要求立刻发出。"
-        if "消息" in lowered or "发消息" in lowered:
-            return "给自己 5 分钟，只写一条诚实的进度消息草稿；今天先不要求把整件事做完。"
-        if "作业" in lowered or "草稿" in lowered:
-            return "给自己 5 分钟，只打开草稿，写下下一小段或一个待补的标题。"
-        return ""
-    if "email" in lowered or "message" in lowered:
-        return "Set a five-minute timer, open the email, and write only the first sentence. You do not have to send it yet."
-    if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
-        return "Set a five-minute timer, open the draft, and write only the next small heading or first sentence."
-    if "presentation" in lowered or "speech" in lowered or "rehearse" in lowered:
-        return "Set a five-minute timer and rehearse only the first minute, then stop and write one note for tomorrow."
-    if "deadline" in lowered or "application" in lowered:
-        return "Set a five-minute timer, open the application checklist, and mark only the next missing item."
-    if "apolog" in lowered:
-        return "Set a five-minute timer and draft one honest apology sentence without sending it yet."
+    answer_terms = [
+        "邮件",
+        "email",
+        "消息",
+        "发消息",
+        "message",
+        "作业",
+        "草稿",
+        "assignment",
+        "homework",
+        "draft",
+        "presentation",
+        "speech",
+        "rehearse",
+        "deadline",
+        "application",
+        "apolog",
+    ]
+    if any(term in lowered for term in answer_terms):
+        return _weird_little_action(intake, answers, anchors, language)
     return ""
 
 
@@ -1214,28 +1400,75 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
     lowered = (answers or "").lower()
     if _is_zh(language):
         if "邮件" in lowered or "email" in lowered:
-            return f"今天把「{anchor}」当成允许慢慢开始的按钮：只打开那封邮件，先写第一句话。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」翻译成一个现实沟通问题：这封邮件只需要让对方知道哪一件事。",
+                    "先只打开草稿，补上主题和第一句话，把“开始”和“发送”拆开。",
+                    "给自己定一个稍后回看的时间；今天可以先存草稿，不一定马上发出去。",
+                ],
+                language,
+            )
         if "消息" in lowered or "发消息" in lowered:
-            return f"今天把「{anchor}」当成一个小门牌：先给对方发一条进度消息，不要求马上完成全部。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」翻译成现实里一条需要落地的沟通。",
+                    "先写一条很短的进度消息，说明现在到哪一步，不要求把整件事立刻完成。",
+                    "如果还不确定，就先存草稿，等一个具体时间再决定是否发送。",
+                ],
+                language,
+            )
         if "作业" in lowered or "草稿" in lowered:
-            return f"今天把「{anchor}」当成一个可以靠近的教室门口：只打开草稿，补上下一小段。"
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」翻译成现实里一个能靠近的草稿入口。",
+                    "先补一个标题或下一小段，不把它当成一次完整交卷。",
+                    "写完就停一下，给明天留下一个清楚的接续点。",
+                ],
+                language,
+            )
         return ""
     if "email" in lowered or "message" in lowered:
-        return (
-            f"For today, treat the {anchor} as permission to start gently: "
-            "open the overdue email and write only the first sentence."
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into a real-world communication question: what does the overdue email need the other person to know?",
+                "Open the draft only long enough to add the subject and first sentence; separate starting from sending.",
+                "Save it without sending, then choose one later review time.",
+            ],
+            language,
         )
     if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
-        return (
-            f"For today, treat the {anchor} as a smaller doorway: open the draft "
-            "and write only the next tiny piece."
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into a real draft doorway, not a full submission.",
+                "Add one heading or next tiny piece.",
+                "Stop with a clear handoff note for tomorrow.",
+            ],
+            language,
         )
     if "presentation" in lowered or "speech" in lowered or "rehearse" in lowered:
-        return f"For today, let the {anchor} narrow the work: rehearse only the first minute of the presentation."
+        return _numbered_suggestions(
+            [
+                f"Let {anchor} narrow the real work to the opening minute.",
+                "Rehearse that minute once, then write one note for the next pass.",
+            ],
+            language,
+        )
     if "deadline" in lowered or "application" in lowered:
-        return f"For today, let the {anchor} become a checklist: open the application and choose one missing item."
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into one real checklist.",
+                "Open the application and mark only the next missing item.",
+            ],
+            language,
+        )
     if "apolog" in lowered:
-        return f"For today, let the {anchor} become one repair step: draft a single apology sentence."
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into one repair step.",
+                "Draft a single apology sentence privately before deciding whether to send it.",
+            ],
+            language,
+        )
     return ""
 
 
@@ -1852,7 +2085,7 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     emotion_interpretation = _emotion_led_interpretation(intake, answers, anchors, language)
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)
-    answer_action = _answer_based_tiny_action(answers, language)
+    answer_action = _answer_based_tiny_action(answers, intake, anchors, language)
     answer_should_shape_visible_tip = bool((answer_tip or answer_action) and not _needs_comfort(answers, language))
     if answer_interpretation and answer_should_shape_visible_tip:
         polished.interpretation = answer_interpretation
@@ -1876,7 +2109,18 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         )
     elif not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
         polished.interpretation = _fallback_interpretation(intake, language)
-    generic_tip_markers = ["drink water", "hydrate", "多休息", "保持积极", "take a walk"]
+    generic_tip_markers = [
+        "drink water",
+        "hydrate",
+        "多休息",
+        "保持积极",
+        "take a walk",
+        "press one very small elevator button",
+        "按下一个很小的电梯按钮",
+        "borrow one action",
+        "借一个动作",
+        "open the task",
+    ]
     emotion_tip = _emotion_led_today_tip(intake, answers, anchors, language)
     if answer_tip and answer_should_shape_visible_tip:
         polished.today_tip = answer_tip
@@ -1905,7 +2149,16 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         or not _anchor_in_text(polished.today_tip, anchors)
     ):
         polished.today_tip = _grounded_today_tip(intake, language)
-    hard_action_markers = ["address it immediately", "fix it immediately", "solve it immediately"]
+    hard_action_markers = [
+        "address it immediately",
+        "fix it immediately",
+        "solve it immediately",
+        "set a five-minute timer",
+        "spend five minutes writing",
+        "给自己 5 分钟",
+        "用 5 分钟写下",
+        "用 5 分钟做一个",
+    ]
     emotion_action = _emotion_led_tiny_action(intake, answers, anchors, language)
     if answer_action and answer_should_shape_visible_tip:
         polished.tiny_action = answer_action
@@ -1914,47 +2167,16 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     elif answer_action:
         polished.tiny_action = answer_action
     elif _has_prophecy_frame(intake.merged_text()):
-        polished.tiny_action = (
-            "Spend five minutes writing: what did I feel, what ordinary worry could it echo, and what can I do safely today?"
-            if not _is_zh(language)
-            else "用 5 分钟写下：我醒来时感觉到了什么？它像哪种普通担心？今天我能安全做哪一小步？"
-        )
+        polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
     elif _is_low_context_intake(intake) and _is_skip_answer(answers, language):
-        polished.tiny_action = (
-            "Add one missing detail: color, body feeling, repeated object, or what happened just before waking."
-            if not _is_zh(language)
-            else "补一个缺失细节：颜色、身体感受、重复物件，或醒来前最后发生的事。"
-        )
+        polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
     elif (
         not polished.tiny_action.strip()
         or _is_placeholder_anchor(polished.tiny_action)
         or not _anchor_in_text(polished.tiny_action, anchors)
         or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
     ):
-        anchor_phrase = _story_anchor_phrase(intake, anchors, language, answers)
-        theme = _dream_theme(intake, answers)
-        if _is_zh(language):
-            if theme == "lost_home":
-                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」补一张小路标：我在找什么、能问哪里、下一站是什么。"
-            elif theme == "dark_water":
-                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」找一个上岸动作：看见三个真实物件，再做一件让身体安定的小事。"
-            elif theme == "library_signal":
-                polished.tiny_action = f"用 5 分钟把「{anchor_phrase}」变成现实便签：今天我可以靠近哪一个安定来源？"
-            elif theme == "message_loss":
-                polished.tiny_action = f"用 5 分钟给「{anchor_phrase}」写一句不发送的话，然后把手机放下。"
-            else:
-                polished.tiny_action = f"用 5 分钟写下：今天和「{anchors[0]}」有关的第一小步是什么？"
-        else:
-            if theme == "lost_home":
-                polished.tiny_action = f"Spend five minutes adding a small route marker for {anchor_phrase}: what I seek, where I can ask, and the next stop."
-            elif theme == "dark_water":
-                polished.tiny_action = f"Spend five minutes finding a shore action for {anchor_phrase}: name three real objects, then do one grounding thing."
-            elif theme == "library_signal":
-                polished.tiny_action = f"Spend five minutes turning {anchor_phrase} into a real note: which steady source can I move closer to today?"
-            elif theme == "message_loss":
-                polished.tiny_action = f"Spend five minutes writing one unsent sentence for {anchor_phrase}, then put the phone down."
-            else:
-                polished.tiny_action = f"Spend five minutes writing the first small step connected to the {anchors[0]}."
+        polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
     emotion_caring_note = _emotion_led_caring_note(intake, answers, language)
     if emotion_caring_note:
         polished.caring_note = emotion_caring_note

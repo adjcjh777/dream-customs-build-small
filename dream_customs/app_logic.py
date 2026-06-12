@@ -257,7 +257,7 @@ def _today_tip_plain_text(card) -> str:
         f"Today Tip: {card.today_tip}",
     ]
     if card.tiny_action:
-        lines.append(f"Tiny action: {card.tiny_action}")
+        lines.append(f"Weird little thing: {card.tiny_action}")
     if card.caring_note:
         lines.append(f"Caring note: {card.caring_note}")
     if card.safety_note:

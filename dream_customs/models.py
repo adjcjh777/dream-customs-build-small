@@ -100,8 +100,15 @@ class FakeTextClient:
                     "Maybe this dream is not predicting lateness. It turns the feeling of being stuck before "
                     "starting into an elevator paused at floor 14."
                 ),
-                today_tip="For today, press one very small elevator button: open the task and write only the first line.",
-                tiny_action="Set a five-minute timer, open the task, and stop after the first line.",
+                today_tip=(
+                    "1. Translate the elevator into the real-life doorway where you feel stuck. "
+                    "2. Open only the draft or email connected to that doorway. "
+                    "3. Add the first sentence and save it without sending yet."
+                ),
+                tiny_action=(
+                    "Draw an elevator button labeled Draft Floor on a sticky note, press it once with your finger, "
+                    "then write only the first sentence."
+                ),
                 caring_note="You can move one floor at a time; the whole building does not need to be solved this morning.",
             )
         return TodayTipCard(
@@ -117,8 +124,12 @@ class FakeTextClient:
                 "也许这个梦不是在预言你会迟到，而是在把“还没开始就担心来不及”的感觉，"
                 "演成了一部停在 14 层的电梯。"
             ),
-            today_tip="今天先按下一个很小的电梯按钮：只打开那件事，不要求自己马上抵达。",
-            tiny_action="用 5 分钟写下：如果今天只停一层，我先停在哪一层？",
+            today_tip=(
+                "1. 把「电梯」翻译成现实里最像卡在入口的一件事。"
+                "2. 只打开和它有关的草稿或邮件。"
+                "3. 写下第一句话后先存起来，不要求马上发出。"
+            ),
+            tiny_action="找一张便利贴，画一个只到“草稿层”的电梯按钮，按一下，再只写第一句话。",
             caring_note="你可以慢慢前进，不需要一醒来就解决所有楼层。",
         )
 

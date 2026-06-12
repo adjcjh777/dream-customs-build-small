@@ -96,3 +96,25 @@ def test_today_tip_card_prioritizes_tip_before_interpretation():
     )
 
     assert html.index("Today's small suggestion") < html.index("Maybe this dream is pointing to")
+
+
+def test_today_tip_card_renames_tiny_action_to_weird_little_thing():
+    card = TodayTipCard(
+        dream_summary="你梦见办公楼、电梯和一封迟迟没发出去的邮件。",
+        main_question="为什么我总是卡在电梯口？",
+        dream_anchors=["办公楼", "电梯", "邮件"],
+        followup_questions=[],
+        user_answers=[],
+        interpretation="也许它在提醒你把开始和发送分开。",
+        today_tip="1. 在现实里先打开邮件草稿。2. 只写第一句话。",
+        tiny_action="画一个只到草稿层的电梯按钮，按一下再写第一句。",
+        caring_note="慢一点也可以。",
+    )
+
+    zh_html = render_today_tip_card(card, language="zh")
+    en_html = render_today_tip_card(card, language="en")
+
+    assert "古怪的小事" in zh_html
+    assert "没试过的小事" not in zh_html
+    assert "Weird little thing" in en_html
+    assert "Tiny action" not in en_html

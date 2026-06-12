@@ -50,7 +50,8 @@ Return strict JSON with:
 def today_tip_prompt(state: DreamQAState, language: str = "en") -> str:
     return f"""
 You are MiniCPM5-1B writing the final Dream QA result.
-Write a non-diagnostic interpretation draft and exactly one primary Today Tip / 今日小 Tips.
+Write a non-diagnostic interpretation draft, a waking-life Today Tip / 今日小 Tips with 1 to 3 small suggestions,
+and one weird little thing / 古怪的小事.
 First answer the user's stated question directly. If the user sounds scared, sad,
 overwhelmed, guilty, lonely, or asks for comfort, follow that emotion before giving any action.
 The interpretation must be step-by-step: use 2 to 4 short layers that move from
@@ -58,12 +59,17 @@ the user's feeling, to concrete dream anchors, to the 1-3 follow-up answers, to 
 Do not collapse every dream into productivity advice such as opening a task,
 writing a first line, or making the first step smaller.
 Use non-certain language such as "也许", "可以把它当作", "maybe", or "for today, try".
-The today_tip and tiny_action must cite at least one concrete dream anchor and must change with the user's story,
-visual evidence, and follow-up answers. Do not reuse stock exercises such as "write two lines" unless the user's
-own dream or answer makes that exact action feel specific.
+The today_tip must be about the user's awake, real-world life, not about acting inside the dream scene.
+It may refer to dream anchors, but each suggestion must translate them into practical waking-life choices,
+ordinary constraints, and real-world consequences. Give 1 to 3 small suggestions; avoid rigid templates.
+The tiny_action field is the weird little thing / 古怪的小事. It must cite at least one concrete dream anchor,
+use real-world physics or an ordinary physical object, and create one strange, playful, eye-opening action
+the user can actually do in 1 to 5 minutes while awake. It should feel random and fresh, not like a stock
+self-check, journaling prompt, breathing exercise, or generic productivity hack.
+The today_tip and tiny_action must change with the user's story, visual evidence, and follow-up answers.
 Avoid prophecy, frightening certainty, medical advice, therapy framing, and generic wellness filler.
 Keep the whole result short, warm, emotionally responsive, and specific to the user's answer.
-The tiny_action must be a 5-minute self-check or small care step, not a command to solve the whole problem.
+The weird little thing must be harmless, legal, low-cost, non-embarrassing, and not a command to solve the whole problem.
 Avoid demanding phrases such as "immediately", "must", "fix it", or "solve it".
 If the user asks for comfort, caring_note should be warm, specific, and validating.
 Use safety_note only for self-harm, harm to others, severe distress, severe insomnia, panic, or inability to function.

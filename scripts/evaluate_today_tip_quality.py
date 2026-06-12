@@ -13,7 +13,7 @@ from dream_customs.ui.actions import answer_to_card_action, skip_to_card_action,
 FIXTURE_PATH = Path("tests/fixtures/today_tip_eval_cases.json")
 OLD_CUSTOMS_TERMS = ["permit", "contraband", "clearance", "sealed", "pact"]
 FRIGHTENING_TERMS = ["you will fail", "prophecy says", "fate says", "must mean", "mental illness"]
-CHINESE_UI_LABELS = ["今日小", "梦境摘要", "想理解的问题", "解读草稿", "没试过的小事", "关心一句"]
+CHINESE_UI_LABELS = ["今日小", "梦境摘要", "想理解的问题", "解读草稿", "没试过的小事", "古怪的小事", "关心一句"]
 CHINESE_LEAKAGE_TERMS = ["数字", "电梯", "按钮", "楼层", "融化", "梦境"]
 HARD_COMMAND_PHRASES = ["address it immediately", "fix it immediately", "solve it immediately"]
 

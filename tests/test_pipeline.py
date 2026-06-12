@@ -7,6 +7,7 @@ from dream_customs.pipeline import (
     add_evidence,
     answer_question,
     ask_questions,
+    build_qa_state,
     build_intake,
     create_session,
     dated_permit_id,
@@ -19,7 +20,7 @@ from dream_customs.pipeline import (
     seal_pact,
     skip_question,
 )
-from dream_customs.prompts import pact_prompt
+from dream_customs.prompts import pact_prompt, today_tip_prompt
 from dream_customs.schema import PactCard, TodayTipCard, VisionWitness
 
 
@@ -271,6 +272,35 @@ def test_generate_today_tip_uses_chinese_concrete_answer_in_visible_tip():
     assert "融化" not in visible
 
 
+def test_chinese_email_tip_becomes_real_world_suggestions_and_weird_action():
+    intake = build_intake(
+        dream_text=(
+            "昨晚梦见我在一栋很高的办公楼14层找一封迟迟没发出去的邮件。"
+            "电梯一直停在黑暗的走廊，我手里拿着一盏小台灯，感觉有点焦急。"
+            "醒来最想知道为什么梦里总是卡在电梯口。"
+        ),
+        mood="焦急",
+    )
+
+    card = generate_today_tip(
+        intake,
+        "我觉得那封邮件其实是在提醒我有一件事一直没有开始。今天可以先写第一句话，不一定马上发出去。",
+        FakeTextClient(),
+        language="zh",
+    )
+
+    assert "办公楼」当成允许慢慢开始的按钮" not in card.today_tip
+    assert "现实" in card.today_tip
+    assert "1." in card.today_tip and "2." in card.today_tip
+    assert "邮件" in card.today_tip
+    assert "第一句" in card.today_tip or "第一句话" in card.today_tip
+    assert "便利贴" in card.tiny_action or "纸" in card.tiny_action
+    assert "按钮" in card.tiny_action or "电梯" in card.tiny_action
+    assert "按一下" in card.tiny_action or "画" in card.tiny_action
+    assert "给自己 5 分钟，只打开那封邮件" not in card.tiny_action
+    assert "这份这个感受" not in card.caring_note
+
+
 def test_generate_today_tip_follows_user_question_and_comfort_need_in_chinese():
     intake = build_intake(
         dream_text="我梦到自己掉进海里，醒来很害怕。我想知道这是不是说明我快撑不住了？",
@@ -476,6 +506,26 @@ def test_pact_prompt_requires_dream_grounded_card():
     assert "avoid generic wellness filler" in prompt
     assert "bedtime_release must be a sentence" in prompt
     assert "not a human name unless a person appears" in prompt
+
+
+def test_today_tip_prompt_requires_waking_life_suggestions_and_weird_action():
+    intake = build_intake(
+        dream_text="我梦见办公楼里的电梯停在 14 层，一封邮件一直发不出去。",
+        mood="焦急",
+    )
+    state = build_qa_state(
+        intake,
+        answers=["我觉得那封邮件是在提醒我有一件现实工作沟通还没开始。"],
+        language="zh",
+    )
+
+    prompt = today_tip_prompt(state, language="zh")
+
+    assert "waking-life" in prompt
+    assert "1 to 3" in prompt
+    assert "weird little thing" in prompt
+    assert "real-world physics" in prompt
+    assert "古怪的小事" in prompt
 
 
 def test_add_evidence_updates_session_with_text_image_audio_and_mood():

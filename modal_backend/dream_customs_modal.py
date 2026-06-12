@@ -159,7 +159,48 @@ def _fallback_json_response(prompt: str) -> str:
         term in prompt.lower()
         for term in ("hurt myself", "self-harm", "unsafe", "撑不住", "很多天睡不着", "痛苦")
     )
-    if "permit_id" in prompt or "practical_suggestion" in prompt:
+    if "today_tip" in prompt or "tiny_action" in prompt:
+        if is_cjk:
+            payload = {
+                "dream_summary": "你记录了一个带着办公楼、电梯和未发送邮件的梦。",
+                "main_question": "这个梦可能在提醒我什么？",
+                "dream_anchors": ["办公楼", "电梯", "邮件"],
+                "followup_questions": [],
+                "user_answers": [],
+                "interpretation": "也许这个梦不是在给出唯一答案，而是在把醒来后的卡住感放到一个具体画面里。",
+                "today_tip": (
+                    "1. 把「办公楼」翻译成现实里最像卡住入口的一件事。"
+                    "2. 只打开相关草稿或邮件。"
+                    "3. 写下第一句话后先存起来，不要求马上发出。"
+                ),
+                "tiny_action": "找一张便利贴，画一个只到“草稿层”的电梯按钮，按一下，再只写第一句话。",
+                "caring_note": "你可以慢慢开始，不需要一醒来就抵达所有楼层。",
+                "safety_note": "",
+            }
+        else:
+            payload = {
+                "dream_summary": "You recorded a dream with an office building, elevator, and unsent email.",
+                "main_question": "What might this dream be asking me to notice today?",
+                "dream_anchors": ["office building", "elevator", "email"],
+                "followup_questions": [],
+                "user_answers": [],
+                "interpretation": "Maybe this dream is not giving one fixed answer; it is turning a waking stuck point into a concrete scene.",
+                "today_tip": (
+                    "1. Translate the office building into the real-life doorway where you feel stuck. "
+                    "2. Open only the related draft or email. "
+                    "3. Add the first sentence and save it without sending yet."
+                ),
+                "tiny_action": "Draw an elevator button labeled Draft Floor on a sticky note, press it once, then write only the first sentence.",
+                "caring_note": "You can start slowly; you do not have to reach every floor this morning.",
+                "safety_note": "",
+            }
+        if distress:
+            payload["safety_note"] = (
+                "如果你已经连续很多天睡不好、非常痛苦，或担心自己会伤害自己/他人，请尽快联系可信任的人或专业支持。"
+                if is_cjk
+                else "If you have been unable to sleep for many nights, feel severe distress, or worry you may hurt yourself or someone else, please reach out to a trusted person or professional support now."
+            )
+    elif "permit_id" in prompt or "practical_suggestion" in prompt:
         if is_cjk:
             payload: Dict[str, Any] = {
                 "visitor_name": "蓝色放行章",
@@ -229,7 +270,20 @@ def _repair_json_response(prompt: str, text_output: str) -> str:
     if parsed is None or fallback is None:
         return _fallback_json_response(prompt)
 
-    if "permit_id" in prompt or "practical_suggestion" in prompt:
+    if "today_tip" in prompt or "tiny_action" in prompt:
+        required_keys = (
+            "dream_summary",
+            "main_question",
+            "dream_anchors",
+            "followup_questions",
+            "user_answers",
+            "interpretation",
+            "today_tip",
+            "tiny_action",
+            "caring_note",
+            "safety_note",
+        )
+    elif "permit_id" in prompt or "practical_suggestion" in prompt:
         required_keys = (
             "visitor_name",
             "permit_id",

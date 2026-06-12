@@ -1,4 +1,4 @@
-from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard
+from dream_customs.schema import CustomsSession, DreamIntake, EvidenceItem, PactCard, TodayTipCard
 
 
 def test_dream_intake_defaults_lists():
@@ -37,6 +37,22 @@ def test_pact_card_requires_core_fields():
     )
     assert card.safety_note == ""
     assert "Late Elevator" in card.to_plain_text()
+
+
+def test_today_tip_plain_text_uses_weird_little_thing_label():
+    card = TodayTipCard(
+        dream_summary="你梦见办公楼、电梯和邮件。",
+        main_question="为什么会卡住？",
+        dream_anchors=["办公楼", "电梯", "邮件"],
+        interpretation="也许这是一个开始被放大的画面。",
+        today_tip="1. 在现实里打开邮件草稿。2. 只写第一句话。",
+        tiny_action="画一个草稿层按钮，按一下再开始。",
+    )
+
+    text = card.to_plain_text()
+
+    assert "古怪的小事:" in text
+    assert "没试过的小事:" not in text
 
 
 def test_customs_session_defaults_to_empty_workbench():

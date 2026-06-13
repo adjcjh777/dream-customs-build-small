@@ -10,6 +10,8 @@ The mirror does not copy the app into a second implementation. It imports the sa
 .venv/bin/python scripts/local_space_mirror.py
 ```
 
+By default, the wrapper keeps the local review app on port `7862`. If an older Dream QA app from this repository is already listening on that port, it stops that process before launching the current code. Use `--no-replace` to leave the old listener untouched.
+
 Open:
 
 ```text

@@ -1,9 +1,16 @@
 import json
 import os
+import signal
 import subprocess
 import sys
 
-from scripts.local_space_mirror import load_runtime_env_json, mirror_manifest
+from scripts.local_space_mirror import (
+    DEFAULT_LOCAL_PORT,
+    _is_repo_gradio_command,
+    load_runtime_env_json,
+    mirror_manifest,
+    stop_previous_local_app,
+)
 from scripts.smoke_local_space_mirror import inspect_config
 
 
@@ -15,7 +22,7 @@ def test_local_space_mirror_manifest_matches_space_entrypoint(monkeypatch):
         "DREAM_CUSTOMS_HOSTED_TOKEN",
     ]:
         monkeypatch.delenv(key, raising=False)
-    manifest = mirror_manifest("127.0.0.1", 7862)
+    manifest = mirror_manifest("127.0.0.1", DEFAULT_LOCAL_PORT)
 
     assert manifest["mode"] == "local-space-mirror"
     assert manifest["space_id"] == "build-small-hackathon/dream-customs"
@@ -33,6 +40,68 @@ def test_local_space_mirror_manifest_matches_space_entrypoint(monkeypatch):
     serialized_env = json.dumps(manifest["env"]).lower()
     assert "https://" not in serialized_env
     assert "secret" not in serialized_env
+
+
+def test_app_uses_stable_local_port_without_changing_space_default():
+    env = os.environ.copy()
+    env.pop("PYTEST_CURRENT_TEST", None)
+    for key in ["GRADIO_SERVER_PORT", "PORT", "SPACE_HOST", "SPACE_ID"]:
+        env.pop(key, None)
+    env["GRADIO_ANALYTICS_ENABLED"] = "False"
+
+    local_result = subprocess.run(
+        [sys.executable, "-c", "import app; print(app._default_server_port())"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    env["SPACE_ID"] = "build-small-hackathon/dream-customs"
+    space_result = subprocess.run(
+        [sys.executable, "-c", "import app; print(app._default_server_port())"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    env["GRADIO_SERVER_PORT"] = "7877"
+    configured_result = subprocess.run(
+        [sys.executable, "-c", "import app; print(app._default_server_port())"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert local_result.stdout.strip() == "7862"
+    assert space_result.stdout.strip() == "7860"
+    assert configured_result.stdout.strip() == "7877"
+
+
+def test_local_space_mirror_only_replaces_repo_gradio_commands():
+    assert _is_repo_gradio_command("/usr/bin/python scripts/local_space_mirror.py")
+    assert _is_repo_gradio_command("/usr/bin/python app.py")
+    assert not _is_repo_gradio_command("/usr/bin/python other_app.py")
+
+
+def test_local_space_mirror_stops_only_matching_repo_processes(monkeypatch):
+    killed: list[tuple[int, signal.Signals]] = []
+
+    monkeypatch.setattr("scripts.local_space_mirror._listener_pids", lambda port: [111, 222])
+    monkeypatch.setattr(
+        "scripts.local_space_mirror._is_repo_local_gradio_process",
+        lambda pid: pid == 111,
+    )
+    monkeypatch.setattr(
+        "scripts.local_space_mirror.os.kill",
+        lambda pid, sig: killed.append((pid, sig)),
+    )
+    monkeypatch.setattr("scripts.local_space_mirror._wait_until_port_is_free", lambda port, pids: None)
+
+    assert stop_previous_local_app(DEFAULT_LOCAL_PORT) == [111]
+    assert killed == [(111, signal.SIGTERM)]
 
 
 def test_local_space_mirror_loads_runtime_env_json_without_printing_values(tmp_path, monkeypatch):

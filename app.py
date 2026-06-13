@@ -11,6 +11,19 @@ from dream_customs.runtime_env import auto_load_runtime_env_json
 from dream_customs.ui.app import build_demo
 
 
+LOCAL_GRADIO_PORT = 7862
+HF_SPACE_GRADIO_PORT = 7860
+
+
+def _default_server_port() -> int:
+    configured_port = os.getenv("GRADIO_SERVER_PORT", "").strip()
+    if configured_port:
+        return int(configured_port)
+    if os.getenv("SPACE_ID", "").strip() or os.getenv("SPACE_HOST", "").strip():
+        return int(os.getenv("PORT", str(HF_SPACE_GRADIO_PORT)))
+    return LOCAL_GRADIO_PORT
+
+
 auto_load_runtime_env_json()
 demo = build_demo()
 
@@ -104,7 +117,7 @@ _install_gradio_api_aliases(demo.app, demo)
 if __name__ == "__main__":
     demo.launch(
         server_name=os.getenv("GRADIO_SERVER_NAME", "0.0.0.0"),
-        server_port=int(os.getenv("GRADIO_SERVER_PORT", "7860")),
+        server_port=_default_server_port(),
         show_api=False,
         show_error=True,
     )

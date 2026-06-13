@@ -441,7 +441,8 @@ body,
   transform: translateY(-1px);
 }
 
-.dc-mic-button[data-mode="listening"] {
+.dc-mic-button[data-mode="recording"],
+.dc-mic-button[data-mode="transcribing"] {
   animation: dc-mic-pulse 1.2s ease-in-out infinite;
   background: var(--dc-teal) !important;
 }
@@ -476,12 +477,15 @@ body,
   width: 2px;
 }
 
-.dc-mic-button[data-mode="listening"] .dc-mic-glyph,
-.dc-mic-button[data-mode="listening"] .dc-mic-glyph::before {
+.dc-mic-button[data-mode="recording"] .dc-mic-glyph,
+.dc-mic-button[data-mode="recording"] .dc-mic-glyph::before,
+.dc-mic-button[data-mode="transcribing"] .dc-mic-glyph,
+.dc-mic-button[data-mode="transcribing"] .dc-mic-glyph::before {
   border-color: #fff9ee;
 }
 
-.dc-mic-button[data-mode="listening"] .dc-mic-glyph::after {
+.dc-mic-button[data-mode="recording"] .dc-mic-glyph::after,
+.dc-mic-button[data-mode="transcribing"] .dc-mic-glyph::after {
   background: #fff9ee;
 }
 
@@ -500,7 +504,8 @@ body,
 }
 
 .dc-mic-control:hover .dc-mic-status,
-.dc-mic-status[data-mode="listening"],
+.dc-mic-status[data-mode="recording"],
+.dc-mic-status[data-mode="transcribing"],
 .dc-mic-status[data-mode="error"],
 .dc-mic-status[data-mode="done"] {
   opacity: 1;

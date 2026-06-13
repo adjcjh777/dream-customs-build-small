@@ -1,10 +1,12 @@
 import os
+import tempfile
 
 from gradio.routes import App
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from dream_customs import zerogpu  # noqa: F401
+from dream_customs.app_logic import _clients
 from dream_customs.runtime_env import auto_load_runtime_env_json
 from dream_customs.ui.app import build_demo
 
@@ -18,6 +20,48 @@ _ORIGINAL_CREATE_APP = App.create_app
 
 def _install_gradio_api_aliases(app, blocks) -> None:
     existing_paths = {getattr(route, "path", "") for route in app.routes}
+
+    if "/dream-asr" not in existing_paths:
+        @app.post("/dream-asr", include_in_schema=False)
+        async def dream_asr(request: Request) -> JSONResponse:
+            """Transcribe a browser-recorded voice note through the server-side ASR client."""
+
+            form = await request.form()
+            upload = form.get("audio")
+            if upload is None or not hasattr(upload, "read"):
+                return JSONResponse(
+                    {"status": "error", "transcript": "", "error": "Missing audio."},
+                    status_code=400,
+                )
+
+            filename = str(getattr(upload, "filename", "") or "dream-voice.webm")
+            suffix = os.path.splitext(filename)[1] or ".webm"
+            temp_path = ""
+            try:
+                audio_bytes = await upload.read()
+                if not audio_bytes:
+                    return JSONResponse(
+                        {"status": "error", "transcript": "", "error": "Empty audio."},
+                        status_code=400,
+                    )
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+                    temp_file.write(audio_bytes)
+                    temp_path = temp_file.name
+                _text_client, _vision_client, asr_client = _clients("demo", "demo")
+                transcript = asr_client.transcribe(temp_path)
+            finally:
+                if temp_path:
+                    try:
+                        os.unlink(temp_path)
+                    except OSError:
+                        pass
+
+            if not transcript:
+                return JSONResponse(
+                    {"status": "error", "transcript": "", "error": "No transcript returned."},
+                    status_code=502,
+                )
+            return JSONResponse({"status": "ok", "transcript": transcript})
 
     if "/gradio_api/info" not in existing_paths:
         @app.get("/gradio_api/info", include_in_schema=False)

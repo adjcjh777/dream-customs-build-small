@@ -1,6 +1,7 @@
 import json
 import inspect
 from datetime import date
+from pathlib import Path
 
 from dream_customs.ui.actions import (
     answer_to_card_action,
@@ -34,22 +35,35 @@ def test_runtime_settings_are_collapsed_for_public_flow():
     assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in flow_column_source
 
 
-def test_voice_input_keeps_modal_asr_component_but_uses_inline_mic_button():
+def test_voice_input_records_audio_to_modal_asr_without_browser_speech_recognition():
     source = inspect.getsource(ui_app.build_demo)
     app_source = inspect.getsource(ui_app)
 
     assert "audio_input = gr.Audio(" in source
-    assert 'sources=["upload"]' in source
-    assert 'sources=["microphone", "upload"]' not in source
-    assert 'type="filepath"' in source
     assert "visible=False" in source
+    assert 'type="filepath"' in source
     assert "_make_media_api_info_client_safe(audio_input)" in source
     assert "mic_html = gr.HTML(_mic_html(DEFAULT_LANGUAGE))" in source
     assert "audio_input = gr.State(None)" not in source
     assert 'value=DEFAULT_ASR_BACKEND' in source
-    assert 'data-timeout="' in ui_app._mic_html("en")
-    assert "Voice is taking too long here" in ui_app._mic_html("en")
-    assert "window.setTimeout" in app_source
+    assert 'data-open="' in ui_app._mic_html("en")
+    assert 'aria-expanded="false"' in ui_app._mic_html("en")
+    assert "window.SpeechRecognition" not in app_source
+    assert "webkitSpeechRecognition" not in app_source
+    assert "recognition.lang" not in app_source
+    assert "MediaRecorder" in app_source
+    assert 'fetch("/dream-asr"' in app_source
+    assert "appendTranscript" in app_source
+    assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in app_source
+
+
+def test_browser_voice_uses_same_origin_asr_proxy():
+    source = Path("app.py").read_text(encoding="utf-8")
+
+    assert '@app.post("/dream-asr", include_in_schema=False)' in source
+    assert '_clients("demo", "demo")' in source
+    assert "asr_client.transcribe(temp_path)" in source
+    assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in source
 
 
 def test_image_upload_is_composer_plus_drawer():

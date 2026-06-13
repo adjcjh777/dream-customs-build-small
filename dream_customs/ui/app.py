@@ -89,13 +89,16 @@ VOICE_JS = r"""
     button.dataset.bound = "true";
 
     const messageFor = (key, fallback) => button.dataset[key] || fallback;
-    let checkingTimer = null;
+    let mediaRecorder = null;
+    let mediaStream = null;
+    let chunks = [];
+    let audioContext = null;
+    let silenceTimer = null;
+    let maxTimer = null;
+    let heardVoice = false;
+    let lastVoiceAt = 0;
 
     const setStatus = (message, mode) => {
-      if (mode !== "listening" && checkingTimer) {
-        window.clearTimeout(checkingTimer);
-        checkingTimer = null;
-      }
       if (status) {
         status.textContent = message;
         status.dataset.mode = mode || "";
@@ -109,84 +112,145 @@ VOICE_JS = r"""
       if (!transcript) {
         return;
       }
-      const spacer = textarea.value.trim() ? "\n" : "";
-      textarea.value = `${textarea.value}${spacer}${transcript}`;
-      textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: transcript }));
-      textarea.dispatchEvent(new Event("change", { bubbles: true }));
-      textarea.focus();
-    };
-
-    button.addEventListener("click", async () => {
-      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!Recognition) {
-        setStatus(messageFor("unsupported", "This browser cannot transcribe voice here. You can still type the dream."), "error");
-        textarea.focus();
-        return;
-      }
-
-      setStatus(messageFor("checking", "Checking microphone permission..."), "listening");
-      let latestTranscript = "";
-
-      const recognition = new Recognition();
-      recognition.lang = button.dataset.language === "zh" ? "zh-CN" : "en-US";
-      recognition.interimResults = true;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
-      checkingTimer = window.setTimeout(() => {
-        if (button.dataset.mode === "listening" && !latestTranscript) {
-          setStatus(messageFor("timeout", "Voice is taking too long here. You can keep typing the dream instead."), "error");
-          try {
-            recognition.stop();
-          } catch (_error) {
-            // Best-effort stop for browsers that leave speech recognition pending.
-          }
+      const prefix = textarea.value.trim() ? "\n" : "";
+      let index = 0;
+      const writeNext = () => {
+        const next = transcript.slice(index, index + 2);
+        textarea.value = `${textarea.value}${next}`;
+        textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText", data: next }));
+        textarea.dispatchEvent(new Event("change", { bubbles: true }));
+        index += next.length;
+        if (index < transcript.length) {
+          window.setTimeout(writeNext, 24);
+        } else {
           textarea.focus();
         }
-      }, 3000);
-
-      recognition.onstart = () => {
-        if (checkingTimer) {
-          window.clearTimeout(checkingTimer);
-          checkingTimer = null;
-        }
-        setStatus(messageFor("listening", "Listening. Say the dream fragment when you are ready."), "listening");
       };
+      textarea.value = `${textarea.value}${prefix}`;
+      writeNext();
+    };
 
-      recognition.onresult = (event) => {
-        latestTranscript = Array.from(event.results)
-          .map((result) => result[0]?.transcript || "")
-          .join("")
-          .trim();
-        if (latestTranscript) {
-          setStatus(`Listening: ${latestTranscript}`, "listening");
+    const cleanupMedia = () => {
+      if (silenceTimer) {
+        window.clearInterval(silenceTimer);
+        silenceTimer = null;
+      }
+      if (maxTimer) {
+        window.clearTimeout(maxTimer);
+        maxTimer = null;
+      }
+      mediaStream?.getTracks().forEach((track) => track.stop());
+      mediaStream = null;
+      if (audioContext && audioContext.state !== "closed") {
+        audioContext.close().catch(() => {});
+      }
+      audioContext = null;
+    };
+
+    const chooseMimeType = () => {
+      const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/wav"];
+      return candidates.find((type) => window.MediaRecorder?.isTypeSupported?.(type)) || "";
+    };
+
+    const uploadAudio = async (blob) => {
+      if (!blob || blob.size === 0) {
+        setStatus(messageFor("empty", "No speech detected. Tap again if you want to retry."), "error");
+        return;
+      }
+      setStatus(messageFor("transcribing", "Transcribing with MiMo ASR..."), "transcribing");
+      const form = new FormData();
+      const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("wav") ? "wav" : "webm";
+      form.append("audio", blob, `dream-voice.${extension}`);
+      try {
+        const response = await fetch("/dream-asr", { method: "POST", body: form });
+        const payload = await response.json();
+        if (!response.ok || payload.status !== "ok" || !payload.transcript) {
+          throw new Error(payload.error || "No transcript returned.");
+        }
+        appendTranscript(payload.transcript);
+        setStatus(messageFor("done", "Added the ASR transcript to the dream note."), "done");
+      } catch (_error) {
+        setStatus(messageFor("error", "Voice transcription failed. You can type this fragment instead."), "error");
+      }
+    };
+
+    const stopRecording = () => {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    };
+
+    const watchSilence = (stream) => {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        return;
+      }
+      audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 1024;
+      source.connect(analyser);
+      const samples = new Uint8Array(analyser.fftSize);
+      const startedAt = Date.now();
+      silenceTimer = window.setInterval(() => {
+        analyser.getByteTimeDomainData(samples);
+        let total = 0;
+        for (const sample of samples) {
+          const value = (sample - 128) / 128;
+          total += value * value;
+        }
+        const rms = Math.sqrt(total / samples.length);
+        const now = Date.now();
+        if (rms > 0.035) {
+          heardVoice = true;
+          lastVoiceAt = now;
+        }
+        if (heardVoice && now - lastVoiceAt > 1300 && now - startedAt > 1200) {
+          stopRecording();
+        }
+      }, 180);
+    };
+
+    const startRecording = async () => {
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+        setStatus(messageFor("unsupported", "This browser cannot record audio here. You can still type the dream."), "error");
+        return;
+      }
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (_error) {
+        setStatus(messageFor("permission", "Microphone permission was not granted. Allow recording and try again."), "error");
+        return;
+      }
+      chunks = [];
+      heardVoice = false;
+      lastVoiceAt = Date.now();
+      const mimeType = chooseMimeType();
+      mediaRecorder = new MediaRecorder(mediaStream, mimeType ? { mimeType } : undefined);
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data?.size) {
+          chunks.push(event.data);
         }
       };
-
-      recognition.onerror = (event) => {
-        if (checkingTimer) {
-          window.clearTimeout(checkingTimer);
-          checkingTimer = null;
-        }
-        const message = event.error === "not-allowed"
-          ? messageFor("permission", "Microphone permission was denied. Allow recording and try again.")
-          : messageFor("empty", "I did not catch that. Tap the microphone again if you want to retry.");
-        setStatus(message, "error");
+      mediaRecorder.onstop = () => {
+        cleanupMedia();
+        const type = mediaRecorder?.mimeType || mimeType || "audio/webm";
+        const blob = new Blob(chunks, { type });
+        mediaRecorder = null;
+        uploadAudio(blob);
       };
+      mediaRecorder.start();
+      watchSilence(mediaStream);
+      maxTimer = window.setTimeout(stopRecording, 30000);
+      setStatus(messageFor("recording", "Listening. Tap again to stop, or pause and I will transcribe."), "recording");
+    };
 
-      recognition.onend = () => {
-        if (checkingTimer) {
-          window.clearTimeout(checkingTimer);
-          checkingTimer = null;
-        }
-        if (latestTranscript) {
-          appendTranscript(latestTranscript);
-          setStatus(messageFor("done", "Added to the dream note."), "done");
-        } else if (button.dataset.mode === "listening") {
-          setStatus(messageFor("empty", "No speech detected. Tap again if you want to retry."), "idle");
-        }
-      };
-
-      recognition.start();
+    button.addEventListener("click", () => {
+      if (mediaRecorder?.state === "recording") {
+        stopRecording();
+      } else {
+        startRecording();
+      }
     });
   };
 
@@ -740,14 +804,17 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     type="button"
     class="dc-mic-button"
     aria-label="{escape(copy['mic_idle'])}"
+    aria-expanded="false"
     data-language="{escape(language)}"
-    data-checking="{escape('正在请求麦克风权限...' if language == 'zh' else 'Checking microphone permission...')}"
-    data-timeout="{escape('语音识别等待太久了。你可以先继续手动输入梦境。' if language == 'zh' else 'Voice is taking too long here. You can keep typing the dream instead.')}"
+    data-idle="{escape(copy['mic_idle'])}"
+    data-open="{escape(copy['voice_help'])}"
+    data-recording="{escape(copy['mic_listening'])}"
+    data-transcribing="{escape(copy['mic_transcribing'])}"
     data-unsupported="{escape(copy['mic_unsupported'])}"
     data-permission="{escape(copy['mic_permission'])}"
-    data-listening="{escape(copy['mic_listening'])}"
     data-done="{escape(copy['mic_done'])}"
     data-empty="{escape(copy['mic_empty'])}"
+    data-error="{escape(copy['mic_error'])}"
   >
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>

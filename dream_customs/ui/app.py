@@ -686,6 +686,8 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
             if index < active_step:
                 line_classes.append("is-complete")
             step_html.append(f'<i class="{" ".join(line_classes)}" aria-hidden="true"></i>')
+    hero_body = copy.get("hero_body", "").strip()
+    hero_body_html = f"<p class=\"dc-hero-body\">{escape(hero_body)}</p>" if hero_body else ""
     return f"""
 <header class="dc-hero">
   <div class="dc-hero-top">
@@ -699,7 +701,7 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     </div>
     <div class="dc-sun-mark" aria-hidden="true"></div>
   </div>
-  <p class="dc-hero-body">{copy['hero_body']}</p>
+  {hero_body_html}
   <div class="dc-hero-ribbon" aria-label="{escape(copy['hero_badge'])}">
     <span>{escape(copy['hero_badge'])}</span>
     <small>{escape(copy['hero_mobile_note'])}</small>

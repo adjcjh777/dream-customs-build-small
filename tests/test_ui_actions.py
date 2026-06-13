@@ -101,10 +101,12 @@ def test_hero_subtitle_explains_app_instead_of_legacy_name():
     hero_html = ui_app._hero_html()
 
     assert "The Morning Question Desk" in hero_html
-    assert "What did the dream leave you asking?" in hero_html
-    assert "grounded Morning Ticket" in hero_html
+    assert "What did the dream ask?" in hero_html
+    assert "One fragment. One gentle question. One Morning Ticket." in hero_html
     assert "dc-hero-ribbon" in hero_html
-    assert "Text + image + voice intake" in hero_html
+    assert "Text · image · voice" in hero_html
+    assert "A small-model dream desk" not in hero_html
+    assert "dc-hero-body" not in hero_html
     assert "Dream Customs" not in hero_html
 
 

@@ -3125,21 +3125,35 @@ button.secondary {
 """
 
 CSS += """
-/* Hero proportion fix: make the desk invitation feel calm, not like a giant poster. */
+/* Hero proportion fix: make the desk invitation feel calm, centered, and brief. */
 .dc-hero {
   align-content: center;
+  justify-items: center;
   background:
     radial-gradient(circle at 74% 37%, rgba(255, 253, 248, 0.54) 0 16%, rgba(255, 253, 248, 0.88) 33%, rgba(255, 253, 248, 0.98) 62%),
     linear-gradient(180deg, rgba(246, 251, 246, 0.96), rgba(255, 250, 240, 0.99)),
     url("https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1600&q=80") 74% 43% / cover !important;
-  gap: clamp(12px, 2vw, 18px);
-  min-height: clamp(420px, 50vh, 560px);
+  gap: clamp(10px, 1.8vw, 16px);
+  min-height: clamp(360px, 44vh, 500px);
   overflow: hidden;
-  padding: clamp(24px, 4vw, 46px) clamp(18px, 5vw, 70px) clamp(30px, 4.8vw, 54px);
+  padding: clamp(22px, 3.6vw, 40px) clamp(18px, 5vw, 70px) clamp(26px, 4.2vw, 48px);
+  text-align: center;
 }
 
 .dc-hero-top {
+  justify-self: stretch;
   grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+
+.dc-brand-lockup {
+  justify-content: center;
+  text-align: center;
+}
+
+.dc-brand-lockup > div {
+  display: grid;
+  justify-items: center;
+  max-width: min(100%, 900px);
 }
 
 .dc-menu-mark {
@@ -3158,19 +3172,23 @@ CSS += """
 }
 
 .dc-hero h1 {
-  font-size: clamp(2.35rem, 5.4vw, 4.85rem) !important;
-  line-height: 1.03;
+  font-size: clamp(2.45rem, 5.2vw, 4.35rem) !important;
+  line-height: 1.01;
   margin-left: auto;
   margin-right: auto;
-  max-width: 1080px;
+  max-width: 820px;
+  text-align: center;
   text-wrap: balance;
 }
 
 .dc-brand-subtitle {
   color: #6f7f8b;
-  font-size: clamp(1rem, 1.8vw, 1.34rem);
+  font-size: clamp(1rem, 1.55vw, 1.2rem);
   line-height: 1.45;
-  max-width: 780px;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 560px;
+  text-align: center;
   text-wrap: balance;
 }
 
@@ -3183,6 +3201,7 @@ CSS += """
 }
 
 .dc-hero-ribbon {
+  justify-self: center;
   background: rgba(255, 253, 248, 0.62);
   border-color: rgba(95, 143, 104, 0.2);
   border-radius: 999px;
@@ -3214,7 +3233,8 @@ CSS += """
 }
 
 .dc-stepper {
-  margin-top: clamp(18px, 3.2vw, 34px);
+  justify-self: center;
+  margin-top: clamp(14px, 2.4vw, 26px);
   max-width: 680px;
 }
 
@@ -3235,12 +3255,12 @@ CSS += """
 
 @media (max-width: 900px) {
   .dc-hero {
-    min-height: 470px;
+    min-height: 430px;
     padding: 24px 22px 32px;
   }
 
   .dc-hero h1 {
-    font-size: clamp(2.25rem, 10vw, 3.65rem) !important;
+    font-size: clamp(2.15rem, 9.4vw, 3.45rem) !important;
   }
 
   .dc-brand-subtitle,
@@ -3251,7 +3271,7 @@ CSS += """
 
 @media (max-width: 640px) {
   .dc-hero {
-    min-height: 520px;
+    min-height: 460px;
   }
 
   .dc-hero-top {

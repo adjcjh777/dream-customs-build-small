@@ -2116,6 +2116,38 @@ def _has_unsupported_clinical_frame(text: str) -> bool:
     return any(marker in clean for marker in markers)
 
 
+def _has_unsupported_emotion_or_generic_wellness(text: str, intake: DreamIntake, answers: str = "") -> bool:
+    clean = (text or "").lower()
+    if not clean:
+        return False
+    source = _story_text(intake, answers)
+    unsupported_without_source = [
+        (["工作压力", "压力"], ["压力", "焦虑", "stress", "stressed", "pressure", "overwhelmed"]),
+        (["害怕", "恐惧", "scared", "afraid"], ["害怕", "怕", "恐惧", "scared", "afraid"]),
+        (["孤独", "lonely"], ["孤独", "lonely"]),
+        (["焦虑", "anxious"], ["焦虑", "anxious"]),
+        (["自责", "guilt", "guilty"], ["自责", "内疚", "guilt", "guilty"]),
+    ]
+    for output_markers, source_markers in unsupported_without_source:
+        if any(marker in clean for marker in output_markers) and not any(marker in source for marker in source_markers):
+            return True
+    generic_markers = [
+        "保持积极",
+        "积极心态",
+        "明天会更好",
+        "喝一杯温水",
+        "一杯温水",
+        "温水",
+        "轻松的音乐",
+        "relaxing music",
+        "stay positive",
+        "positive mindset",
+        "tomorrow will be better",
+        "warm water",
+    ]
+    return any(marker in clean for marker in generic_markers)
+
+
 def _nonclinical_caring_note(anchors: List[str], language: str = "en") -> str:
     anchor = anchors[0] if anchors else ("梦里的这个细节" if _is_zh(language) else "this dream detail")
     if _is_zh(language):
@@ -2296,13 +2328,21 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     merged = "\n".join([intake.merged_text(), answers or ""])
     has_escalation = needs_escalation(merged)
     if not has_escalation:
-        if _has_unsupported_clinical_frame(polished.interpretation):
+        if _has_unsupported_clinical_frame(polished.interpretation) or _has_unsupported_emotion_or_generic_wellness(
+            polished.interpretation, intake, answers
+        ):
             polished.interpretation = _fallback_interpretation(intake, language)
-        if _has_unsupported_clinical_frame(polished.today_tip):
+        if _has_unsupported_clinical_frame(polished.today_tip) or _has_unsupported_emotion_or_generic_wellness(
+            polished.today_tip, intake, answers
+        ):
             polished.today_tip = _grounded_today_tip(intake, language)
-        if _has_unsupported_clinical_frame(polished.tiny_action):
+        if _has_unsupported_clinical_frame(polished.tiny_action) or _has_unsupported_emotion_or_generic_wellness(
+            polished.tiny_action, intake, answers
+        ):
             polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
-        if _has_unsupported_clinical_frame(polished.caring_note):
+        if _has_unsupported_clinical_frame(polished.caring_note) or _has_unsupported_emotion_or_generic_wellness(
+            polished.caring_note, intake, answers
+        ):
             polished.caring_note = _nonclinical_caring_note(anchors, language)
     polished.safety_note = safety_note(language) if has_escalation else ""
     if not _is_zh(language):

@@ -168,6 +168,47 @@ def test_today_tip_removes_unsupported_clinical_frame_for_company_water_dream():
     assert card.safety_note == ""
 
 
+def test_today_tip_removes_unsupported_emotion_and_generic_wellness_for_company_water_dream():
+    class OverreachingHostedTextClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="你梦见在公司午觉时被人泼水。",
+                main_question="这个梦里的水可能在提醒我什么？",
+                dream_anchors=["公司午觉", "被人泼水"],
+                followup_questions=["在「公司、午觉、被人泼水」里，醒来后最强烈的感受是什么？"],
+                user_answers=["用户选择跳过这个追问。"],
+                interpretation=(
+                    "你选择跳过这个追问。梦中的公司可能是在提醒你注意工作与休息的平衡，"
+                    "或者暗示你今天需要处理一些工作压力。午觉时被泼水可能象征着突如其来的挑战。"
+                ),
+                today_tip="明天上班前，先喝一杯温水，或者听一首轻松的音乐。",
+                tiny_action="把一杯温水放在桌上提醒自己保持积极。",
+                caring_note="如果你感到害怕或孤独，不必过度自责。保持积极心态，明天会更好。",
+                safety_note="",
+            )
+
+    intake = build_intake(dream_text="我在公司午觉的时候被人泼了一盆水。")
+
+    card = generate_today_tip(
+        intake,
+        "用户选择跳过这个追问。",
+        OverreachingHostedTextClient(),
+        language="zh",
+        followup_questions=["在「公司、午觉、被人泼水」里，醒来后最强烈的感受是什么？"],
+    )
+    combined = card.to_plain_text()
+
+    assert "公司" in combined
+    assert "被人泼水" in combined or "被人泼了一盆水" in combined
+    assert "工作压力" not in combined
+    assert "害怕" not in combined
+    assert "孤独" not in combined
+    assert "保持积极" not in combined
+    assert "明天会更好" not in combined
+    assert "温水" not in combined
+    assert "轻松的音乐" not in combined
+
+
 def test_generate_pact_returns_card_and_html():
     intake = build_intake(dream_text="I missed an elevator.", mood="anxious")
     card, html = generate_pact(intake, "I want a small start.", FakeTextClient())

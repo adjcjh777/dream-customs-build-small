@@ -1,6 +1,8 @@
 import io
 import json
 import os
+import subprocess
+import sys
 import tempfile
 from typing import Any, Dict, Optional
 
@@ -20,7 +22,11 @@ from modal_backend.contracts import (
 APP_NAME = "dream-customs-minicpm-backend"
 TEXT_MODEL = "openbmb/MiniCPM5-1B"
 VISION_MODEL = "openbmb/MiniCPM-V-4.6"
-ASR_MODEL = "openai/whisper-tiny"
+ASR_MODEL = "XiaomiMiMo/MiMo-V2.5-ASR"
+ASR_TOKENIZER_MODEL = "XiaomiMiMo/MiMo-Audio-Tokenizer"
+MIMO_ASR_REPO_DIR = "/opt/MiMo-V2.5-ASR"
+MIMO_ASR_NESTED_REPO_DIR = "/opt/MiMo-V2.5-ASR/MiMo-V2.5-ASR"
+MIMO_ASR_RUNTIME_REPO_DIR = "/tmp/MiMo-V2.5-ASR"
 MINUTES = 60
 
 app = modal.App(APP_NAME)
@@ -48,6 +54,34 @@ image = (
         "transformers>=4.56",
         "librosa",
         "soundfile",
+    )
+    .add_local_dir("modal_backend", remote_path="/root/modal_backend")
+)
+
+asr_image = (
+    modal.Image.from_registry("nvidia/cuda:12.4.1-devel-ubuntu22.04", add_python="3.12")
+    .apt_install("build-essential", "ffmpeg", "git", "ninja-build")
+    .pip_install(
+        "accelerate>=1.9.0",
+        "fastapi[standard]>=0.116.1",
+        "huggingface-hub",
+        "librosa>=0.11.0",
+        "pydantic>=2.11.7",
+        "scipy>=1.16.1",
+        "torch==2.6.0",
+        "torchaudio==2.6.0",
+        "transformers==4.49.0",
+        "triton==3.2.0",
+        "uvicorn>=0.35.0",
+        "zhon==2.1.1",
+    )
+    .run_commands(
+        "pip install wheel && "
+        "CUDA_HOME=/usr/local/cuda pip install flash-attn==2.7.4.post1 --no-build-isolation"
+    )
+    .run_commands(
+        "git clone --depth 1 https://github.com/XiaomiMiMo/MiMo-V2.5-ASR.git "
+        f"{MIMO_ASR_REPO_DIR} && test -d {MIMO_ASR_REPO_DIR}/src"
     )
     .add_local_dir("modal_backend", remote_path="/root/modal_backend")
 )
@@ -121,15 +155,67 @@ def _load_vision_pipe():
 def _load_asr_pipe():
     global _ASR_PIPE
     if _ASR_PIPE is None:
-        from transformers import pipeline
+        from huggingface_hub import snapshot_download
 
-        _ASR_PIPE = pipeline(
-            "automatic-speech-recognition",
-            model=os.getenv("DREAM_CUSTOMS_ASR_MODEL", ASR_MODEL),
-            device_map="auto",
-            torch_dtype="auto",
+        repo_candidates = (
+            MIMO_ASR_REPO_DIR,
+            MIMO_ASR_NESTED_REPO_DIR,
+            MIMO_ASR_RUNTIME_REPO_DIR,
+        )
+        source_dir = ""
+        for repo_dir in repo_candidates:
+            if os.path.isdir(os.path.join(repo_dir, "src")) and repo_dir not in sys.path:
+                sys.path.insert(0, repo_dir)
+                source_dir = repo_dir
+                break
+            if os.path.isdir(os.path.join(repo_dir, "src")):
+                source_dir = repo_dir
+                break
+        if not source_dir:
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "https://github.com/XiaomiMiMo/MiMo-V2.5-ASR.git",
+                    MIMO_ASR_RUNTIME_REPO_DIR,
+                ],
+                check=True,
+            )
+            if not os.path.isdir(os.path.join(MIMO_ASR_RUNTIME_REPO_DIR, "src")):
+                raise RuntimeError("MiMo-V2.5-ASR source checkout is missing in Modal.")
+            sys.path.insert(0, MIMO_ASR_RUNTIME_REPO_DIR)
+        from src.mimo_audio.mimo_audio import MimoAudio
+
+        model_path = os.getenv("DREAM_CUSTOMS_ASR_MODEL_PATH", "").strip()
+        if not model_path:
+            model_path = snapshot_download(
+                os.getenv("DREAM_CUSTOMS_ASR_MODEL", ASR_MODEL),
+                token=os.getenv("HF_TOKEN") or None,
+            )
+        tokenizer_path = os.getenv("DREAM_CUSTOMS_ASR_TOKENIZER_PATH", "").strip()
+        if not tokenizer_path:
+            tokenizer_path = snapshot_download(
+                os.getenv("DREAM_CUSTOMS_ASR_TOKENIZER_MODEL", ASR_TOKENIZER_MODEL),
+                token=os.getenv("HF_TOKEN") or None,
+            )
+        _ASR_PIPE = MimoAudio(
+            model_path=model_path,
+            mimo_audio_tokenizer_path=tokenizer_path,
         )
     return _ASR_PIPE
+
+
+def _asr_audio_tag(payload: Dict[str, Any]) -> str:
+    value = str(payload.get("language_tag") or payload.get("language") or "").strip().lower()
+    if value in {"<chinese>", "chinese", "zh", "zh-cn", "mandarin", "中文", "汉语", "普通话"}:
+        return "<chinese>"
+    if value in {"<english>", "english", "en", "en-us", "en-gb"}:
+        return "<english>"
+    if value in {"auto", "detect", "code-switch", "code_switch", "mixed"}:
+        return ""
+    return value if value in {"<chinese>", "<english>"} else ""
 
 
 def _messages_from_payload(payload: Dict[str, Any], prompt: str) -> list[Dict[str, str]]:
@@ -373,6 +459,7 @@ def health() -> Dict[str, str]:
         "text_model": TEXT_MODEL,
         "vision_model": VISION_MODEL,
         "asr_model": ASR_MODEL,
+        "asr_tokenizer_model": ASR_TOKENIZER_MODEL,
     }
 
 
@@ -467,9 +554,9 @@ async def vision(
 
 
 @app.function(
-    image=image,
-    gpu="L4",
-    timeout=10 * MINUTES,
+    image=asr_image,
+    gpu="A100",
+    timeout=20 * MINUTES,
     scaledown_window=5 * MINUTES,
     volumes={"/root/.cache/huggingface": hf_cache},
     secrets=secrets,
@@ -489,10 +576,11 @@ async def asr(
         return _json_error(str(exc))
 
     suffix = os.path.splitext(filename)[1] or ".wav"
-    pipe = _load_asr_pipe()
+    model = _load_asr_pipe()
+    audio_tag = _asr_audio_tag(payload)
     with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
         temp_file.write(audio_bytes)
         temp_file.flush()
-        result = pipe(temp_file.name)
-    transcript = _stringify_pipeline_result(result)
+        transcript = model.asr_sft(temp_file.name, audio_tag=audio_tag)
+    transcript = str(transcript or "").strip()
     return {"status": "ok", "transcript": transcript, "response": transcript}

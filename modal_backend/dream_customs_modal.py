@@ -207,17 +207,6 @@ def _load_asr_pipe():
     return _ASR_PIPE
 
 
-def _asr_audio_tag(payload: Dict[str, Any]) -> str:
-    value = str(payload.get("language_tag") or payload.get("language") or "").strip().lower()
-    if value in {"<chinese>", "chinese", "zh", "zh-cn", "mandarin", "中文", "汉语", "普通话"}:
-        return "<chinese>"
-    if value in {"<english>", "english", "en", "en-us", "en-gb"}:
-        return "<english>"
-    if value in {"auto", "detect", "code-switch", "code_switch", "mixed"}:
-        return ""
-    return value if value in {"<chinese>", "<english>"} else ""
-
-
 def _messages_from_payload(payload: Dict[str, Any], prompt: str) -> list[Dict[str, str]]:
     messages = payload.get("messages")
     if isinstance(messages, list) and messages:
@@ -577,10 +566,9 @@ async def asr(
 
     suffix = os.path.splitext(filename)[1] or ".wav"
     model = _load_asr_pipe()
-    audio_tag = _asr_audio_tag(payload)
     with tempfile.NamedTemporaryFile(suffix=suffix) as temp_file:
         temp_file.write(audio_bytes)
         temp_file.flush()
-        transcript = model.asr_sft(temp_file.name, audio_tag=audio_tag)
+        transcript = model.asr_sft(temp_file.name)
     transcript = str(transcript or "").strip()
     return {"status": "ok", "transcript": transcript, "response": transcript}

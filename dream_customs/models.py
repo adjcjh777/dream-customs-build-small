@@ -194,7 +194,14 @@ def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
 
 def _as_string_list(value: Any) -> List[str]:
     if isinstance(value, list):
-        return [str(item).strip() for item in value if str(item).strip()]
+        items = []
+        for item in value:
+            if isinstance(item, dict):
+                item = item.get("question") or item.get("text") or item.get("content") or item.get("label") or ""
+            text = str(item).strip()
+            if text:
+                items.append(text)
+        return items
     if isinstance(value, str) and value.strip():
         return [part.strip() for part in re.split(r"[,，\n]", value) if part.strip()]
     return []
@@ -310,7 +317,7 @@ class OllamaTextClient:
         model_name: str = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0",
         base_url: str = "http://localhost:11434",
         timeout: float = 45.0,
-        temperature: float = 0.2,
+        temperature: float = 0.0,
         max_tokens: int = 700,
         fallback: Optional[FakeTextClient] = None,
     ):
@@ -618,7 +625,7 @@ class HostedMiniCPMTextClient:
         endpoint: str = "",
         token: str = "",
         timeout: float = 60.0,
-        temperature: float = 0.2,
+        temperature: float = 0.0,
         max_tokens: int = 780,
         fallback: Optional[FakeTextClient] = None,
     ):

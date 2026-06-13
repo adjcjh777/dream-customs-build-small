@@ -14,7 +14,7 @@ def test_normalize_text_payload_accepts_prompt():
     payload = normalize_text_payload({"prompt": "Return JSON.", "max_tokens": 123})
     assert payload["prompt"] == "Return JSON."
     assert payload["max_tokens"] == 123
-    assert payload["temperature"] == 0.2
+    assert payload["temperature"] == 0.0
 
 
 def test_normalize_text_payload_accepts_openai_style_messages():

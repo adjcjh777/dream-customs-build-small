@@ -178,6 +178,23 @@ _ZH_ANCHOR_MARKERS = [
     "楼顶",
     "办公楼",
     "高的办公楼",
+    "公司午觉",
+    "公司午休",
+    "公司",
+    "办公室",
+    "上班",
+    "午觉",
+    "午休",
+    "被人泼了一盆水",
+    "被人泼水",
+    "被泼了一盆水",
+    "被泼水",
+    "往脸上浇了一盆水",
+    "浇了一盆水",
+    "泼了一盆水",
+    "一盆水",
+    "盆水",
+    "泼水",
     "漆黑的走廊",
     "漆黑走廊",
     "黑暗走廊",
@@ -297,6 +314,23 @@ _ZH_TO_EN_PHRASES = {
     "楼顶": "rooftop",
     "办公楼": "office building",
     "高的办公楼": "tall office building",
+    "公司午觉": "office nap",
+    "公司午休": "office lunch-break nap",
+    "公司": "company office",
+    "办公室": "office",
+    "上班": "being at work",
+    "午觉": "nap",
+    "午休": "lunch break",
+    "被人泼了一盆水": "someone pouring a basin of water",
+    "被人泼水": "someone splashing water",
+    "被泼了一盆水": "being splashed with a basin of water",
+    "被泼水": "being splashed with water",
+    "往脸上浇了一盆水": "water poured onto the face",
+    "浇了一盆水": "a basin of water being poured",
+    "泼了一盆水": "a basin of water being splashed",
+    "一盆水": "a basin of water",
+    "盆水": "basin of water",
+    "泼水": "splashing water",
     "漆黑的走廊": "dark hallway",
     "漆黑走廊": "dark hallway",
     "黑暗走廊": "dark hallway",
@@ -486,6 +520,8 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
     candidates: List[str] = []
     visual_candidates = _visual_anchor_candidates(intake)
     candidates.extend(visual_candidates[:3])
+    if re.search(r"公司|办公室|上班", raw_text) and re.search(r"午觉|午休", raw_text) and re.search(r"泼|浇|水", raw_text):
+        candidates.extend(["公司", "午觉", "被人泼水"])
     if "elevator" in text:
         candidates.append("elevator")
     if re.search(r"\bfloor\s*14\b|\b14\b", text):
@@ -697,7 +733,7 @@ def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
     text = _story_text(intake, answers)
     if _contains_any(text, ["小孩", "child", "找不到家", "lost", "home", "回家", "地铁", "subway"]):
         return "lost_home"
-    if _contains_any(text, ["海", "海浪", "水", "月牙", "moon", "sea", "wave", "water", "dark sea"]):
+    if _contains_any(text, ["海", "海浪", "月牙", "moon", "sea", "wave", "dark sea", "dark water", "漆黑的海"]):
         return "dark_water"
     if _contains_any(text, ["电梯", "按钮", "14", "elevator", "button", "floor"]):
         return "stuck_elevator"
@@ -754,6 +790,8 @@ def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str 
     theme = _dream_theme(intake, answers)
     if theme == "stuck_elevator":
         return _stuck_elevator_anchor_phrase(intake, anchors, language, answers)
+    if anchors:
+        return _join_anchors(anchors, language)
     if _is_zh(language):
         themed = {
             "lost_home": "地铁站里迷路的小孩和回家的方向",
@@ -1169,13 +1207,16 @@ def _main_question_from_intake(intake: DreamIntake, language: str = "en") -> str
 def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
     primary = _primary_anchor(intake, language)
     secondary = _secondary_anchor(intake, language)
+    anchors = _anchors_for_language(intake, language)
+    story_anchor = _story_anchor_phrase(intake, anchors, language) if anchors else primary
     if not _is_zh(language):
         return (
-            f"Maybe this dream is not giving you a fixed answer. It is placing {_anchor_with_article(primary)} "
-            f"beside {_anchor_with_article(secondary)} so you can notice one small stuck point today."
+            "Maybe this dream is not giving you a fixed answer. "
+            f"It is placing {_anchor_with_article(story_anchor)} near {_anchor_with_article(secondary)} "
+            "so you can notice one small stuck point today."
         )
     return (
-        f"也许这个梦不是在给你一个确定答案，而是把「{primary}」和「{secondary}」放到一起，"
+        f"也许这个梦不是在给你一个确定答案，而是把「{story_anchor}」这组线索放在一起，"
         "提醒你先看见今天最卡住的一小处。"
     )
 
@@ -1368,7 +1409,7 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
         )
     return _numbered_suggestions(
         [
-            f"把「{primary}」当成现实生活的线索，不当成梦里给你的命令。",
+            f"把「{anchor}」当成现实生活的线索，不当成梦里给你的命令。",
             "说出它像今天哪件普通小事，再选一个真的能做的小动作。",
         ],
         language,
@@ -2038,6 +2079,50 @@ def build_qa_state(
     )
 
 
+def _has_unsupported_clinical_frame(text: str) -> bool:
+    clean = (text or "").lower()
+    markers = [
+        "睡眠剥夺",
+        "睡眠障碍",
+        "睡眠问题",
+        "压力过大",
+        "压力过载",
+        "压力信号",
+        "持续焦虑",
+        "焦虑症",
+        "寻求专业帮助",
+        "专业帮助",
+        "专业支持",
+        "心理咨询",
+        "心理治疗",
+        "医疗建议",
+        "临床",
+        "诊断",
+        "病理",
+        "创伤证据",
+        "sleep deprivation",
+        "sleep disorder",
+        "sleep problem",
+        "pressure overload",
+        "professional help",
+        "professional support",
+        "medical advice",
+        "clinical",
+        "diagnosis",
+        "therapy",
+        "pathology",
+        "trauma evidence",
+    ]
+    return any(marker in clean for marker in markers)
+
+
+def _nonclinical_caring_note(anchors: List[str], language: str = "en") -> str:
+    anchor = anchors[0] if anchors else ("梦里的这个细节" if _is_zh(language) else "this dream detail")
+    if _is_zh(language):
+        return f"这个梦被你记下来已经够了；今天先把「{anchor}」当作一个需要被温柔看见的细节。"
+    return f"Writing this dream down is already enough; today, let {anchor} be one detail you meet gently."
+
+
 def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
     polished = card.model_copy(deep=True)
     answer_lines = [line.strip() for line in (answers or "").splitlines() if line.strip()]
@@ -2209,7 +2294,17 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     elif _is_zh(language) and "所有楼层" in polished.caring_note:
         polished.caring_note = "你不需要一醒来就解释完整个梦；先照顾一个细节和一个很小的下一步就好。"
     merged = "\n".join([intake.merged_text(), answers or ""])
-    polished.safety_note = safety_note(language) if needs_escalation(merged) else ""
+    has_escalation = needs_escalation(merged)
+    if not has_escalation:
+        if _has_unsupported_clinical_frame(polished.interpretation):
+            polished.interpretation = _fallback_interpretation(intake, language)
+        if _has_unsupported_clinical_frame(polished.today_tip):
+            polished.today_tip = _grounded_today_tip(intake, language)
+        if _has_unsupported_clinical_frame(polished.tiny_action):
+            polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
+        if _has_unsupported_clinical_frame(polished.caring_note):
+            polished.caring_note = _nonclinical_caring_note(anchors, language)
+    polished.safety_note = safety_note(language) if has_escalation else ""
     if not _is_zh(language):
         polished = _clean_english_today_tip_language(polished)
     return polished

@@ -93,6 +93,81 @@ def test_elevator_floor14_demo_anchors_are_clean_for_question_stage():
     assert "for floor" not in state.dream_anchors
 
 
+def test_zh_company_nap_splashed_water_keeps_real_anchors():
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text="我在公司午觉的时候被人泼了一盆水。",
+        mood="",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+
+    assert any("公司" in anchor for anchor in session.qa_state.dream_anchors)
+    assert any("午觉" in anchor or "午休" in anchor for anchor in session.qa_state.dream_anchors)
+    assert any("泼" in anchor or "水" in anchor for anchor in session.qa_state.dream_anchors)
+
+    session = ask_questions(session, FakeTextClient(), language="zh")
+    first_response = session.question_history[0]
+
+    assert "公司" in first_response or "午觉" in first_response or "泼" in first_response
+    assert "夜晚的海" not in first_response
+    assert "海浪" not in first_response
+    assert "月牙" not in first_response
+    assert "小人" not in first_response
+
+
+def test_zh_plain_water_fragment_does_not_invent_sea_scene():
+    session = add_evidence(
+        create_session(language="zh"),
+        dream_text="水",
+        mood="",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+        language="zh",
+    )
+    session = ask_questions(session, FakeTextClient(), language="zh")
+
+    first_response = session.question_history[0]
+
+    assert "水" in first_response
+    assert "夜晚的海" not in first_response
+    assert "海浪" not in first_response
+    assert "月牙" not in first_response
+    assert "小人" not in first_response
+
+
+def test_today_tip_removes_unsupported_clinical_frame_for_company_water_dream():
+    class ClinicalHostedTextClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="你梦见在公司午觉时被人泼水。",
+                main_question="这个梦里的水可能在提醒我什么？",
+                dream_anchors=["水"],
+                followup_questions=[],
+                user_answers=[],
+                interpretation="「被人泼水」可能是睡眠剥夺或压力过大的信号。",
+                today_tip="围绕「公司午觉」留意睡眠问题，必要时寻求专业帮助。",
+                tiny_action="把一杯水放在桌上，提醒自己尽快寻求专业帮助。",
+                caring_note="如果你持续焦虑或有睡眠问题，建议寻求专业帮助。",
+                safety_note="建议寻求专业帮助。",
+            )
+
+    intake = build_intake(dream_text="我在公司午觉的时候被人泼了一盆水。")
+
+    card = generate_today_tip(intake, "", ClinicalHostedTextClient(), language="zh")
+    combined = card.to_plain_text()
+
+    assert any("公司" in anchor for anchor in card.dream_anchors)
+    assert any("午觉" in anchor or "午休" in anchor for anchor in card.dream_anchors)
+    assert any("泼" in anchor or "水" in anchor for anchor in card.dream_anchors)
+    assert "睡眠剥夺" not in combined
+    assert "压力过大" not in combined
+    assert "睡眠问题" not in combined
+    assert "专业帮助" not in combined
+    assert card.safety_note == ""
+
+
 def test_generate_pact_returns_card_and_html():
     intake = build_intake(dream_text="I missed an elevator.", mood="anxious")
     card, html = generate_pact(intake, "I want a small start.", FakeTextClient())

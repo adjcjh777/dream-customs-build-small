@@ -30,11 +30,11 @@ def normalize_text_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
     except (TypeError, ValueError):
         max_tokens = 700
     max_tokens = max(64, min(max_tokens, 1200))
-    temperature = payload.get("temperature", 0.2)
+    temperature = payload.get("temperature", 0.0)
     try:
         temperature = float(temperature)
     except (TypeError, ValueError):
-        temperature = 0.2
+        temperature = 0.0
     temperature = max(0.0, min(temperature, 0.7))
     return {
         "prompt": prompt,

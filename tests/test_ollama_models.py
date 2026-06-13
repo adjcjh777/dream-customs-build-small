@@ -143,6 +143,22 @@ def test_hosted_text_client_parses_common_response_shape():
     assert negotiation["questions"] == ["What does it ask?"]
 
 
+def test_hosted_text_client_extracts_question_text_from_object_list():
+    client = StubHostedTextClient(
+        {
+            "response": (
+                '{"visitor_name":"小水盆",'
+                '"questions":[{"type":"1","question":"你当时是怎么被泼水的？"}],'
+                '"tone_note":"先贴近用户自己的场景。"}'
+            )
+        }
+    )
+
+    negotiation = client.generate_negotiation("dream")
+
+    assert negotiation["questions"] == ["你当时是怎么被泼水的？"]
+
+
 def test_hosted_text_client_parses_model_led_brief():
     class StubHostedBriefClient(HostedMiniCPMTextClient):
         def _post_json(self, prompt, max_tokens=700):

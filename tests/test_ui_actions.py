@@ -103,6 +103,8 @@ def test_hero_subtitle_explains_app_instead_of_legacy_name():
     assert "The Morning Question Desk" in hero_html
     assert "What did the dream leave you asking?" in hero_html
     assert "grounded Morning Ticket" in hero_html
+    assert "dc-hero-ribbon" in hero_html
+    assert "Text + image + voice intake" in hero_html
     assert "Dream Customs" not in hero_html
 
 
@@ -115,6 +117,23 @@ def test_composer_has_three_real_demo_chips():
     assert "_example_floor14" in source
     assert "_example_melting" in source
     assert ".dc-demo-chip-row" in CSS
+    assert "Dream slips" in ui_app._demo_chip_intro_html("en")
+    assert "梦境纸片" in ui_app._demo_chip_intro_html("zh")
+
+
+def test_side_panel_frames_the_morning_desk_rule():
+    html = ui_app._side_stamp_html("en")
+    zh_html = ui_app._side_stamp_html("zh")
+
+    assert "dc-side-stack" in html
+    assert "dc-desk-rule" in html
+    assert "Do not solve the whole dream." in html
+    assert "dc-intake-rail" in html
+    assert "Text" in html
+    assert "Image" in html
+    assert "Voice" in html
+    assert "清晨桌面规则" in zh_html
+    assert "文字" in zh_html
 
 
 def test_side_panel_dropdown_hover_stays_readable():
@@ -183,6 +202,8 @@ def test_question_stage_shows_anchor_chips_before_the_question():
     )
 
     assert "dc-question-anchor-strip" in html
+    assert "dc-question-anchor-label" in html
+    assert "Sticky details already on the desk" in html
     assert html.index("elevator") < html.index("Morning Question Desk")
     assert "floor 14" in html
     assert "melting button" in html

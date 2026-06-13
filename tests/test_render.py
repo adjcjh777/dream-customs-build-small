@@ -99,6 +99,8 @@ def test_today_tip_card_prioritizes_tip_before_interpretation():
     assert "Morning Ticket" in html
     assert "Because your dream kept returning to" in html
     assert "dqa-anchor-chips" in html
+    assert "dqa-ticket-stamp" in html
+    assert "Take one note today" in html
     assert "floor 14" in html
     assert "How this was made small" in html
 

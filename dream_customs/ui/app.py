@@ -432,7 +432,10 @@ def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
     anchor_label = "梦境锚点" if language == "zh" else "Dream anchors"
     anchor_chips = "".join(f"<span>{escape(anchor)}</span>" for anchor in anchor_items)
     anchor_strip = (
+        "<div class='dc-question-anchor-wrap'>"
+        f"<span class='dc-question-anchor-label'>{escape(copy['question_anchor_label'])}</span>"
         f"<div class='dc-question-anchor-strip' aria-label='{anchor_label}'>{anchor_chips}</div>"
+        "</div>"
         if anchor_chips
         else ""
     )
@@ -697,6 +700,10 @@ def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
     <div class="dc-sun-mark" aria-hidden="true"></div>
   </div>
   <p class="dc-hero-body">{copy['hero_body']}</p>
+  <div class="dc-hero-ribbon" aria-label="{escape(copy['hero_badge'])}">
+    <span>{escape(copy['hero_badge'])}</span>
+    <small>{escape(copy['hero_mobile_note'])}</small>
+  </div>
   <div class="dc-stepper" aria-label="Dream QA steps">
     {''.join(step_html)}
   </div>
@@ -714,12 +721,13 @@ def _section_title_html(number: int, text: str) -> str:
 
 
 def _demo_chip_intro_html(language: str = DEFAULT_LANGUAGE) -> str:
-    message = (
-        "Or tap the 90-second demo trail:"
-        if normalize_language(language) == "en"
-        else "也可以点一个 90 秒演示线索："
-    )
-    return f'<p class="dc-demo-chip-intro">{escape(message)}</p>'
+    copy = copy_for(language)
+    return f"""
+<div class="dc-demo-chip-intro">
+  <span>{escape(copy['demo_intro_label'])}</span>
+  <strong>{escape(copy['demo_intro_body'])}</strong>
+</div>
+""".strip()
 
 
 def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
@@ -774,7 +782,13 @@ def _field_tip_html(language: str = DEFAULT_LANGUAGE, view=None) -> str:
             else "梦境记录需要至少一句文字、图片或语音线索，然后再继续。"
         )
         return f'<p class="dc-field-tip is-error" role="alert">{escape(message)}</p>'
-    return f"<p class=\"dc-field-tip\">{escape(copy['field_tip'])}</p>"
+    return f"""
+<div class="dc-field-tip">
+  <span>{escape(copy['desk_rule_label'])}</span>
+  <strong>{escape(copy['desk_rule_title'])}</strong>
+  <p>{escape(copy['field_tip'])}</p>
+</div>
+""".strip()
 
 
 def _processing_html(language: str = DEFAULT_LANGUAGE) -> str:
@@ -783,11 +797,23 @@ def _processing_html(language: str = DEFAULT_LANGUAGE) -> str:
 
 def _side_stamp_html(language: str = DEFAULT_LANGUAGE) -> str:
     copy = copy_for(language)
+    intake_items = "".join(f"<span>{escape(item)}</span>" for item in copy["intake_items"])
     return f"""
-<div class="dc-side-stamp">
-  <span>{escape(copy['side_stamp_label'])}</span>
-  <strong>{escape(copy['side_stamp_title'])}</strong>
-  <small>{escape(copy['side_stamp_body'])}</small>
+<div class="dc-side-stack">
+  <div class="dc-side-stamp">
+    <span>{escape(copy['side_stamp_label'])}</span>
+    <strong>{escape(copy['side_stamp_title'])}</strong>
+    <small>{escape(copy['side_stamp_body'])}</small>
+  </div>
+  <div class="dc-desk-rule">
+    <span>{escape(copy['desk_rule_label'])}</span>
+    <strong>{escape(copy['desk_rule_title'])}</strong>
+    <p>{escape(copy['desk_rule_body'])}</p>
+  </div>
+  <div class="dc-intake-rail" aria-label="{escape(copy['intake_label'])}">
+    <small>{escape(copy['intake_label'])}</small>
+    <div>{intake_items}</div>
+  </div>
 </div>
 """.strip()
 

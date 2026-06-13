@@ -53,6 +53,8 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
             if is_zh
             else "MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket."
         ),
+        "ticket_stamp_label": "今天只带走一张" if is_zh else "Take one note today",
+        "ticket_stamp_title": "贴着梦境细节" if is_zh else "Grounded in the dream",
     }
     tiny_action = (
         f"<section class='dqa-ticket-row'><h3>{labels['tiny_action']}</h3><p>{escape(card.tiny_action)}</p></section>"
@@ -80,6 +82,10 @@ def render_today_tip_card(card: TodayTipCard, language: str = "en") -> str:
     <div>
       <h2>{labels['page']}</h2>
       <p>{labels['thanks']}</p>
+    </div>
+    <div class="dqa-ticket-stamp" aria-hidden="true">
+      <span>{labels['ticket_stamp_label']}</span>
+      <strong>{labels['ticket_stamp_title']}</strong>
     </div>
   </div>
   <div class="dqa-anchor-chips" aria-label="{labels['anchors']}">{anchor_chips}</div>

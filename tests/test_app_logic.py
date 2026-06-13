@@ -1,4 +1,5 @@
 import json
+import urllib.error
 
 from dream_customs.app_logic import (
     _clients,
@@ -148,3 +149,22 @@ def test_asr_endpoint_derives_from_modal_text_endpoint_when_secret_is_missing():
     )
 
     assert settings["asr_endpoint"] == "https://workspace--dream-customs-minicpm-backend-asr.modal.run"
+
+
+def test_hosted_asr_can_disable_demo_fallback_for_browser_voice(monkeypatch, tmp_path):
+    audio_path = tmp_path / "voice.wav"
+    audio_path.write_bytes(b"not a real wav but enough to exercise upload encoding")
+
+    def raise_url_error(*_args, **_kwargs):
+        raise urllib.error.URLError("modal unavailable")
+
+    monkeypatch.setattr("dream_customs.models.urllib.request.urlopen", raise_url_error)
+    client = HostedASRClient(
+        endpoint="https://example.test/asr",
+        token="secret-token",
+        timeout=3,
+        fallback_enabled=False,
+    )
+
+    assert client.transcribe(str(audio_path)) == ""
+    assert "URLError" in client.last_error

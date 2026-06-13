@@ -53,6 +53,9 @@ def test_voice_input_records_audio_to_modal_asr_without_browser_speech_recogniti
     assert "recognition.lang" not in app_source
     assert "MediaRecorder" in app_source
     assert 'fetch("/dream-asr"' in app_source
+    assert "AbortController" in app_source
+    assert "asrRequestTimeout" in app_source
+    assert "waking" in app_source
     assert "appendTranscript" in app_source
     assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in app_source
 
@@ -61,8 +64,10 @@ def test_browser_voice_uses_same_origin_asr_proxy():
     source = Path("app.py").read_text(encoding="utf-8")
 
     assert '@app.post("/dream-asr", include_in_schema=False)' in source
-    assert '_clients("demo", "demo")' in source
-    assert "asr_client.transcribe(temp_path)" in source
+    assert "_browser_asr_client()" in source
+    assert "fallback_enabled=False" in source
+    assert "asyncio.to_thread(asr_client.transcribe, temp_path)" in source
+    assert "BROWSER_ASR_TIMEOUT_SECONDS = 150.0" in source
     assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in source
 
 

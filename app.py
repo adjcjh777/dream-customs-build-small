@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 
@@ -6,13 +7,15 @@ from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from dream_customs import zerogpu  # noqa: F401
-from dream_customs.app_logic import _clients
+from dream_customs.app_logic import _client_settings
+from dream_customs.models import HostedASRClient
 from dream_customs.runtime_env import auto_load_runtime_env_json
 from dream_customs.ui.app import build_demo
 
 
 LOCAL_GRADIO_PORT = 7862
 HF_SPACE_GRADIO_PORT = 7860
+BROWSER_ASR_TIMEOUT_SECONDS = 150.0
 
 
 def _default_server_port() -> int:
@@ -22,6 +25,26 @@ def _default_server_port() -> int:
     if os.getenv("SPACE_ID", "").strip() or os.getenv("SPACE_HOST", "").strip():
         return int(os.getenv("PORT", str(HF_SPACE_GRADIO_PORT)))
     return LOCAL_GRADIO_PORT
+
+
+def _browser_asr_timeout_seconds() -> float:
+    value = os.getenv("DREAM_CUSTOMS_BROWSER_ASR_TIMEOUT_SECONDS", "").strip()
+    if not value:
+        return BROWSER_ASR_TIMEOUT_SECONDS
+    try:
+        return max(10.0, float(value))
+    except ValueError:
+        return BROWSER_ASR_TIMEOUT_SECONDS
+
+
+def _browser_asr_client() -> HostedASRClient:
+    resolved = _client_settings(asr_timeout_seconds=_browser_asr_timeout_seconds())
+    return HostedASRClient(
+        endpoint=resolved["asr_endpoint"],
+        token=resolved["hosted_token"],
+        timeout=resolved["asr_timeout_seconds"],
+        fallback_enabled=False,
+    )
 
 
 auto_load_runtime_env_json()
@@ -50,6 +73,7 @@ def _install_gradio_api_aliases(app, blocks) -> None:
             filename = str(getattr(upload, "filename", "") or "dream-voice.webm")
             suffix = os.path.splitext(filename)[1] or ".webm"
             temp_path = ""
+            asr_client = None
             try:
                 audio_bytes = await upload.read()
                 if not audio_bytes:
@@ -60,8 +84,8 @@ def _install_gradio_api_aliases(app, blocks) -> None:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
                     temp_file.write(audio_bytes)
                     temp_path = temp_file.name
-                _text_client, _vision_client, asr_client = _clients("demo", "demo")
-                transcript = asr_client.transcribe(temp_path)
+                asr_client = _browser_asr_client()
+                transcript = await asyncio.to_thread(asr_client.transcribe, temp_path)
             finally:
                 if temp_path:
                     try:
@@ -71,7 +95,16 @@ def _install_gradio_api_aliases(app, blocks) -> None:
 
             if not transcript:
                 return JSONResponse(
-                    {"status": "error", "transcript": "", "error": "No transcript returned."},
+                    {
+                        "status": "error",
+                        "transcript": "",
+                        "error": (
+                            asr_client.last_error
+                            if asr_client is not None
+                            else "MiMo ASR client could not be initialized."
+                        )
+                        or "No transcript returned.",
+                    },
                     status_code=502,
                 )
             return JSONResponse({"status": "ok", "transcript": transcript})

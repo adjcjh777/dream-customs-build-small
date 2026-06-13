@@ -95,6 +95,8 @@ VOICE_JS = r"""
     let audioContext = null;
     let silenceTimer = null;
     let maxTimer = null;
+    let wakingTimer = null;
+    let requestTimer = null;
     let heardVoice = false;
     let lastVoiceAt = 0;
 
@@ -147,6 +149,17 @@ VOICE_JS = r"""
       audioContext = null;
     };
 
+    const clearRequestTimers = () => {
+      if (wakingTimer) {
+        window.clearTimeout(wakingTimer);
+        wakingTimer = null;
+      }
+      if (requestTimer) {
+        window.clearTimeout(requestTimer);
+        requestTimer = null;
+      }
+    };
+
     const chooseMimeType = () => {
       const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/wav"];
       return candidates.find((type) => window.MediaRecorder?.isTypeSupported?.(type)) || "";
@@ -161,16 +174,31 @@ VOICE_JS = r"""
       const form = new FormData();
       const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("wav") ? "wav" : "webm";
       form.append("audio", blob, `dream-voice.${extension}`);
+      clearRequestTimers();
+      const controller = new AbortController();
+      const asrRequestTimeout = Number(button.dataset.timeoutMs || "140000");
+      wakingTimer = window.setTimeout(() => {
+        setStatus(messageFor("waking", "MiMo ASR is waking on Modal. This first pass can take a moment."), "waking");
+      }, 6000);
+      requestTimer = window.setTimeout(() => {
+        controller.abort();
+      }, asrRequestTimeout);
       try {
-        const response = await fetch("/dream-asr", { method: "POST", body: form });
+        const response = await fetch("/dream-asr", { method: "POST", body: form, signal: controller.signal });
         const payload = await response.json();
         if (!response.ok || payload.status !== "ok" || !payload.transcript) {
           throw new Error(payload.error || "No transcript returned.");
         }
         appendTranscript(payload.transcript);
         setStatus(messageFor("done", "Added the ASR transcript to the dream note."), "done");
-      } catch (_error) {
-        setStatus(messageFor("error", "Voice transcription failed. You can type this fragment instead."), "error");
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          setStatus(messageFor("timeout", "MiMo ASR timed out. Tap the mic to try once more."), "error");
+        } else {
+          setStatus(messageFor("error", "Voice transcription failed. You can type this fragment instead."), "error");
+        }
+      } finally {
+        clearRequestTimers();
       }
     };
 
@@ -249,6 +277,7 @@ VOICE_JS = r"""
       if (mediaRecorder?.state === "recording") {
         stopRecording();
       } else {
+        clearRequestTimers();
         startRecording();
       }
     });
@@ -810,11 +839,14 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     data-open="{escape(copy['voice_help'])}"
     data-recording="{escape(copy['mic_listening'])}"
     data-transcribing="{escape(copy['mic_transcribing'])}"
+    data-waking="{escape(copy['mic_waking'])}"
     data-unsupported="{escape(copy['mic_unsupported'])}"
     data-permission="{escape(copy['mic_permission'])}"
     data-done="{escape(copy['mic_done'])}"
     data-empty="{escape(copy['mic_empty'])}"
     data-error="{escape(copy['mic_error'])}"
+    data-timeout="{escape(copy['mic_timeout'])}"
+    data-timeout-ms="140000"
   >
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>

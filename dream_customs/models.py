@@ -870,21 +870,32 @@ class HostedASRClient:
         token: str = "",
         timeout: float = 45.0,
         fallback: Optional[FakeASRClient] = None,
+        fallback_enabled: bool = True,
     ):
         self.endpoint = endpoint.strip()
         self.token = token.strip()
         self.timeout = timeout
         self.fallback = fallback or FakeASRClient()
+        self.fallback_enabled = fallback_enabled
+        self.last_error = ""
+
+    def _fallback_transcript(self, audio_path: Optional[str]) -> str:
+        if not self.fallback_enabled:
+            return ""
+        return self.fallback.transcribe(audio_path)
 
     def transcribe(self, audio_path: Optional[str]) -> str:
+        self.last_error = ""
         if not audio_path:
             return ""
         if not self.endpoint:
-            return self.fallback.transcribe(audio_path)
+            self.last_error = "Missing ASR endpoint."
+            return self._fallback_transcript(audio_path)
         try:
             with open(audio_path, "rb") as audio_file:
                 audio_b64 = base64.b64encode(audio_file.read()).decode("ascii")
-        except OSError:
+        except OSError as exc:
+            self.last_error = f"{exc.__class__.__name__}: {exc}"
             return ""
         payload = {
             "audio": audio_b64,
@@ -902,6 +913,12 @@ class HostedASRClient:
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
-            return self.fallback.transcribe(audio_path)
-        return _hosted_transcript_from_response(payload) or self.fallback.transcribe(audio_path)
+        except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError) as exc:
+            self.last_error = f"{exc.__class__.__name__}: {exc}"
+            return self._fallback_transcript(audio_path)
+        transcript = _hosted_transcript_from_response(payload)
+        if transcript:
+            return transcript
+        error = payload.get("error") if isinstance(payload, dict) else ""
+        self.last_error = str(error or "No transcript returned.").strip()
+        return self._fallback_transcript(audio_path)

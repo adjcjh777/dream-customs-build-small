@@ -3123,3 +3123,143 @@ button.secondary {
   }
 }
 """
+
+CSS += """
+/* Hero proportion fix: make the desk invitation feel calm, not like a giant poster. */
+.dc-hero {
+  align-content: center;
+  background:
+    radial-gradient(circle at 74% 37%, rgba(255, 253, 248, 0.54) 0 16%, rgba(255, 253, 248, 0.88) 33%, rgba(255, 253, 248, 0.98) 62%),
+    linear-gradient(180deg, rgba(246, 251, 246, 0.96), rgba(255, 250, 240, 0.99)),
+    url("https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=1600&q=80") 74% 43% / cover !important;
+  gap: clamp(12px, 2vw, 18px);
+  min-height: clamp(420px, 50vh, 560px);
+  overflow: hidden;
+  padding: clamp(24px, 4vw, 46px) clamp(18px, 5vw, 70px) clamp(30px, 4.8vw, 54px);
+}
+
+.dc-hero-top {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+
+.dc-menu-mark {
+  opacity: 0.78;
+}
+
+.dc-sun-mark {
+  height: 44px;
+  opacity: 0.78;
+  width: 44px;
+}
+
+.dc-hero-kicker {
+  font-size: clamp(0.78rem, 1.1vw, 0.96rem);
+  margin-bottom: 8px;
+}
+
+.dc-hero h1 {
+  font-size: clamp(2.35rem, 5.4vw, 4.85rem) !important;
+  line-height: 1.03;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1080px;
+  text-wrap: balance;
+}
+
+.dc-brand-subtitle {
+  color: #6f7f8b;
+  font-size: clamp(1rem, 1.8vw, 1.34rem);
+  line-height: 1.45;
+  max-width: 780px;
+  text-wrap: balance;
+}
+
+.dc-hero-body {
+  color: #4f5f67;
+  font-size: clamp(0.95rem, 1.32vw, 1.08rem);
+  line-height: 1.58;
+  max-width: 700px;
+  text-wrap: balance;
+}
+
+.dc-hero-ribbon {
+  background: rgba(255, 253, 248, 0.62);
+  border-color: rgba(95, 143, 104, 0.2);
+  border-radius: 999px;
+  box-shadow: none;
+  gap: 10px;
+  margin-top: 0;
+  padding: 7px 12px;
+}
+
+.dc-hero-ribbon span,
+.dc-hero-ribbon small {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.dc-hero-ribbon span {
+  align-items: center;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.dc-hero-ribbon span::before {
+  background: var(--dqa-sage-deep);
+  border-radius: 999px;
+  content: "";
+  display: inline-block;
+  height: 7px;
+  width: 7px;
+}
+
+.dc-stepper {
+  margin-top: clamp(18px, 3.2vw, 34px);
+  max-width: 680px;
+}
+
+.dc-stepper span {
+  flex-basis: clamp(74px, 10vw, 112px);
+  font-size: clamp(0.9rem, 1.48vw, 1.14rem);
+}
+
+.dc-stepper strong {
+  font-size: clamp(1rem, 1.8vw, 1.28rem);
+  height: clamp(44px, 5.2vw, 58px);
+  width: clamp(44px, 5.2vw, 58px);
+}
+
+.dc-stepper-line {
+  margin-top: clamp(21px, 2.6vw, 29px);
+}
+
+@media (max-width: 900px) {
+  .dc-hero {
+    min-height: 470px;
+    padding: 24px 22px 32px;
+  }
+
+  .dc-hero h1 {
+    font-size: clamp(2.25rem, 10vw, 3.65rem) !important;
+  }
+
+  .dc-brand-subtitle,
+  .dc-hero-body {
+    max-width: 620px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dc-hero {
+    min-height: 520px;
+  }
+
+  .dc-hero-top {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .dc-hero-ribbon {
+    border-radius: 14px;
+  }
+}
+"""

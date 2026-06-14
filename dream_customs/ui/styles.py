@@ -1210,6 +1210,86 @@ a.built-with[href*="gradio.app"] {
 """
 
 CSS += """
+.dc-question-original p {
+  font-size: clamp(1.16rem, 2.4vw, 1.45rem);
+  font-weight: 720;
+  line-height: 1.45;
+  margin: 4px 0 0 !important;
+}
+
+.dc-question-context {
+  background: rgba(255, 253, 248, 0.72);
+  border: 1px solid rgba(215, 168, 66, 0.22);
+  border-radius: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+}
+
+.dc-question-context summary {
+  color: var(--dqa-sage-deep);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 760;
+}
+
+.dc-question-context p {
+  color: var(--dqa-muted);
+  font-size: 0.92rem;
+  margin-top: 8px;
+}
+
+.dc-stage button.dc-is-loading {
+  cursor: progress !important;
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.dc-stage button.dc-is-loading::after {
+  animation: dqa-loading-dot 900ms ease-in-out infinite;
+  content: "";
+  display: inline-block;
+  margin-left: 8px;
+}
+
+@keyframes dqa-loading-dot {
+  0%,
+  100% {
+    content: "";
+  }
+  33% {
+    content: ".";
+  }
+  66% {
+    content: "..";
+  }
+}
+
+@media (max-width: 640px) {
+  .dc-hero {
+    min-height: 248px !important;
+    padding-bottom: 18px !important;
+  }
+
+  .dc-stepper {
+    margin-top: 18px !important;
+  }
+
+  .dc-stepper span {
+    flex-basis: 62px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .dc-stepper strong {
+    height: 38px !important;
+    width: 38px !important;
+  }
+
+  .dc-side-stamp {
+    display: none;
+  }
+}
+"""
+CSS += """
 /* Reference-space polish: soft PawMap spacing, case-file step clarity, paper-note tactility. */
 :root {
   --dqa-dawn: #eef6f1;

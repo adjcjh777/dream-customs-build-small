@@ -455,14 +455,52 @@ VOICE_JS = r"""
   };
 
   const bindProcessingButtons = () => {
+    const setBusyButton = (button, mode) => {
+      const isZh = currentLanguage() === "zh";
+      const label = mode === "submit"
+        ? (isZh ? "正在整理线索..." : "Reading clues...")
+        : mode === "question"
+        ? (isZh ? "正在换角度..." : "Finding another angle...")
+        : (isZh ? "正在生成 Tips..." : "Writing the tip...");
+      if (!button.dataset.originalText) {
+        button.dataset.originalText = button.textContent.trim();
+      }
+      button.textContent = label;
+      button.classList.add("dc-is-loading");
+      button.setAttribute("aria-busy", "true");
+      button.dataset.busyStarted = String(Date.now());
+    };
+
+    const resetSettledButton = (button) => {
+      const startedAt = Number(button.dataset.busyStarted || "0");
+      if (
+        button.dataset.originalText
+        && button.getAttribute("aria-busy") === "true"
+        && startedAt
+        && Date.now() - startedAt > 700
+      ) {
+        button.textContent = button.dataset.originalText;
+        button.classList.remove("dc-is-loading");
+        button.removeAttribute("aria-busy");
+        delete button.dataset.busyStarted;
+      }
+    };
+
     const bindButton = (selector, mode) => {
       document.querySelectorAll(selector).forEach((root) => {
         const button = root.matches("button") ? root : root.querySelector("button");
-        if (!button || button.dataset.processingBound === "true") {
+        if (!button) {
+          return;
+        }
+        resetSettledButton(button);
+        if (button.dataset.processingBound === "true") {
           return;
         }
         button.dataset.processingBound = "true";
-        button.addEventListener("click", () => setProcessingCopy(mode));
+        button.addEventListener("click", () => {
+          setProcessingCopy(mode);
+          setBusyButton(button, mode);
+        });
       });
     };
 
@@ -518,9 +556,43 @@ def _notice_html(view: dict) -> str:
     return f"<div class='{css}'>{message}</div>" if message else ""
 
 
+def _split_question_for_display(raw_question: str) -> tuple[str, str]:
+    question = " ".join(str(raw_question or "").split())
+    if not question:
+        return "", ""
+    if "?" not in question:
+        return question, ""
+
+    question_end = question.rfind("?") + 1
+    prefix = question[:question_end]
+    suffix = question[question_end:].strip()
+    candidate = prefix
+    for marker in (": ", "："):
+        if marker in candidate:
+            candidate = candidate.rsplit(marker, 1)[-1].strip()
+    if len(candidate) < 12:
+        candidate = prefix.strip()
+
+    context = question[: max(0, question.find(candidate))].strip(" :：")
+    if suffix:
+        context = f"{context} {suffix}".strip()
+    if context == candidate:
+        context = ""
+    return candidate, context
+
+
 def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
     copy = copy_for(language)
-    question = escape(view.get("question") or "")
+    primary_question, context = _split_question_for_display(view.get("question") or "")
+    question = escape(primary_question)
+    context_html = (
+        "<details class='dc-question-context'>"
+        f"<summary>{escape(copy['question_context_label'])}</summary>"
+        f"<p>{escape(context)}</p>"
+        "</details>"
+        if context
+        else ""
+    )
     anchor_items = [str(anchor).strip() for anchor in view.get("dream_anchors", [])[:3] if str(anchor).strip()]
     anchor_label = "梦境锚点" if language == "zh" else "Dream anchors"
     anchor_chips = "".join(f"<span>{escape(anchor)}</span>" for anchor in anchor_items)
@@ -533,7 +605,7 @@ def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
         else ""
     )
     optional_question = (
-        f"<p class='dc-question-original'><span>{copy['question_speaker']}</span>{question}</p>"
+        f"<div class='dc-question-original'><span>{copy['question_speaker']}</span><p>{question}</p></div>"
         if question
         else ""
     )
@@ -544,6 +616,7 @@ def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
   <p>{copy['question_body']}</p>
   {anchor_strip}
   {optional_question}
+  {context_html}
   <p class="dc-question-note">{copy['question_note']}</p>
 </div>
 """.strip()
@@ -756,7 +829,7 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
 
 
 def _active_step_for_status(status: str) -> int:
-    return {"record": 1, "error": 1, "ask": 2, "drafting": 2, "tip": 3}.get(status, 1)
+    return {"record": 1, "error": 1, "ask": 3, "drafting": 3, "tip": 4}.get(status, 1)
 
 
 def _hero_html(language: str = DEFAULT_LANGUAGE, status: str = "record") -> str:
@@ -1069,13 +1142,6 @@ def build_demo() -> gr.Blocks:
                             show_copy_button=True,
                             elem_classes=["dc-hidden-text"],
                         )
-                    with gr.Accordion(initial_copy["debug_title"], open=False, elem_classes=["dc-debug-panel"]) as debug_panel:
-                        debug_help_html = gr.HTML(_debug_help_html(DEFAULT_LANGUAGE))
-                        debug_json = gr.Code(
-                            label=initial_copy["debug_state_label"],
-                            value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
-                            language="json",
-                        )
 
                 with gr.Column(elem_classes=["dc-side-panel"]):
                     language = gr.Radio(
@@ -1176,6 +1242,13 @@ def build_demo() -> gr.Blocks:
                                 value=DEFAULT_ASR_LATENCY_BUDGET_MS,
                                 precision=0,
                             )
+                    with gr.Accordion(initial_copy["debug_title"], open=False, elem_classes=["dc-debug-panel"]) as debug_panel:
+                        debug_help_html = gr.HTML(_debug_help_html(DEFAULT_LANGUAGE))
+                        debug_json = gr.Code(
+                            label=initial_copy["debug_state_label"],
+                            value=json.dumps(initial.get("debug", {}), ensure_ascii=False, indent=2),
+                            language="json",
+                        )
 
             with gr.Group(visible=False):
                 agent_dream_text = gr.Textbox(label="Agent dream text")

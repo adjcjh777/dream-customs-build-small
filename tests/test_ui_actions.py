@@ -29,10 +29,12 @@ def test_runtime_settings_are_collapsed_for_public_flow():
     flow_column_source = source.split('with gr.Column(elem_classes=["dc-flow-column"]):', 1)[1].split(
         'with gr.Column(elem_classes=["dc-side-panel"]):', 1
     )[0]
+    side_panel_source = source.split('with gr.Column(elem_classes=["dc-side-panel"]):', 1)[1]
 
     assert 'gr.Accordion("Advanced", open=False' in source
     assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in source
-    assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in flow_column_source
+    assert 'with gr.Accordion(initial_copy["debug_title"], open=False' not in flow_column_source
+    assert 'with gr.Accordion(initial_copy["debug_title"], open=False' in side_panel_source
 
 
 def test_voice_input_records_audio_to_modal_asr_without_browser_speech_recognition():
@@ -109,11 +111,12 @@ def test_hero_stepper_tracks_app_status():
 
     assert '<span class="dc-step is-complete"><strong>1</strong>' in ask_html
     assert '<i class="dc-stepper-line is-complete" aria-hidden="true"></i>' in ask_html
-    assert '<span class="dc-step is-active" aria-current="step"><strong>2</strong>' in ask_html
-    assert '<span class="dc-step is-complete"><strong>2</strong>' in tip_html
-    assert '<span class="dc-step is-active" aria-current="step"><strong>3</strong>' in tip_html
-    assert tip_html.count("dc-stepper-line is-complete") == 2
-    assert "One Question" in tip_html
+    assert '<span class="dc-step is-complete"><strong>2</strong>' in ask_html
+    assert '<span class="dc-step is-active" aria-current="step"><strong>3</strong>' in ask_html
+    assert '<span class="dc-step is-complete"><strong>3</strong>' in tip_html
+    assert '<span class="dc-step is-active" aria-current="step"><strong>4</strong>' in tip_html
+    assert tip_html.count("dc-stepper-line is-complete") == 3
+    assert "Answer" in tip_html
 
 
 def test_hero_subtitle_explains_app_instead_of_legacy_name():
@@ -216,7 +219,10 @@ def test_processing_note_is_story_copy_not_backend_jargon():
 def test_question_stage_shows_anchor_chips_before_the_question():
     html = ui_app._question_markdown(
         {
-            "question": "When floor 14 shows up beside the overdue email, what would make opening it feel smaller?",
+            "question": (
+                "What I hear first is the concrete image. One question that will shape the final tip: "
+                "When floor 14 shows up beside the overdue email, what would make opening it feel smaller?"
+            ),
             "dream_anchors": ["elevator", "floor 14", "melting button"],
         },
         "en",
@@ -226,8 +232,11 @@ def test_question_stage_shows_anchor_chips_before_the_question():
     assert "dc-question-anchor-label" in html
     assert "Sticky details already on the desk" in html
     assert html.index("elevator") < html.index("Morning Question Desk")
+    assert "Why this question" in html
     assert "floor 14" in html
     assert "melting button" in html
+    assert "What I hear first" in html
+    assert html.index("When floor 14") < html.index("Why this question")
 
 
 def test_long_running_buttons_show_processing_feedback():
@@ -241,6 +250,10 @@ def test_long_running_buttons_show_processing_feedback():
     assert "bindProcessingButtons" in ui_app.VOICE_JS
     assert "setProcessingCopy" in ui_app.VOICE_JS
     assert "processingBound" in ui_app.VOICE_JS
+    assert "setBusyButton" in ui_app.VOICE_JS
+    assert "resetSettledButton" in ui_app.VOICE_JS
+    assert "busyStarted" in ui_app.VOICE_JS
+    assert "dc-is-loading" in ui_app.VOICE_JS
     assert "Asking from another angle" in ui_app.VOICE_JS
     assert "one more grounded question" in ui_app.VOICE_JS
     assert "js=SUBMIT_PROCESSING_JS" not in source
@@ -250,6 +263,7 @@ def test_long_running_buttons_show_processing_feedback():
     assert "Folding the follow-up answer" in app_source
     assert ".dc-notice.is-processing" in CSS
     assert ".dc-processing-note.is-active" in CSS
+    assert ".dc-stage button.dc-is-loading" in CSS
     assert "endpoint" not in ui_app.VOICE_JS.lower()
     assert "debug" not in ui_app.VOICE_JS.lower()
 

@@ -839,6 +839,42 @@ def _answer_snippet(answers: str, language: str = "en") -> str:
     return " ".join(words[:22])
 
 
+def _answer_reality_cue(answers: str, language: str = "en") -> str:
+    snippet = _answer_snippet(answers, language)
+    if not snippet:
+        return ""
+    lowered = snippet.lower()
+    if _is_zh(language):
+        lead_ins = [
+            "现实里",
+            "现实中",
+            "可能是",
+            "大概是",
+            "像是",
+            "让我想到",
+            "提醒我",
+            "其实是",
+        ]
+        for lead in lead_ins:
+            if lead in snippet:
+                return snippet[snippet.find(lead) :].strip(" ，。；、")
+        return snippet
+    lead_ins = [
+        "in real life",
+        "it is probably",
+        "it's probably",
+        "probably",
+        "it reminded me of",
+        "it reminds me of",
+        "it felt like",
+        "it feels like",
+    ]
+    for lead in lead_ins:
+        if lead in lowered:
+            return snippet[lowered.find(lead) :].strip(" ,.;:")
+    return snippet
+
+
 def _anchor_with_article(anchor: str) -> str:
     clean = (anchor or "").strip()
     if clean.lower().startswith(("the ", "a ", "an ")):
@@ -1422,8 +1458,16 @@ def _answer_based_tiny_action(
     anchors: List[str],
     language: str = "en",
 ) -> str:
+    if _answer_has_concrete_task_keyword(answers):
+        return _weird_little_action(intake, answers, anchors, language)
+    return ""
+
+
+def _answer_has_concrete_task_keyword(answers: str) -> bool:
     lowered = (answers or "").lower()
     answer_terms = [
+        "请假",
+        "申请",
         "邮件",
         "email",
         "消息",
@@ -1439,15 +1483,17 @@ def _answer_based_tiny_action(
         "rehearse",
         "deadline",
         "application",
+        "leave request",
+        "time off",
+        "sick leave",
         "apolog",
     ]
-    if any(term in lowered for term in answer_terms):
-        return _weird_little_action(intake, answers, anchors, language)
-    return ""
+    return any(term in lowered for term in answer_terms)
 
 
 def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> str:
     lowered = (answers or "").lower()
+    reality_cue = _answer_reality_cue(answers, language)
     if _is_zh(language):
         if "邮件" in lowered or "email" in lowered:
             return _numbered_suggestions(
@@ -1473,6 +1519,22 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
                     f"把「{anchor}」翻译成现实里一个能靠近的草稿入口。",
                     "先补一个标题或下一小段，不把它当成一次完整交卷。",
                     "写完就停一下，给明天留下一个清楚的接续点。",
+                ],
+                language,
+            )
+        if "请假" in lowered or "申请" in lowered:
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」翻译成现实里那件需要开口的申请，而不是要求自己一次解释清楚所有内疚。",
+                    "今天先写一句最普通的请求，说明你需要什么；先存草稿，不急着立刻发送。",
+                ],
+                language,
+            )
+        if reality_cue:
+            return _numbered_suggestions(
+                [
+                    f"把「{anchor}」和你刚才说的「{reality_cue}」接起来，而不是只解释梦的象征。",
+                    "今天只选一个可回头的小动作：写一句说明、问一个入口，或把下一步先放到草稿里。",
                 ],
                 language,
             )
@@ -1511,6 +1573,14 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             ],
             language,
         )
+    if "leave request" in lowered or "time off" in lowered or "sick leave" in lowered:
+        return _numbered_suggestions(
+            [
+                f"Translate {anchor} into the leave request you named, not into a verdict about your guilt.",
+                "Draft one plain sentence that states what you need; save it before deciding when to send.",
+            ],
+            language,
+        )
     if "apolog" in lowered:
         return _numbered_suggestions(
             [
@@ -1519,11 +1589,20 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             ],
             language,
         )
+    if reality_cue:
+        return _numbered_suggestions(
+            [
+                f"Connect {anchor} to the waking-life clue you named: \"{reality_cue}\".",
+                "Choose one reversible first step today: draft one sentence, ask for one doorway, or park the next step where you can return to it.",
+            ],
+            language,
+        )
     return ""
 
 
 def _answer_based_interpretation(answers: str, anchor: str, language: str = "en") -> str:
     lowered = (answers or "").lower()
+    reality_cue = _answer_reality_cue(answers, language)
     if _is_zh(language):
         if "邮件" in lowered or "email" in lowered:
             return f"也许「{anchor}」不是在催你立刻完成什么，而是在提醒你：那封邮件可以先从一句话开始。"
@@ -1531,6 +1610,10 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
             return f"也许「{anchor}」不是在催你立刻回应什么，而是在提醒你：那条消息可以先从一句草稿开始。"
         if "作业" in lowered or "草稿" in lowered:
             return f"也许「{anchor}」不是在说你已经来不及，而是在提醒你：草稿可以先从下一小段开始。"
+        if "请假" in lowered or "申请" in lowered:
+            return f"也许「{anchor}」不是在责怪你有需求，而是在提醒你：那件申请可以先从一句普通请求开始。"
+        if reality_cue:
+            return f"也许「{anchor}」不是要给梦一个固定解释，而是在把你刚才说的「{reality_cue}」推到更温和的入口。"
         return ""
     if "email" in lowered:
         return (
@@ -1557,10 +1640,20 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
             f"Maybe the {anchor} is not asking you to finish the whole application in one push. "
             "It is pointing to the gentler threshold: finding the next missing item."
         )
+    if "leave request" in lowered or "time off" in lowered or "sick leave" in lowered:
+        return (
+            f"Maybe the {anchor} is not blaming you for needing care. "
+            "It is pointing to the gentler threshold: drafting one plain leave request sentence."
+        )
     if "apolog" in lowered:
         return (
             f"Maybe the {anchor} is not asking you to repair everything at once. "
             "It is pointing to the gentler threshold: drafting one honest sentence."
+        )
+    if reality_cue:
+        return (
+            f"Maybe the {anchor} is not asking for a fixed dream meaning. "
+            f"It is pointing back to the waking-life clue you named: \"{reality_cue}\"."
         )
     return ""
 
@@ -2135,6 +2228,13 @@ def _has_unsupported_emotion_or_generic_wellness(text: str, intake: DreamIntake,
         "保持积极",
         "积极心态",
         "明天会更好",
+        "优化效率",
+        "提高效率",
+        "待办清单",
+        "待办事项",
+        "保持专注",
+        "按优先级",
+        "优先级排序",
         "喝一杯温水",
         "一杯温水",
         "温水",
@@ -2143,6 +2243,13 @@ def _has_unsupported_emotion_or_generic_wellness(text: str, intake: DreamIntake,
         "stay positive",
         "positive mindset",
         "tomorrow will be better",
+        "productivity advice",
+        "productivity hack",
+        "be more productive",
+        "to-do list",
+        "todo list",
+        "sort your tasks",
+        "prioritize your tasks",
         "warm water",
     ]
     return any(marker in clean for marker in generic_markers)
@@ -2212,14 +2319,22 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)
     answer_action = _answer_based_tiny_action(answers, intake, anchors, language)
-    answer_should_shape_visible_tip = bool((answer_tip or answer_action) and not _needs_comfort(answers, language))
+    answer_should_shape_visible_tip = bool(
+        (answer_tip or answer_action)
+        and not _needs_comfort(answers, language)
+        and (
+            _answer_has_concrete_task_keyword(answers)
+            or not _should_use_emotion_led_response(intake, answers, language)
+        )
+    )
+    has_prophecy_frame = _has_prophecy_frame(intake.merged_text())
     if answer_interpretation and answer_should_shape_visible_tip:
         polished.interpretation = answer_interpretation
     elif emotion_interpretation:
         polished.interpretation = emotion_interpretation
     elif answer_interpretation:
         polished.interpretation = answer_interpretation
-    elif _has_prophecy_frame(intake.merged_text()):
+    elif has_prophecy_frame:
         anchor = _answer_bridge_anchor(anchors)
         polished.interpretation = (
             f"Maybe the {anchor} is best treated as a fear-shaped image, not as evidence that something bad will happen."
@@ -2252,9 +2367,9 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.today_tip = answer_tip
     elif emotion_tip:
         polished.today_tip = emotion_tip
-    elif answer_tip:
+    elif answer_tip and not has_prophecy_frame and not _should_use_emotion_led_response(intake, answers, language):
         polished.today_tip = answer_tip
-    elif _has_prophecy_frame(intake.merged_text()):
+    elif has_prophecy_frame:
         anchor = anchors[0]
         polished.today_tip = (
             f"For today, do not test whether the {anchor} is a sign. Name one ordinary worry it resembles, then choose one small calming step."

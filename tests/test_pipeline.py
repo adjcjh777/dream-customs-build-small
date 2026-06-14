@@ -498,6 +498,70 @@ def test_generate_today_tip_keeps_english_emotional_question_from_becoming_task_
     assert "first line" not in combined
 
 
+def test_today_tip_rejects_hollow_productivity_advice_even_when_it_mentions_anchor():
+    class HollowProductivityClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="你梦见旧图书馆里有一把打不开的钥匙。",
+                main_question="这个梦在提醒我什么？",
+                dream_anchors=["旧图书馆", "钥匙"],
+                followup_questions=["旧图书馆和钥匙里，哪个细节最抓住你？"],
+                user_answers=[],
+                interpretation="「旧图书馆」说明你需要优化效率，整理待办清单。",
+                today_tip="今天把「旧图书馆」当作提高效率的提醒，整理待办清单并保持专注。",
+                tiny_action="写三项待办事项，按优先级排序。",
+                caring_note="保持专注就会更好。",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text="我梦见自己在旧图书馆里拿着一把旧钥匙，却找不到它能打开哪扇门。",
+        mood="困惑",
+    )
+
+    card = generate_today_tip(intake, "用户选择跳过这个追问。", HollowProductivityClient(), language="zh")
+    combined = "\n".join([card.interpretation, card.today_tip, card.tiny_action, card.caring_note])
+
+    assert "旧图书馆" in combined or "钥匙" in combined
+    assert "效率" not in combined
+    assert "待办" not in combined
+    assert "专注" not in combined
+    assert "优先级" not in combined
+    assert "保持积极" not in combined
+
+
+def test_today_tip_absorbs_non_template_followup_answer_as_real_life_cue():
+    class AnchorOnlyClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="You dreamed of a locked green room and a warm key.",
+                main_question="What is the locked room asking me to notice?",
+                dream_anchors=["locked green room", "warm key"],
+                followup_questions=["What does the locked room feel closest to in waking life?"],
+                user_answers=[],
+                interpretation="Maybe the locked green room is a private threshold.",
+                today_tip="For today, treat the locked green room as a small threshold and take one careful step.",
+                tiny_action="Draw the warm key and move it one inch.",
+                caring_note="One small threshold is enough.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text="I found a locked green room behind my kitchen. The key was warm but would not turn.",
+        mood="uneasy",
+        main_question="Why does it feel like I cannot ask for what I need?",
+    )
+    answer = "In real life it is probably the leave request I keep avoiding because I feel guilty."
+
+    card = generate_today_tip(intake, answer, AnchorOnlyClient(), language="en")
+    combined = "\n".join([card.main_question, card.interpretation, card.today_tip, card.tiny_action, card.caring_note]).lower()
+
+    assert "locked green room" in combined or "warm key" in combined
+    assert "leave request" in combined
+    assert "guilty" in combined or "guilt" in combined
+    assert "one careful step" not in card.today_tip.lower()
+
+
 def test_generate_today_tip_adds_safety_note_for_repeated_insomnia_without_self_harm():
     intake = build_intake(
         dream_text="我昨晚反复梦见自己在一条漆黑的走廊里走，醒来后心跳很快，已经连续3晚都睡不好。",

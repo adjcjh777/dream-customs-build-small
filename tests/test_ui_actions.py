@@ -10,7 +10,9 @@ from dream_customs.ui.actions import (
     skip_to_card_action,
     submit_dream_action,
 )
+from dream_customs.schema import CustomsSession, TodayTipCard
 import dream_customs.ui.app as ui_app
+import dream_customs.ui.actions as ui_actions
 from dream_customs.ui.app import _reset
 from dream_customs.ui.copy import DEFAULT_MOOD, PROCESSING_NOTE
 from dream_customs.ui.styles import CSS
@@ -343,6 +345,28 @@ def test_mobile_mvp_submit_then_skip_generates_today_tip():
     assert "电梯" in view["card_text"] or "elevator" in view["card_text"].lower()
     assert "DC-DEMO-014" not in view["card_text"]
     assert "Today Tip" in view["card_html"]
+
+
+def test_visible_tip_payload_repairs_broken_caring_note_placeholder():
+    session = CustomsSession(language="en", phase="tip")
+    session.sealed_tip = TodayTipCard(
+        dream_summary="I dreamed I was late, my phone battery died, and the elevator never arrived.",
+        main_question="What might the elevator be asking me to notice today?",
+        dream_anchors=["elevator", "phone"],
+        followup_questions=[],
+        user_answers=["The user chose to skip this question."],
+        interpretation="Maybe the elevator and phone show a small stuck point.",
+        today_tip="Use the elevator and phone to name one doorway action for today.",
+        tiny_action="Draw one elevator button.",
+        caring_note="dream fragment ， dream fragment floor。",
+        safety_note="",
+    )
+
+    view = ui_actions._view_payload(session, "demo", "demo", language="en")
+    combined = "\n".join([view["card_text"], view["card_html"], view["caring_note"]]).lower()
+
+    assert "dream fragment" not in combined
+    assert "elevator" in view["caring_note"].lower()
 
 
 def test_mobile_mvp_empty_submit_stays_on_record_with_clear_error():

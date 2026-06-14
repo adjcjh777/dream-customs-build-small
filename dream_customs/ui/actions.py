@@ -108,6 +108,19 @@ def _card_plain_text(card: TodayTipCard, language: str) -> str:
     return "\n".join(lines)
 
 
+def _sanitize_visible_card(card: TodayTipCard, language: str) -> TodayTipCard:
+    visible = card.model_copy(deep=True)
+    caring_note = (visible.caring_note or "").lower()
+    if "dream fragment" in caring_note or "梦境片段" in caring_note:
+        anchor = visible.dream_anchors[0] if visible.dream_anchors else ("梦里的这个细节" if language == "zh" else "this dream detail")
+        visible.caring_note = (
+            f"今天先把「{anchor}」当作一个被看见的线索，不急着把整个梦解释完。"
+            if language == "zh"
+            else f"You do not have to solve the whole dream today; let {anchor} be one detail you meet gently."
+        )
+    return visible
+
+
 def _render_today_pass(card: TodayTipCard, language: str) -> str:
     return render_today_tip_card(card, language=language)
 
@@ -139,7 +152,8 @@ def _view_payload(
     else:
         status = "record"
     copy = copy_for(language)
-    card = None if status == "ask" else session.sealed_tip or session.draft_tip
+    raw_card = None if status == "ask" else session.sealed_tip or session.draft_tip
+    card = _sanitize_visible_card(raw_card, language) if raw_card else None
     payload = {
         "status": status,
         "phase": session.phase,

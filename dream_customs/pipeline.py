@@ -529,6 +529,22 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         candidates.append("frightening dream")
     if re.search(r"barely slept|many nights|can't sleep|cannot sleep|could not sleep|insomnia|slept", text):
         candidates.append("lost sleep")
+    if re.search(r"\b(close\s+friend|friend|best\s+friend)\b", text) and re.search(
+        r"\b(misunderstood|misunderstand|wronged|hurt|invisible|unseen|unheard|heard|listened|listening)\b",
+        text,
+    ):
+        if "close friend" in text:
+            candidates.append("close friend")
+        else:
+            candidates.append("friend")
+        if re.search(r"\bmisunderstood|misunderstand\b", text):
+            candidates.append("being misunderstood")
+        if re.search(r"\bnobody\s+(?:heard|listened)\b|\bno one\s+(?:heard|listened)\b", text):
+            candidates.append("nobody heard me")
+        if "invisible" in text:
+            candidates.append("feeling invisible")
+        if "hurt" in text or "wronged" in text:
+            candidates.append("feeling hurt")
     if re.search(r"\bfloor\s*14\b|\b14\b", text):
         candidates.append("floor 14")
     if "button" in text and re.search(r"\b(melt|melted|melting|wax)\b", text):
@@ -839,6 +855,29 @@ def _contains_any(text: str, terms: List[str]) -> bool:
 
 def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
     text = _story_text(intake, answers)
+    if _contains_any(text, ["friend", "朋友"]) and _contains_any(
+        text,
+        [
+            "misunderstood",
+            "misunderstand",
+            "nobody heard",
+            "nobody listened",
+            "no one heard",
+            "no one listened",
+            "invisible",
+            "unseen",
+            "unheard",
+            "wronged",
+            "hurt",
+            "误解",
+            "没人听",
+            "没人听见",
+            "看不见",
+            "委屈",
+            "受伤",
+        ],
+    ):
+        return "misunderstood_friend"
     if _contains_any(text, ["小孩", "child", "找不到家", "lost", "home", "回家", "地铁", "subway"]):
         return "lost_home"
     if _contains_any(text, ["海", "海浪", "月牙", "moon", "sea", "wave", "dark sea", "dark water", "漆黑的海"]):
@@ -905,6 +944,7 @@ def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str 
             "lost_home": "地铁站里迷路的小孩和回家的方向",
             "dark_water": "夜晚的海、海浪和月牙下的小人",
             "library_signal": "旧图书馆、红色楼梯和那张便签",
+            "misunderstood_friend": "朋友的误解、没人听见和受伤感",
             "message_loss": "那条消息、前任和突然消失",
             "chased": "森林、白色猫和空白路牌",
             "school_pressure": "教室、作业和来不及交上的感觉",
@@ -915,6 +955,7 @@ def _story_anchor_phrase(intake: DreamIntake, anchors: List[str], language: str 
             "lost_home": "the lost child, the subway, and the way home",
             "dark_water": "the dark water, the waves, and the small figure under the moon",
             "library_signal": "the old library, the red staircase, and the note",
+            "misunderstood_friend": "the close friend, being misunderstood, and feeling invisible",
             "message_loss": "the message, the former partner, and the disappearance",
             "chased": "the chase, the call for help, and the missing route",
             "school_pressure": "the classroom, the assignment, and the late feeling",
@@ -1299,6 +1340,14 @@ def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str]
                 ],
                 language,
             )
+        if theme == "misunderstood_friend":
+            return _numbered_suggestions(
+                [
+                    f"先把「{anchor}」当成醒来后还需要被听见的受伤感，不急着证明谁对谁错。",
+                    "今天只做一个温和澄清动作：写下一句“我真正想被听见的是……”，先不急着发送。",
+                ],
+                language,
+            )
         if theme == "message_loss":
             return _numbered_suggestions(
                 [
@@ -1344,6 +1393,14 @@ def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str]
             [
                 f"Let {anchor} point to a real source of steadiness.",
                 "Pick one person, place, or object that feels like home and spend five minutes near it.",
+            ],
+            language,
+        )
+    if theme == "misunderstood_friend":
+        return _numbered_suggestions(
+            [
+                f"Treat {anchor} as the hurt of not being heard, not as proof that you must fix the whole friendship today.",
+                "Write one gentle clarifying sentence that starts with: What I wanted you to understand was...",
             ],
             language,
         )
@@ -1481,6 +1538,10 @@ def _weird_little_action(intake: DreamIntake, answers: str, anchors: List[str], 
                 f"做一张迷你借书卡，书名写「{anchor}」，到期日写“今晚不追讨”；把它夹进一本书里，像把梦暂存进图书馆。",
                 f"把一张便签折成小楼梯，写上「{anchor}」后让一支笔从第一阶滑到第二阶；今天只允许它上这一阶。",
             ],
+            "misunderstood_friend": [
+                f"在便签上写「{anchor}」旁边最想被听见的一句话，把便签对折放十分钟，先不决定要不要发出。",
+                f"画两个小气泡，一个写「{anchor}」，一个写“我真正想说的是”；只填第二个气泡的一句话。",
+            ],
             "message_loss": [
                 f"把手机旁边放一张小纸片当“消息降落伞”，写上「{anchor}」的一个词；让纸片从手机边滑下来，今天不真的发送。",
                 f"画一个迷你信号塔，塔顶写「{anchor}」；把手机倒扣三十秒，像给没发出的消息临时下班。",
@@ -1516,6 +1577,10 @@ def _weird_little_action(intake: DreamIntake, answers: str, anchors: List[str], 
         "library_signal": [
             f"Make a tiny library card titled {anchor}, set the due date to Not tonight, and tuck it into a book.",
             f"Fold a note into a small staircase, write {anchor} on it, and slide a pen from the first step to the second; today it only gets one step.",
+        ],
+        "misunderstood_friend": [
+            f"Write one sentence you wished had been heard beside {anchor}, fold the note once, and wait ten minutes before deciding whether it needs to be sent.",
+            f"Draw two speech bubbles: one labeled {anchor}, one labeled What I meant was. Fill only the second bubble with one gentle sentence.",
         ],
         "message_loss": [
             f"Put a paper scrap beside your phone as a message parachute, write one word from {anchor}, and let it slide down from the phone without sending anything.",
@@ -1567,6 +1632,14 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
                 ],
                 language,
             )
+        if theme == "misunderstood_friend":
+            return _numbered_suggestions(
+                [
+                    f"Use {anchor} to name the part that wanted to be heard.",
+                    "Choose one gentle clarification for today: write the sentence privately before deciding whether to say it.",
+                ],
+                language,
+            )
         if theme == "message_loss":
             return _numbered_suggestions(
                 [
@@ -1613,6 +1686,14 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
             [
                 f"让「{anchor}」指向现实里能让你稳定一点的人、地方或物件。",
                 "今天靠近它五分钟，不急着整理完整答案。",
+            ],
+            language,
+        )
+    if theme == "misunderstood_friend":
+        return _numbered_suggestions(
+            [
+                f"把「{anchor}」先翻译成“我有一部分想被听见”。",
+                "今天只写一句温和澄清，不急着证明整件事谁对谁错。",
             ],
             language,
         )
@@ -1926,7 +2007,11 @@ def _text_uses_anchor(text: str, anchors: List[str]) -> bool:
             continue
         if item in clean:
             return True
-        tokens = [token for token in re.split(r"[\s,，。:：;；、]+", item) if len(token) >= 3]
+        tokens = [
+            token
+            for token in re.split(r"[\s,，。:：;；、]+", item)
+            if len(token) >= 3 and token not in _ANCHOR_STOPWORDS
+        ]
         if any(token in clean for token in tokens):
             return True
     return False
@@ -2244,6 +2329,11 @@ def _decomposition_question(
                 "那张便签或“回家”的感觉，更像想联系某个人，还是想回到一种安定状态？",
                 "最后只确认今天的需要：你想整理一个现实线索，还是先给自己一点回家的感觉？",
             ],
+            "misunderstood_friend": [
+                f"在「{story_anchor}」里，最重的是被误解、没人听见，还是醒来后的受伤感？",
+                "如果今天只照顾一个部分，你更想先被理解、先澄清一句话，还是先让自己缓一下？",
+                "最后只确认今天的需要：你想要一句安慰，还是一个很小的沟通动作？",
+            ],
             "message_loss": [
                 "那条消息最刺痛你的地方，是它出现了、消失了，还是它来自某个具体的人？",
                 "这个梦更像在问“我还在等什么”，还是在问“我该怎么照顾还没放下的部分”？",
@@ -2271,6 +2361,11 @@ def _decomposition_question(
                 f"Which detail in {story_anchor} feels closest to your current stuck point?",
                 "Does the stuckness feel more like being late to start, or like trying something and getting no response?",
                 "Last check before the tip: would one small action help most, or a sentence that lowers the pressure first?",
+            ],
+            "misunderstood_friend": [
+                f"In {story_anchor}, what stayed strongest: being misunderstood, not being heard, or waking up hurt?",
+                "If you cared for only one part today, would you want understanding, one clarifying sentence, or a pause before responding?",
+                "Last check before the tip: would comfort help most, or one small communication step?",
             ],
         }
         fallback = [

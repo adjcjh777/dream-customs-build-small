@@ -13,6 +13,7 @@ from dream_customs.pipeline import (
     create_session,
     dated_permit_id,
     draft_pact,
+    finish_today_tip,
     generate_negotiation,
     generate_pact,
     generate_today_tip,
@@ -666,6 +667,52 @@ def test_today_tip_keeps_friend_misunderstanding_emotional_instead_of_email_draf
     assert "friend" in combined or "message" in combined
     assert "my question:" not in card.main_question.lower()
     assert card.main_question == "Why did I wake up feeling so wronged and hurt?"
+    assert not re.search(r"\b[123]\.", card.today_tip)
+
+
+def test_friend_misunderstanding_skip_path_keeps_relationship_emotion_anchors():
+    dream_text = (
+        "I dreamed my close friend misunderstood me. I kept explaining, but nobody heard me, "
+        "and I woke up feeling hurt and invisible."
+    )
+    session = add_evidence(
+        create_session(),
+        dream_text=dream_text,
+        mood="Hurt and invisible",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+        language="en",
+    )
+
+    assert "close friend" in session.qa_state.dream_anchors
+    assert "being misunderstood" in session.qa_state.dream_anchors
+    assert "nobody heard me" in session.qa_state.dream_anchors
+    assert "feeling invisible" in session.qa_state.dream_anchors
+    assert "feeling hurt" in session.qa_state.dream_anchors
+
+    session = ask_questions(session, FakeTextClient(), language="en")
+    question_text = session.question_history[0].lower()
+
+    assert "friend" in question_text
+    assert "misunderstood" in question_text or "heard" in question_text or "hurt" in question_text
+    assert "former partner" not in question_text
+    assert "disappearance" not in question_text
+    assert "dream clues" not in question_text
+
+    session = skip_question(session, language="en")
+    session = finish_today_tip(session, FakeTextClient(), language="en")
+    card = session.sealed_tip
+    combined = _today_tip_public_text(card).lower()
+
+    assert "friend" in combined
+    assert "misunderstood" in combined or "heard" in combined
+    assert "invisible" in combined or "hurt" in combined
+    assert "former partner" not in combined
+    assert "disappearance" not in combined
+    assert "dream clues" not in combined
+    assert "stuck before starting" not in combined
+    assert "overdue email" not in combined
+    assert "first sentence of the email" not in combined
     assert not re.search(r"\b[123]\.", card.today_tip)
 
 

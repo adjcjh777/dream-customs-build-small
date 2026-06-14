@@ -538,7 +538,8 @@ async def vision(
                 ],
             }
         ]
-        result = pipe(text=messages, max_new_tokens=int(payload.get("max_tokens", 320)))
+        max_tokens = max(64, min(int(payload.get("max_tokens", 220)), 400))
+        result = pipe(text=messages, max_new_tokens=max_tokens)
     return response_payload(_stringify_pipeline_result(result))
 
 

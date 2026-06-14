@@ -125,6 +125,9 @@ def test_developer_settings_configure_hosted_clients():
         vision_temperature=0.22,
         text_max_tokens=256,
         vision_max_tokens=128,
+        text_latency_budget_ms=5000,
+        vision_latency_budget_ms=6000,
+        asr_latency_budget_ms=4000,
     )
 
     assert isinstance(text_client, HostedMiniCPMTextClient)
@@ -140,6 +143,25 @@ def test_developer_settings_configure_hosted_clients():
     assert vision_client.temperature == 0.22
     assert text_client.max_tokens == 256
     assert vision_client.max_tokens == 128
+    assert text_client.latency_budget_ms == 5000
+    assert vision_client.latency_budget_ms == 6000
+    assert asr_client.latency_budget_ms == 4000
+    assert text_client.request_timeout == 5.0
+    assert vision_client.request_timeout == 6.0
+    assert asr_client.request_timeout == 4.0
+
+
+def test_default_modal_latency_settings_target_fast_feedback():
+    settings = _client_settings()
+
+    assert settings["text_timeout_seconds"] <= 10
+    assert settings["vision_timeout_seconds"] <= 10
+    assert settings["asr_timeout_seconds"] <= 10
+    assert settings["text_latency_budget_ms"] <= 10_000
+    assert settings["vision_latency_budget_ms"] <= 10_000
+    assert settings["asr_latency_budget_ms"] <= 10_000
+    assert settings["text_max_tokens"] <= 560
+    assert settings["vision_max_tokens"] <= 220
 
 
 def test_asr_endpoint_derives_from_modal_text_endpoint_when_secret_is_missing():

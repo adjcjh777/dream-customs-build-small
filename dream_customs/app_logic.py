@@ -35,15 +35,15 @@ from dream_customs.schema import CustomsSession
 
 DEFAULT_TEXT_MODEL = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q8_0"
 DEFAULT_VISION_MODEL = "openbmb/minicpm-v4.6"
-DEFAULT_HOSTED_TIMEOUT_SECONDS = 60.0
-DEFAULT_ASR_TIMEOUT_SECONDS = 45.0
+DEFAULT_HOSTED_TIMEOUT_SECONDS = 9.0
+DEFAULT_ASR_TIMEOUT_SECONDS = 9.0
 DEFAULT_TEXT_TEMPERATURE = 0.0
 DEFAULT_VISION_TEMPERATURE = 0.1
-DEFAULT_TEXT_MAX_TOKENS = 560
-DEFAULT_VISION_MAX_TOKENS = 320
-DEFAULT_TEXT_LATENCY_BUDGET_MS = 3500
-DEFAULT_VISION_LATENCY_BUDGET_MS = 6500
-DEFAULT_ASR_LATENCY_BUDGET_MS = 2500
+DEFAULT_TEXT_MAX_TOKENS = 480
+DEFAULT_VISION_MAX_TOKENS = 220
+DEFAULT_TEXT_LATENCY_BUDGET_MS = 8000
+DEFAULT_VISION_LATENCY_BUDGET_MS = 9000
+DEFAULT_ASR_LATENCY_BUDGET_MS = 8000
 
 
 def _file_path(value: Any) -> str:
@@ -154,6 +154,7 @@ def _clients(text_backend: str, vision_backend: str, **settings):
             timeout=resolved["text_timeout_seconds"],
             temperature=resolved["text_temperature"],
             max_tokens=resolved["text_max_tokens"],
+            latency_budget_ms=resolved["text_latency_budget_ms"],
         )
     else:
         text_client = FakeTextClient()
@@ -171,6 +172,7 @@ def _clients(text_backend: str, vision_backend: str, **settings):
             timeout=resolved["vision_timeout_seconds"],
             temperature=resolved["vision_temperature"],
             max_tokens=resolved["vision_max_tokens"],
+            latency_budget_ms=resolved["vision_latency_budget_ms"],
         )
     else:
         vision_client = FakeVisionClient()
@@ -180,6 +182,7 @@ def _clients(text_backend: str, vision_backend: str, **settings):
             endpoint=resolved["asr_endpoint"],
             token=resolved["hosted_token"],
             timeout=resolved["asr_timeout_seconds"],
+            latency_budget_ms=resolved["asr_latency_budget_ms"],
         )
     else:
         asr_client = FakeASRClient()

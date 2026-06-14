@@ -1210,6 +1210,48 @@ a.built-with[href*="gradio.app"] {
 """
 
 CSS += """
+.dc-example-intro {
+  align-items: baseline;
+  color: var(--dqa-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.dc-example-intro span {
+  color: var(--dqa-sage-deep);
+  font-size: 0.78rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.dc-example-intro strong {
+  color: #59675f;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.dc-example-select {
+  min-width: 0 !important;
+}
+
+.dc-example-select .wrap,
+.dc-example-select .container,
+.dc-example-select input[role="listbox"] {
+  background: #fff !important;
+  border-color: rgba(79, 138, 88, 0.26) !important;
+  border-radius: 12px !important;
+  color: var(--dqa-ink) !important;
+  min-height: 58px !important;
+}
+
+.dc-example-select label,
+.dc-example-select [data-testid="block-label"] {
+  color: var(--dqa-sage-deep) !important;
+  font-size: 0.82rem !important;
+}
+
 .dc-question-original p {
   font-size: clamp(1.16rem, 2.4vw, 1.45rem);
   font-weight: 720;

@@ -16,7 +16,7 @@ APP_COPY = {
         "hero_mobile_note": "Half-awake friendly",
         "brand_subtitle": "Dream Customs",
         "steps": ["Record", "Clarify", "Answer", "Tip"],
-        "notice_record": "Write one dream fragment, then use a demo chip if you want the 90-second judge path.",
+        "notice_record": "Write one dream fragment, or choose a sample dream slip if you want the 90-second judge path.",
         "notice_ask": "Answer this one question, or skip it and turn the existing clues into a Morning Ticket.",
         "notice_tip": "Your Morning Ticket is ready. Treat it as gentle reflection, not diagnosis or prophecy.",
         "notice_error": "Dream QA needs a dream fragment before it can continue.",
@@ -35,9 +35,8 @@ APP_COPY = {
         "voice_label": "Voice note",
         "voice_help": "Record or upload a short voice note. It is sent to MiMo ASR when you continue.",
         "field_tip": "The desk looks for three anchors: a place, an object, and the question the dream left behind.",
-        "example_button": "elevator",
-        "example_button_2": "floor 14",
-        "example_button_3": "melting buttons",
+        "example_select_label": "Sample dream",
+        "example_select_placeholder": "Choose a dream slip...",
         "submit_button": "Ask one question",
         "processing_note": (
             "After submission, the desk extracts dream anchors, asks one grounded question, then writes a Morning Ticket with one Today Tip."
@@ -66,9 +65,9 @@ APP_COPY = {
         "copy_label": "Copyable result",
         "side_title": "Waking mood",
         "mood_label": "Mood",
-        "side_stamp_label": "90-second demo",
-        "side_stamp_title": "Elevator, floor 14, first sentence",
-        "side_stamp_body": "The strongest path ends with a tiny action tied to a real overdue email.",
+        "side_stamp_label": "Quick demo path",
+        "side_stamp_title": "Pick a slip, answer or skip",
+        "side_stamp_body": "The strongest path shows one grounded question and one Today Tip.",
         "desk_rule_label": "Morning desk rule",
         "desk_rule_title": "Do not solve the whole dream.",
         "desk_rule_body": "Catch the strange object, name the feeling, ask one useful question.",
@@ -92,7 +91,7 @@ APP_COPY = {
         "hero_mobile_note": "适合半醒时使用",
         "brand_subtitle": "Dream Customs",
         "steps": ["记录", "明确问题", "回答追问", "Tips"],
-        "notice_record": "写一个梦境片段；想走 90 秒演示路径，也可以直接点示例 chip。",
+        "notice_record": "写一个梦境片段；想走 90 秒演示路径，也可以从示例梦境里选一条。",
         "notice_ask": "回答这一个追问，或跳过，用已有梦境线索生成清晨小票。",
         "notice_tip": "清晨小票已生成。把它当作温和参考，不是诊断或预言。",
         "notice_error": "梦境问答台还没有收到片段。",
@@ -111,9 +110,8 @@ APP_COPY = {
         "voice_label": "语音片段",
         "voice_help": "可以录音或上传一小段语音。点击继续后，会直接发送给 MiMo ASR 转写。",
         "field_tip": "问讯室会优先寻找三个锚点：地点、物件、以及梦醒后留下的问题。",
-        "example_button": "电梯",
-        "example_button_2": "14 楼",
-        "example_button_3": "融化按钮",
+        "example_select_label": "示例梦境",
+        "example_select_placeholder": "选择一张梦境纸片...",
         "submit_button": "问一个问题",
         "processing_note": (
             "提交后，问讯室会提取梦境锚点，问一个关键问题，再写成一张清晨小票。"
@@ -142,9 +140,9 @@ APP_COPY = {
         "copy_label": "可复制结果",
         "side_title": "醒来后的心情",
         "mood_label": "心情",
-        "side_stamp_label": "90 秒演示",
-        "side_stamp_title": "电梯、14 楼、第一句话",
-        "side_stamp_body": "最稳的演示路径会把梦境锚点落到一封迟迟没写的邮件。",
+        "side_stamp_label": "快速演示路径",
+        "side_stamp_title": "选一张纸片，回答或跳过",
+        "side_stamp_body": "最稳的演示会展示一个贴着细节的追问和一个今日小 Tips。",
         "desk_rule_label": "清晨桌面规则",
         "desk_rule_title": "不要解完整个梦。",
         "desk_rule_body": "先抓住奇怪的物件，说出醒来的感受，再问一个今天能用的问题。",
@@ -161,39 +159,45 @@ APP_COPY = {
 }
 
 EXAMPLE_DREAMS = {
-    "en": "I dreamed I kept missing an elevator. The button for floor 14 melted like wax. I woke up anxious because it reminded me of an overdue email.",
-    "zh": "我梦到自己一直赶不上电梯，14 楼按钮像蜡一样融化。醒来有点焦虑，因为它让我想到一封迟迟没写的邮件。",
+    "en": "I dreamed I was late, my phone battery died, and the elevator never arrived. I wanted a quick tip and felt stuck at the entrance.",
+    "zh": "我梦到自己快迟到了，手机没电，电梯一直没来。我想要一个很快能用的小建议，但梦里像被卡在入口。",
 }
 
 EXAMPLE_MOODS = {"en": "Uneasy", "zh": "焦虑"}
 
-EXAMPLE_CHIPS = {
+EXAMPLE_SLIPS = {
     "en": {
-        "elevator": (
-            "I dreamed I kept missing an elevator. The doors opened, closed, and left me behind.",
+        "late_elevator": (
+            "Late elevator and dead phone",
+            "I dreamed I was late, my phone battery died, and the elevator never arrived. I wanted a quick tip and felt stuck at the entrance.",
             "Uneasy",
         ),
-        "floor14": (
-            "I dreamed I kept missing an elevator, and the floor number stayed on 14.",
+        "friend_misread": (
+            "A friend misunderstood me",
+            "I dreamed I sent a message to a friend, but every reply bubble turned into fog. I woke up worried I had been misunderstood.",
             "Uneasy",
         ),
-        "melting": (
-            "I dreamed I kept missing an elevator. The button for floor 14 melted like wax. I woke up anxious because it reminded me of an overdue email.",
-            "Uneasy",
+        "sleepless_loop": (
+            "The same sleepless room",
+            "I dreamed I kept waking up inside the same room, checking the clock each time, but morning never arrived.",
+            "Tired",
         ),
     },
     "zh": {
-        "elevator": (
-            "我梦到自己一直赶不上电梯，门开了又关，好像总是把我留在外面。",
+        "late_elevator": (
+            "迟到的电梯和没电手机",
+            "我梦到自己快迟到了，手机没电，电梯一直没来。我想要一个很快能用的小建议，但梦里像被卡在入口。",
             "焦虑",
         ),
-        "floor14": (
-            "我梦到自己一直赶不上电梯，楼层数字一直停在 14。",
+        "friend_misread": (
+            "朋友误解了我",
+            "我梦到自己给朋友发消息，但每个回复气泡都变成雾。醒来后担心自己是不是被误解了。",
             "焦虑",
         ),
-        "melting": (
-            "我梦到自己一直赶不上电梯，14 楼按钮像蜡一样融化。醒来有点焦虑，因为它让我想到一封迟迟没写的邮件。",
-            "焦虑",
+        "sleepless_loop": (
+            "反复醒来的房间",
+            "我梦到自己一次次在同一个房间醒来，每次都看钟，可早晨一直没有到。",
+            "疲惫",
         ),
     },
 }

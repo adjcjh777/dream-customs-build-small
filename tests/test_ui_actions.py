@@ -134,17 +134,33 @@ def test_hero_subtitle_explains_app_instead_of_legacy_name():
     assert "Dream Customs" not in hero_html
 
 
-def test_composer_has_three_real_demo_chips():
+def test_composer_uses_one_sample_dream_dropdown():
     source = inspect.getsource(ui_app.build_demo)
 
-    assert 'elem_classes=["dc-demo-chip-row"]' in source
-    assert source.count('elem_classes=["dc-demo-chip"]') == 3
-    assert "_example_elevator" in source
-    assert "_example_floor14" in source
-    assert "_example_melting" in source
-    assert ".dc-demo-chip-row" in CSS
-    assert "Dream slips" in ui_app._demo_chip_intro_html("en")
-    assert "梦境纸片" in ui_app._demo_chip_intro_html("zh")
+    assert 'elem_classes=["dc-example-select"]' in source
+    assert "example_select = gr.Dropdown(" in source
+    assert "_example_slip" in source
+    assert "_example_elevator" not in source
+    assert 'elem_classes=["dc-demo-chip-row"]' not in source
+    assert source.count('elem_classes=["dc-demo-chip"]') == 0
+    assert ".dc-example-select" in CSS
+    assert "Dream slips" in ui_app._demo_slip_intro_html("en")
+    assert "梦境纸片" in ui_app._demo_slip_intro_html("zh")
+
+    choices = ui_app._example_choices("en")
+    labels = [label for label, _key in choices]
+    assert labels == [
+        "Late elevator and dead phone",
+        "A friend misunderstood me",
+        "The same sleepless room",
+    ]
+    dream_text, mood = ui_app._example_slip("en", "friend_misread")
+    assert "reply bubble" in dream_text
+    assert mood == "Uneasy"
+
+    zh_text, zh_mood = ui_app._example_slip("zh", "sleepless_loop")
+    assert "同一个房间" in zh_text
+    assert zh_mood == "疲惫"
 
 
 def test_side_panel_frames_the_morning_desk_rule():
@@ -158,8 +174,13 @@ def test_side_panel_frames_the_morning_desk_rule():
     assert "Text" in html
     assert "Image" in html
     assert "Voice" in html
+    assert "first sentence" not in html.lower()
+    assert "overdue email" not in html.lower()
+    assert "Pick a slip" in html
     assert "清晨桌面规则" in zh_html
     assert "文字" in zh_html
+    assert "第一句话" not in zh_html
+    assert "邮件" not in zh_html
 
 
 def test_side_panel_dropdown_hover_stays_readable():

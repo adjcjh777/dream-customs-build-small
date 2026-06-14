@@ -71,8 +71,18 @@ def test_browser_voice_uses_same_origin_asr_proxy():
     assert "_browser_asr_client()" in source
     assert "fallback_enabled=False" in source
     assert "asyncio.to_thread(asr_client.transcribe, temp_path)" in source
-    assert "BROWSER_ASR_TIMEOUT_SECONDS = 150.0" in source
+    assert "BROWSER_ASR_TIMEOUT_SECONDS = 20.0" in source
+    assert 'data-timeout-ms="20000"' in ui_app._mic_html("en")
     assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in source
+
+
+def test_agent_api_uses_fast_local_question_before_modal_tip():
+    source = inspect.getsource(ui_app._agent_dream_qa)
+
+    assert 'text_backend="demo"' in source
+    assert 'vision_backend="demo"' in source
+    assert "answer_to_card_action(" in source
+    assert "skip_to_card_action(" in source
 
 
 def test_image_upload_is_composer_plus_drawer():
@@ -322,7 +332,7 @@ def test_mobile_reset_restores_calm_mood():
         60,
         0.2,
         0.1,
-        780,
+        560,
         320,
         "demo",
         "",

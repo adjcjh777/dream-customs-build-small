@@ -15,7 +15,7 @@ from dream_customs.ui.app import build_demo
 
 LOCAL_GRADIO_PORT = 7862
 HF_SPACE_GRADIO_PORT = 7860
-BROWSER_ASR_TIMEOUT_SECONDS = 150.0
+BROWSER_ASR_TIMEOUT_SECONDS = 20.0
 
 
 def _default_server_port() -> int:
@@ -32,7 +32,7 @@ def _browser_asr_timeout_seconds() -> float:
     if not value:
         return BROWSER_ASR_TIMEOUT_SECONDS
     try:
-        return max(10.0, float(value))
+        return max(5.0, float(value))
     except ValueError:
         return BROWSER_ASR_TIMEOUT_SECONDS
 

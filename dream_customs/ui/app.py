@@ -800,8 +800,8 @@ def _agent_dream_qa(dream_text: str, mood: str = "", answer: str = "", language:
         image_value=None,
         audio_value=None,
         mood=mood,
-        text_backend=DEFAULT_TEXT_BACKEND,
-        vision_backend=DEFAULT_VISION_BACKEND,
+        text_backend="demo",
+        vision_backend="demo",
         language=language,
     )
     view = json.loads(view_json)
@@ -919,7 +919,7 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     data-empty="{escape(copy['mic_empty'])}"
     data-error="{escape(copy['mic_error'])}"
     data-timeout="{escape(copy['mic_timeout'])}"
-    data-timeout-ms="140000"
+    data-timeout-ms="20000"
   >
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>

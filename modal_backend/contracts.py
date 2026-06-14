@@ -24,11 +24,11 @@ def normalize_text_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
                     if content:
                         parts.append(content)
             prompt = "\n".join(parts).strip()
-    max_tokens = payload.get("max_tokens", 700)
+    max_tokens = payload.get("max_tokens", 560)
     try:
         max_tokens = int(max_tokens)
     except (TypeError, ValueError):
-        max_tokens = 700
+        max_tokens = 560
     max_tokens = max(64, min(max_tokens, 1200))
     temperature = payload.get("temperature", 0.0)
     try:

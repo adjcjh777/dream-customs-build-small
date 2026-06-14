@@ -22,7 +22,7 @@ def test_normalize_text_payload_accepts_openai_style_messages():
         {"messages": [{"role": "user", "content": "Dream of an elevator."}]}
     )
     assert payload["prompt"] == "Dream of an elevator."
-    assert payload["max_tokens"] == 700
+    assert payload["max_tokens"] == 560
 
 
 def test_normalize_text_payload_clamps_max_tokens():

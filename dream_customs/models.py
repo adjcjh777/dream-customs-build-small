@@ -362,7 +362,7 @@ class OllamaTextClient:
         parsed = self._generate_json(
             prompt,
             '{"visitor_name":"string","questions":["string","string"],"tone_note":"string"}',
-            num_predict=320,
+            num_predict=240,
         )
         if not parsed:
             return self.fallback.generate_negotiation(prompt)
@@ -383,7 +383,7 @@ class OllamaTextClient:
                 '"risk_level":"string","alliance_reading":"string","practical_suggestion":"string",'
                 '"weird_task":"string","bedtime_release":"string","safety_note":"string"}'
             ),
-            num_predict=700,
+            num_predict=560,
         )
         if not parsed:
             return self.fallback.generate_pact(prompt)
@@ -410,7 +410,7 @@ class OllamaTextClient:
                 '"followup_questions":["string"],"user_answers":["string"],"interpretation":"string",'
                 '"today_tip":"string","tiny_action":"string","caring_note":"string","safety_note":"string"}'
             ),
-            num_predict=780,
+            num_predict=560,
         )
         if not parsed:
             return self.fallback.generate_today_tip(prompt)
@@ -426,7 +426,7 @@ class OllamaTextClient:
                 '"today_bridge":"string","visual_evidence":["string"],'
                 '"safety_flags":["string"],"language":"en"}'
             ),
-            num_predict=520,
+            num_predict=360,
         )
         if not parsed:
             return self.fallback.generate_brief(prompt)
@@ -627,6 +627,7 @@ class HostedMiniCPMTextClient:
         timeout: float = 60.0,
         temperature: float = 0.0,
         max_tokens: int = 780,
+        latency_budget_ms: int = 0,
         fallback: Optional[FakeTextClient] = None,
     ):
         self.endpoint = endpoint.strip()
@@ -634,7 +635,14 @@ class HostedMiniCPMTextClient:
         self.timeout = timeout
         self.temperature = max(0.0, min(float(temperature), 0.7))
         self.max_tokens = max(64, min(int(max_tokens), 1200))
+        self.latency_budget_ms = max(0, int(latency_budget_ms or 0))
         self.fallback = fallback or FakeTextClient()
+
+    @property
+    def request_timeout(self) -> float:
+        if self.latency_budget_ms <= 0:
+            return self.timeout
+        return max(1.0, min(float(self.timeout), self.latency_budget_ms / 1000.0))
 
     def _post_json(self, prompt: str, max_tokens: int = 700) -> Optional[Dict[str, Any]]:
         if not self.endpoint:
@@ -656,7 +664,7 @@ class HostedMiniCPMTextClient:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.request_timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
             return None
@@ -676,7 +684,7 @@ class HostedMiniCPMTextClient:
         parsed = self._generate_json(
             prompt,
             '{"visitor_name":"string","questions":["string"],"tone_note":"string"}',
-            max_tokens=360,
+            max_tokens=240,
         )
         if not parsed:
             return self.fallback.generate_negotiation(prompt)
@@ -697,7 +705,7 @@ class HostedMiniCPMTextClient:
                 '"risk_level":"string","alliance_reading":"string","practical_suggestion":"string",'
                 '"weird_task":"string","bedtime_release":"string","safety_note":"string"}'
             ),
-            max_tokens=780,
+            max_tokens=560,
         )
         if not parsed:
             return self.fallback.generate_pact(prompt)
@@ -724,7 +732,7 @@ class HostedMiniCPMTextClient:
                 '"followup_questions":["string"],"user_answers":["string"],"interpretation":"string",'
                 '"today_tip":"string","tiny_action":"string","caring_note":"string","safety_note":"string"}'
             ),
-            max_tokens=780,
+            max_tokens=560,
         )
         if not parsed:
             return self.fallback.generate_today_tip(prompt)
@@ -740,7 +748,7 @@ class HostedMiniCPMTextClient:
                 '"today_bridge":"string","visual_evidence":["string"],'
                 '"safety_flags":["string"],"language":"en"}'
             ),
-            max_tokens=520,
+            max_tokens=360,
         )
         if not parsed:
             return self.fallback.generate_brief(prompt)
@@ -777,6 +785,7 @@ class HostedMiniCPMVisionClient:
         timeout: float = 60.0,
         temperature: float = 0.1,
         max_tokens: int = 320,
+        latency_budget_ms: int = 0,
         fallback: Optional[FakeVisionClient] = None,
     ):
         self.endpoint = endpoint.strip()
@@ -784,7 +793,14 @@ class HostedMiniCPMVisionClient:
         self.timeout = timeout
         self.temperature = max(0.0, min(float(temperature), 0.7))
         self.max_tokens = max(64, min(int(max_tokens), 800))
+        self.latency_budget_ms = max(0, int(latency_budget_ms or 0))
         self.fallback = fallback or FakeVisionClient()
+
+    @property
+    def request_timeout(self) -> float:
+        if self.latency_budget_ms <= 0:
+            return self.timeout
+        return max(1.0, min(float(self.timeout), self.latency_budget_ms / 1000.0))
 
     def _post_image(self, image_path: str, prompt: Optional[str] = None) -> Optional[Dict[str, Any]]:
         if not self.endpoint:
@@ -811,7 +827,7 @@ class HostedMiniCPMVisionClient:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.request_timeout) as response:
                 return json.loads(response.read().decode("utf-8"))
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError):
             return None
@@ -876,15 +892,23 @@ class HostedASRClient:
         endpoint: str = "",
         token: str = "",
         timeout: float = 45.0,
+        latency_budget_ms: int = 0,
         fallback: Optional[FakeASRClient] = None,
         fallback_enabled: bool = True,
     ):
         self.endpoint = endpoint.strip()
         self.token = token.strip()
         self.timeout = timeout
+        self.latency_budget_ms = max(0, int(latency_budget_ms or 0))
         self.fallback = fallback or FakeASRClient()
         self.fallback_enabled = fallback_enabled
         self.last_error = ""
+
+    @property
+    def request_timeout(self) -> float:
+        if self.latency_budget_ms <= 0:
+            return self.timeout
+        return max(1.0, min(float(self.timeout), self.latency_budget_ms / 1000.0))
 
     def _fallback_transcript(self, audio_path: Optional[str]) -> str:
         if not self.fallback_enabled:
@@ -918,7 +942,7 @@ class HostedASRClient:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.request_timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except (OSError, TimeoutError, urllib.error.URLError, json.JSONDecodeError) as exc:
             self.last_error = f"{exc.__class__.__name__}: {exc}"

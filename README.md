@@ -17,6 +17,13 @@ tags:
   - gradio
   - minicpm
   - build-small-hackathon
+  - thousand-token-wood
+  - backyard-ai
+  - openbmb
+  - modal
+  - openai-codex
+  - off-brand
+  - best-demo
   - dream-journal
 ---
 
@@ -32,9 +39,21 @@ The public hackathon demo is English-first for international judges. A visible i
 
 Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, extracts up to three concrete dream anchors, asks one grounded follow-up question, and returns a Morning Ticket: the Today Tip first, a tiny 5-minute action, and a short non-certain supporting reflection.
 
-The fastest demo path is the elevator story: `elevator -> floor 14 -> melting buttons -> overdue email -> write only the first sentence`.
+The fastest judge path is text or image first: choose a sample dream, or enter a short dream about a dead phone, a late elevator, or a misunderstood friend, then answer or skip one grounded question. Voice input is available as an ASR path, but the primary demo should not rely on live transcription.
 
 This is not a therapy, diagnosis, or prophecy product.
+
+## Submission Status
+
+- Space: <https://huggingface.co/spaces/build-small-hackathon/dream-customs>
+- Direct app: <https://build-small-hackathon-dream-customs.hf.space>
+- GitHub: <https://github.com/adjcjh777/dream-customs-build-small>
+- Primary track: Thousand Token Wood.
+- Secondary track: Backyard AI.
+- Demo assets in this repo: `videos/dreamqa_01_text_only.mp4`, `videos/dreamqa_02_image_only.mp4`, `videos/dreamqa_03_text_plus_image.mp4`.
+- Final public demo video URL: to be added after the final upload.
+- Final social post URL: to be added after publishing the X/Instagram post.
+- Final submission prep notes: `docs/submission/2026-06-14-build-small-final-pack.md`.
 
 ## Models
 
@@ -59,7 +78,7 @@ This is not a therapy, diagnosis, or prophecy product.
 - Toggle: `English / 中文`.
 - English mode translates or paraphrases non-English dream anchors into natural English, so an international judge does not see mixed UI/model language.
 - Chinese mode keeps the warm `梦境问答台` wording.
-- Today Tips should be small and optional: "write the first sentence" beats "handle it immediately."
+- Today Tips should be small and optional: "write one honest line" beats "handle it immediately."
 
 ## Current Direction References
 
@@ -175,7 +194,7 @@ Latest local Dream QA refactor smoke:
 - `docs/smoke/2026-06-08-dream-qa-refactor-smoke.md`
 - `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`
 
-Historical smoke notes under `docs/smoke/` describe earlier pact/customs UI passes. They remain useful deployment history, but the current implementation target is the Dream QA flow documented in `docs/handoff.md`, `docs/spec.md`, and `docs/prd.md`.
+Historical smoke notes and earlier pact/customs plans have been archived to `archive/dream-customs-legacy/`. The current implementation target is the Dream QA flow documented in `docs/handoff.md`, `docs/spec.md`, and `docs/prd.md`.
 
 ## Safety
 

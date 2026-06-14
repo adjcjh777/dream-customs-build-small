@@ -176,7 +176,7 @@ VOICE_JS = r"""
       form.append("audio", blob, `dream-voice.${extension}`);
       clearRequestTimers();
       const controller = new AbortController();
-      const asrRequestTimeout = Number(button.dataset.timeoutMs || "140000");
+      const asrRequestTimeout = Number(button.dataset.timeoutMs || "9000");
       wakingTimer = window.setTimeout(() => {
         setStatus(messageFor("waking", "MiMo ASR is waking on Modal. This first pass can take a moment."), "waking");
       }, 6000);
@@ -919,7 +919,7 @@ def _mic_html(language: str = DEFAULT_LANGUAGE) -> str:
     data-empty="{escape(copy['mic_empty'])}"
     data-error="{escape(copy['mic_error'])}"
     data-timeout="{escape(copy['mic_timeout'])}"
-    data-timeout-ms="20000"
+    data-timeout-ms="{int(DEFAULT_ASR_TIMEOUT_SECONDS * 1000)}"
   >
     <span class="dc-mic-glyph" aria-hidden="true"></span>
   </button>

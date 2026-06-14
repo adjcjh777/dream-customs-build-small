@@ -71,8 +71,9 @@ def test_browser_voice_uses_same_origin_asr_proxy():
     assert "_browser_asr_client()" in source
     assert "fallback_enabled=False" in source
     assert "asyncio.to_thread(asr_client.transcribe, temp_path)" in source
-    assert "BROWSER_ASR_TIMEOUT_SECONDS = 20.0" in source
-    assert 'data-timeout-ms="20000"' in ui_app._mic_html("en")
+    assert "BROWSER_ASR_TIMEOUT_SECONDS = 9.0" in source
+    assert 'latency_budget_ms=resolved["asr_latency_budget_ms"]' in source
+    assert 'data-timeout-ms="9000"' in ui_app._mic_html("en")
     assert "DREAM_CUSTOMS_HOSTED_TOKEN" not in source
 
 

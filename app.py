@@ -15,7 +15,7 @@ from dream_customs.ui.app import build_demo
 
 LOCAL_GRADIO_PORT = 7862
 HF_SPACE_GRADIO_PORT = 7860
-BROWSER_ASR_TIMEOUT_SECONDS = 20.0
+BROWSER_ASR_TIMEOUT_SECONDS = 9.0
 
 
 def _default_server_port() -> int:
@@ -43,6 +43,7 @@ def _browser_asr_client() -> HostedASRClient:
         endpoint=resolved["asr_endpoint"],
         token=resolved["hosted_token"],
         timeout=resolved["asr_timeout_seconds"],
+        latency_budget_ms=resolved["asr_latency_budget_ms"],
         fallback_enabled=False,
     )
 

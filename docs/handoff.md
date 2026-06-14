@@ -1,6 +1,6 @@
 # Dream QA / 梦境问答台 Handoff
 
-Last updated: 2026-06-08
+Last updated: 2026-06-14
 
 ## Current Product Direction
 
@@ -67,7 +67,7 @@ Use:
 
 Do not broaden to arbitrary small models unless MiniCPM paths fail.
 
-Voice input is allowed, but current MiniCPM pair does not directly transcribe raw audio. Use a small ASR adapter only for transcription. Keep dream understanding and final generation inside MiniCPM.
+Voice input is allowed, but current MiniCPM pair does not directly transcribe raw audio. The submitted route uses `XiaomiMiMo/MiMo-V2.5-ASR` only for transcription; dream understanding and final generation stay inside MiniCPM.
 
 ## Contest Constraints
 
@@ -191,9 +191,8 @@ The public Space can run on ZeroGPU after `dream_customs.zerogpu` registers the 
 - Language: English-first for the international hackathon, with Chinese available through an in-app toggle.
 - Recommendation quality: deterministic Today Tip eval is required before deployment.
 
-## Open Questions For User
+## Final Submission Notes
 
-These do not block document alignment:
-
-- Which ASR adapter is acceptable for the hackathon submission?
-- Should `refs/pr/*` cleanup be done after HF Space merges, or left for auditability?
+- Text and image are the recommended public demo path.
+- Voice is implemented through MiMo ASR and should be presented as optional until live transcription success is consistently proven.
+- Leave old `refs/pr/*` discussion refs in place unless cleanup is explicitly requested; they are useful audit history for the final hackathon push.

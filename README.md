@@ -1,5 +1,5 @@
 ---
-title: Dream Customs
+title: Dream QA
 emoji: 🌤️
 colorFrom: green
 colorTo: yellow
@@ -9,7 +9,7 @@ python_version: "3.10"
 app_file: app.py
 pinned: false
 license: mit
-short_description: Guided dream Q&A with one gentle today tip.
+short_description: Morning dream Q&A with one grounded Today Tip.
 models:
   - openbmb/MiniCPM5-1B
   - openbmb/MiniCPM-V-4.6
@@ -39,7 +39,7 @@ The public hackathon demo is English-first for international judges. A visible i
 
 Dream QA accepts dream fragments by text, image, or voice. It turns those fragments into a shared dream intake, extracts up to three concrete dream anchors, asks one grounded follow-up question, and returns a Morning Ticket: the Today Tip first, a tiny 5-minute action, and a short non-certain supporting reflection.
 
-The fastest judge path is text or image first: choose a sample dream, or enter a short dream about a dead phone, a late elevator, or a misunderstood friend, then answer or skip one grounded question. Voice input is available as an ASR path, but the primary demo should not rely on live transcription.
+The fastest demo path is text or image first: choose a sample dream, or enter a short dream about a dead phone, a late elevator, or a misunderstood friend, then answer or skip one grounded question. Voice input is available as an ASR path, but the primary demo should not rely on live transcription.
 
 This is not a therapy, diagnosis, or prophecy product.
 

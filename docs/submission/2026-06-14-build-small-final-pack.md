@@ -10,6 +10,12 @@ Date: 2026-06-14
 - Performance QA baseline: HF Space main `60a11f36082f4117a5dbcc9f2b9200f97318e666` with app code from GitHub `0272c67b1862ac8ac4294f6945e937c5f60d38cf`.
 - Submission materials branch: `origin/feature/mimo-asr-modal`. Re-check the current HF Space main SHA tomorrow before final submission because README/material-only commits change the Space SHA.
 
+## Official Sources Checked
+
+- Field guide: https://huggingface.co/spaces/build-small-hackathon/field-guide/blob/main/details.md
+- FAQ: https://huggingface.co/spaces/build-small-hackathon/field-guide/blob/main/faq.md
+- Rule interpretation for this project: each individual model is under 32B; the submitted artifact is a Gradio Space in the official hackathon org; final README still needs public demo video and social links before submission.
+
 ## Official Submission Checklist
 
 - Gradio app hosted in the official Build Small Hugging Face organization.
@@ -103,3 +109,5 @@ Space: https://huggingface.co/spaces/build-small-hackathon/dream-customs
 4. Replace the README demo/social placeholders with final public URLs.
 5. Re-run final smoke: full pytest, Today Tip eval, live `/config`, text/image browser path, and a quick semantic safety case.
 6. Submit the Space URL, demo video URL, and social post URL.
+
+README frontmatter is already aligned to `Dream QA`, the target tracks, and the sponsor/bonus tags. The remaining README blockers are only the final public video URL and the final social post URL.

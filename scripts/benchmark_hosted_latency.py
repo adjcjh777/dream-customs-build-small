@@ -109,8 +109,13 @@ def main() -> int:
         dream_text="I dreamed my phone died while I waited for an elevator.",
         mood="Anxious",
     )
-    state = build_qa_state(intake, language="en")
     answers = "The dead phone felt closest to being behind before I even start."
+    state = build_qa_state(
+        intake,
+        questions=["Which detail feels closest to your waking life right now?"],
+        answers=[answers],
+        language="en",
+    )
 
     report: dict[str, Any] = {
         "configured": {
@@ -143,7 +148,7 @@ def main() -> int:
         report["results"].append(
             _measure(
                 "text_today_tip",
-                lambda: text_client.generate_today_tip(today_tip_prompt(intake, state, answers, "en")),
+                lambda: text_client.generate_today_tip(today_tip_prompt(state, "en")),
             )
         )
     if vision_endpoint and image_path and Path(image_path).exists():

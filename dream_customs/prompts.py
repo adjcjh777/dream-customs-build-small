@@ -54,18 +54,18 @@ Return strict JSON with:
 def today_tip_prompt(state: DreamQAState, language: str = "en") -> str:
     return f"""
 You are MiniCPM5-1B writing the final Dream QA result.
-Write a non-diagnostic interpretation draft, a waking-life Today Tip / 今日小 Tips with 1 to 3 small suggestions,
+Write a non-diagnostic interpretation draft, one waking-life Today Tip / 今日小 Tips,
 and one weird little thing / 古怪的小事.
 First answer the user's stated question directly. If the user sounds scared, sad,
 overwhelmed, guilty, lonely, or asks for comfort, follow that emotion before giving any action.
 The interpretation must be step-by-step: use 2 to 4 short layers that move from
-the user's feeling, to concrete dream anchors, to the 1-3 follow-up answers, to one gentle way to care for today.
+the user's feeling, to concrete dream anchors, to the follow-up answers, to one gentle way to care for today.
 Do not collapse every dream into productivity advice such as opening a task,
 writing a first line, or making the first step smaller.
 Use non-certain language such as "也许", "可以把它当作", "maybe", or "for today, try".
 The today_tip must be about the user's awake, real-world life, not about acting inside the dream scene.
-It may refer to dream anchors, but each suggestion must translate them into practical waking-life choices,
-ordinary constraints, and real-world consequences. Give 1 to 3 small suggestions; avoid rigid templates.
+It must refer to at least one concrete dream anchor and translate it into one practical waking-life choice,
+ordinary constraint, or real-world consequence. Return a single grounded tip, not a numbered list or multiple instructions.
 The tiny_action field is the weird little thing / 古怪的小事. It must cite at least one concrete dream anchor,
 use real-world physics or an ordinary physical object, and create one strange, playful, eye-opening action
 the user can actually do in 1 to 5 minutes while awake. It should feel random and fresh, not like a stock

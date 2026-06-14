@@ -431,6 +431,7 @@ _PLACEHOLDER_ANCHORS = {
     "the dream detail",
     "dream",
     "dream fragment",
+    "dream fragments",
 }
 
 
@@ -524,6 +525,10 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         candidates.extend(["公司", "午觉", "被人泼水"])
     if "elevator" in text:
         candidates.append("elevator")
+    if re.search(r"frightening dream|scary dream|recurring dream|same frightening dream", text):
+        candidates.append("frightening dream")
+    if re.search(r"barely slept|many nights|can't sleep|cannot sleep|could not sleep|insomnia|slept", text):
+        candidates.append("lost sleep")
     if re.search(r"\bfloor\s*14\b|\b14\b", text):
         candidates.append("floor 14")
     if "button" in text and re.search(r"\b(melt|melted|melting|wax)\b", text):
@@ -577,6 +582,16 @@ def _english_anchor_text(text: str) -> str:
     return clean
 
 
+def _english_public_text(text: str) -> str:
+    clean = text or ""
+    for source, target in sorted(_ZH_TO_EN_PHRASES.items(), key=lambda item: len(item[0]), reverse=True):
+        clean = clean.replace(source, target)
+    clean = re.sub(r"[\u4e00-\u9fff]+", " dream fragment ", clean)
+    clean = re.sub(r"\s+([,.!?;:])", r"\1", clean)
+    clean = re.sub(r"\s+", " ", clean).strip()
+    return clean
+
+
 def _zh_anchor_text(text: str) -> str:
     clean = re.sub(r"\s+", " ", (text or "").strip(" .,:;!?\"'()[]{}"))
     if not clean:
@@ -609,7 +624,7 @@ def _clean_english_today_tip_language(card: TodayTipCard) -> TodayTipCard:
         "caring_note",
         "safety_note",
     ):
-        setattr(cleaned, field, _english_anchor_text(getattr(cleaned, field)))
+        setattr(cleaned, field, _english_public_text(getattr(cleaned, field)))
     cleaned.dream_anchors = _dedupe_preserve_order(
         [_english_anchor_text(anchor) for anchor in cleaned.dream_anchors if anchor]
     )
@@ -704,6 +719,99 @@ def _story_text(intake: DreamIntake, answers: str = "") -> str:
         ]
         if part and part.strip()
     ).lower()
+
+
+def _provenance_text(intake: DreamIntake, answers: str = "") -> str:
+    parts = [
+        intake.dream_text,
+        intake.voice_transcript,
+        " ".join(intake.visual_clues),
+        " ".join(intake.recurring_symbols),
+        intake.mood,
+        intake.main_question,
+        intake.uncertainty,
+        intake.user_context,
+        answers or "",
+    ]
+    return re.sub(r"\s+", " ", " ".join(part.strip() for part in parts if part and part.strip())).lower()
+
+
+def _source_has_any(source: str, terms: List[str]) -> bool:
+    return any(term in source for term in terms)
+
+
+def _anchor_has_source_provenance(anchor: str, intake: DreamIntake, answers: str = "", language: str = "en") -> bool:
+    if _is_placeholder_anchor(anchor):
+        return False
+    source = _provenance_text(intake, answers)
+    clean = _english_anchor_text(anchor).lower() if not _is_zh(language) else anchor.lower()
+    clean = re.sub(r"\s+", " ", clean).strip(" .,:;!?\"'()[]{}")
+    if not clean or _is_placeholder_anchor(clean):
+        return False
+
+    high_risk_requirements = [
+        (["office building", "办公楼"], ["office building", "office tower", "办公楼"]),
+        (["overdue email", "email", "e-mail", "邮件"], ["email", "e-mail", "邮件"]),
+        (["email draft", "邮件草稿"], ["email", "e-mail", "邮件"]),
+        (["first sentence of the email", "email first sentence"], ["email", "e-mail", "邮件"]),
+    ]
+    for markers, required_terms in high_risk_requirements:
+        if any(marker in clean for marker in markers):
+            return _source_has_any(source, required_terms)
+    if "draft" in clean or "草稿" in clean:
+        return _source_has_any(
+            source,
+            [
+                "draft",
+                "草稿",
+                "email",
+                "e-mail",
+                "邮件",
+                "leave request",
+                "time off",
+                "sick leave",
+                "application",
+                "assignment",
+                "homework",
+                "presentation",
+                "speech",
+                "apolog",
+                "请假",
+                "申请",
+                "作业",
+                "演讲",
+                "汇报",
+                "道歉",
+            ],
+        )
+
+    if clean in source:
+        return True
+    if _is_zh(language):
+        for source_phrase, target in _EN_TO_ZH_PHRASES.items():
+            if target == clean and source_phrase in source:
+                return True
+    if "elevator" in clean or "电梯" in clean:
+        return "elevator" in source or "电梯" in source
+    if "phone" in clean or "手机" in clean:
+        return _source_has_any(source, ["phone", "手机", "battery", "电量"])
+    if "sleep" in clean or "slept" in clean or "失眠" in clean:
+        return _source_has_any(source, ["sleep", "slept", "insomnia", "barely slept", "睡", "失眠"])
+    if "message" in clean or "消息" in clean:
+        return _source_has_any(source, ["message", "messages", "消息", "发消息"])
+    tokens = [token for token in re.split(r"[\s,，。:：;；、]+", clean) if len(token) >= 3]
+    return bool(tokens) and any(token in source for token in tokens)
+
+
+def _filter_anchors_by_source(
+    anchors: List[str],
+    intake: DreamIntake,
+    answers: str = "",
+    language: str = "en",
+) -> List[str]:
+    return _dedupe_preserve_order(
+        [anchor for anchor in anchors if _anchor_has_source_provenance(anchor, intake, answers, language)]
+    )
 
 
 def _source_mentions_melted_detail(intake: DreamIntake, answers: str = "") -> bool:
@@ -886,15 +994,62 @@ def _title_anchor(text: str) -> str:
     return " ".join(part.capitalize() for part in text.split())
 
 
+def _story_portion_for_summary(text: str, language: str = "en") -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if not clean:
+        return ""
+    if _is_zh(language):
+        parts = re.split(r"(?:我)?(?:最)?想知道|(?:我)?想问|醒来(?:后)?最想知道", clean, maxsplit=1)
+        return parts[0].strip(" ，。；、") or clean
+    parts = re.split(r"\bmy\s+question\s*:|\bi\s+want\s+to\s+know\s*:?", clean, maxsplit=1, flags=re.IGNORECASE)
+    return parts[0].strip(" ,.;:") or clean
+
+
+def _truncate_summary_text(text: str, language: str = "en", limit: int = 96) -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if len(clean) <= limit:
+        return clean
+    prefix = clean[:limit].rstrip()
+    if _is_zh(language):
+        break_at = max(prefix.rfind(mark) for mark in ("。", "！", "？", "；"))
+        if break_at >= 28:
+            return prefix[: break_at + 1]
+        return prefix.rstrip("，；、 ") + "..."
+    break_at = max(prefix.rfind(mark) for mark in (".", "!", "?", ";"))
+    if break_at >= 42:
+        return prefix[: break_at + 1]
+    word_break = prefix.rfind(" ")
+    if word_break >= 48:
+        prefix = prefix[:word_break]
+    prefix = re.sub(r"\b(?:a|an|the|and|or|but|with|for|to|of|in|at|was|were)\s*$", "", prefix, flags=re.IGNORECASE)
+    return prefix.rstrip(" ,;:") + "..."
+
+
+def _looks_like_bad_summary(text: str, intake: DreamIntake, answers: str = "", language: str = "en") -> bool:
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if not clean:
+        return True
+    if _contains_unprovenanced_detail(clean, intake, answers, language):
+        return True
+    if not _is_zh(language):
+        if re.search(r"\b(?:a|an|the|and|or|but|with|for|to|of|in|at|was|were)\s*$", clean, re.IGNORECASE):
+            return True
+        if len(clean) < 80 and not clean.endswith((".", "!", "?", "...")) and re.search(r"\b\w{1,3}$", clean):
+            return True
+    return False
+
+
 def _summary_from_intake(intake: DreamIntake, language: str = "en") -> str:
-    merged = intake.dream_text.strip() or intake.voice_transcript.strip()
+    merged = _story_portion_for_summary(intake.dream_text.strip(), language) or _story_portion_for_summary(
+        intake.voice_transcript.strip(),
+        language,
+    )
     if not merged and intake.visual_clues:
         merged = "、".join(intake.visual_clues[:3]) if _is_zh(language) else ", ".join(intake.visual_clues[:3])
     if not merged:
         return "你记录了一个还在整理中的梦。" if _is_zh(language) else "You recorded a dream that is still taking shape."
     clean = re.sub(r"\s+", " ", merged).strip()
-    if len(clean) > 72:
-        clean = clean[:69].rstrip() + "..."
+    clean = _truncate_summary_text(clean, language)
     if not _is_zh(language):
         clean = _clean_placeholder_phrase(_english_anchor_text(clean))
     if not _is_zh(language):
@@ -928,10 +1083,17 @@ def _clean_user_question(text: str, language: str = "en") -> str:
     if not clean:
         return ""
     if _is_zh(language):
+        clean = re.sub(r"^(我)?(的)?(主要)?问题是[：:，,\s]*", "", clean)
         clean = re.sub(r"^(我)?(醒来后)?(最)?(想知道|想问|在想|担心|害怕)[：:，,\s]*", "", clean)
         clean = re.sub(r"^(只)?想知道[：:，,\s]*", "", clean)
         clean = clean.strip(" ：:「」\"'()[]{}")
         return clean if clean.endswith(("?", "？")) else f"{clean}？"
+    clean = re.sub(
+        r"^(?:my\s+)?(?:main\s+)?question\s*(?:is|was)?\s*[:：,\-]?\s*",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    ).strip()
     clean = re.sub(
         r"^(i\s+)?(woke\s+up\s+)?(want\s+to\s+know|wonder|am\s+wondering|need\s+to\s+know|worry|fear)\s*(if|whether|why|what|how)?\s*",
         lambda match: (match.group(4) or "").strip() + " ",
@@ -1257,9 +1419,36 @@ def _fallback_interpretation(intake: DreamIntake, language: str = "en") -> str:
     )
 
 
+def _strip_list_marker(text: str) -> str:
+    return re.sub(r"^\s*(?:\d+[\.)]|[-*•])\s*", "", text or "").strip()
+
+
 def _numbered_suggestions(items: List[str], language: str = "en") -> str:
-    cleaned = [item.strip() for item in items if item and item.strip()]
-    return " ".join(f"{index}. {item}" for index, item in enumerate(cleaned[:3], start=1))
+    cleaned = [_strip_list_marker(item.strip()) for item in items if item and item.strip()]
+    cleaned = [item for item in cleaned if item]
+    if not cleaned:
+        return ""
+    first = cleaned[0].rstrip("。.;； ")
+    if len(cleaned) == 1:
+        return first
+    second = cleaned[1].strip()
+    if _is_zh(language):
+        return f"{first}；{second}"
+    return f"{first}. {second}"
+
+
+def _one_tip_text(text: str, language: str = "en") -> str:
+    clean = re.sub(r"\s+", " ", (text or "").strip())
+    if not clean:
+        return ""
+    if not re.search(r"(?:^|\s)\d+[\.)]\s+", clean):
+        return _strip_list_marker(clean)
+    parts = [
+        _strip_list_marker(part)
+        for part in re.split(r"(?:^|\s)\d+[\.)]\s+", clean)
+        if _strip_list_marker(part)
+    ]
+    return _numbered_suggestions(parts[:2], language) if parts else _strip_list_marker(clean)
 
 
 def _seeded_option(options: List[str], intake: DreamIntake, answers: str = "") -> str:
@@ -1284,9 +1473,9 @@ def _weird_little_action(intake: DreamIntake, answers: str, anchors: List[str], 
                 f"用手指在桌面画一条看不见的海岸线，把一个小物件从「{anchor}」那侧推到自己这侧，像给醒来的身体靠岸。",
             ],
             "stuck_elevator": [
-                "找一张便利贴，画一个只到“草稿层”的电梯按钮，贴在电脑旁；用手指按一下，再只写邮件第一句话。",
-                "在纸上画三枚电梯按钮：14、草稿、暂停；闭眼按一下“草稿”，然后打开邮件写第一句话。",
-                "把一张纸立在键盘旁当电梯门，画个「邮件草稿层」按钮；按一下纸门，再写一句就合上。",
+                f"找一张便利贴，画一个写着「{anchor}」的小电梯按钮，贴在桌边；用手指按一下，再写下今天最小的入口动作。",
+                f"在纸上画三枚电梯按钮：等待、开始、暂停；闭眼按一下最像「{anchor}」的那一枚，然后只做一个一分钟动作。",
+                f"把一张纸立在桌边当电梯门，门上写「{anchor}」；推开一厘米，再说出一个今天能先确认的小事实。",
             ],
             "library_signal": [
                 f"做一张迷你借书卡，书名写「{anchor}」，到期日写“今晚不追讨”；把它夹进一本书里，像把梦暂存进图书馆。",
@@ -1320,9 +1509,9 @@ def _weird_little_action(intake: DreamIntake, answers: str, anchors: List[str], 
             f"Trace an invisible shoreline on the table and push one small object from the {anchor} side back toward you.",
         ],
         "stuck_elevator": [
-            "Draw an elevator button labeled Draft Floor on a sticky note, press it once with your finger, then write only the first sentence of the email.",
-            "Draw three elevator buttons on paper: 14, Draft, Pause. Close your eyes, press Draft once, then open the email for one sentence.",
-            "Stand a piece of paper beside the keyboard like elevator doors, draw an Email Draft button, press it once, write one sentence, and close the paper doors.",
+            f"Draw a tiny elevator button labeled {anchor}, press it once with your finger, then name the smallest doorway action you can try today.",
+            f"Draw three elevator buttons on paper: Wait, Start, Pause. Press the one that feels closest to {anchor}, then do one action under a minute.",
+            f"Stand a piece of paper on the desk like elevator doors, write {anchor} on it, open the paper one centimeter, and name one fact you can check today.",
         ],
         "library_signal": [
             f"Make a tiny library card titled {anchor}, set the due date to Not tonight, and tuck it into a book.",
@@ -1390,7 +1579,7 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
             return _numbered_suggestions(
                 [
                     f"Use {anchor} to spot the real-life place where you feel stuck at the entrance.",
-                    "Choose one waking-life doorway action today: open the draft, check one fact, or ask one person.",
+                    "Choose one waking-life doorway action today: check one fact, ask one person, or name what you are waiting for.",
                 ],
                 language,
             )
@@ -1439,7 +1628,7 @@ def _grounded_today_tip(intake: DreamIntake, language: str = "en") -> str:
         return _numbered_suggestions(
             [
                 f"从「{anchor}」找出现实里最像“卡在门口”的一件事。",
-                "今天只选一个醒着能做的入口动作：打开草稿、查一个信息，或问一个人。",
+                "今天只选一个醒着能做的入口动作：查一个信息、问一个人，或写下自己在等什么。",
             ],
             language,
         )
@@ -1491,6 +1680,30 @@ def _answer_has_concrete_task_keyword(answers: str) -> bool:
     return any(term in lowered for term in answer_terms)
 
 
+def _is_relationship_message_context(text: str) -> bool:
+    lowered = (text or "").lower()
+    relationship_terms = [
+        "friend",
+        "close friend",
+        "misunderstood",
+        "wronged",
+        "hurt",
+        "invisible",
+        "nobody listened",
+        "not angry",
+        "worst possible way",
+        "前任",
+        "朋友",
+        "误解",
+        "委屈",
+        "受伤",
+        "没人听",
+        "看不见",
+    ]
+    task_terms = ["work message", "client", "deadline", "email", "overdue", "工作", "客户", "邮件", "截止"]
+    return any(term in lowered for term in relationship_terms) and not any(term in lowered for term in task_terms)
+
+
 def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> str:
     lowered = (answers or "").lower()
     reality_cue = _answer_reality_cue(answers, language)
@@ -1499,17 +1712,24 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             return _numbered_suggestions(
                 [
                     f"把「{anchor}」翻译成一个现实沟通问题：这封邮件只需要让对方知道哪一件事。",
-                    "先只打开草稿，补上主题和第一句话，把“开始”和“发送”拆开。",
+                    "先只打开草稿，补上主题和第一句话，把“开始”和“发送”拆开；今天可以先存草稿，不一定马上发出去。",
                     "给自己定一个稍后回看的时间；今天可以先存草稿，不一定马上发出去。",
                 ],
                 language,
             )
         if "消息" in lowered or "发消息" in lowered:
+            if _is_relationship_message_context(answers):
+                return _numbered_suggestions(
+                    [
+                        f"把「{anchor}」和那种被误解、没被听见的感觉接起来。",
+                        "今天先写一句私密的澄清：我真正希望朋友听懂的是哪一点；不急着立刻发出。",
+                    ],
+                    language,
+                )
             return _numbered_suggestions(
                 [
                     f"把「{anchor}」翻译成现实里一条需要落地的沟通。",
-                    "先写一条很短的进度消息，说明现在到哪一步，不要求把整件事立刻完成。",
-                    "如果还不确定，就先存草稿，等一个具体时间再决定是否发送。",
+                    "先写一句它需要传达的核心意思，不要求把整件事立刻完成或发出。",
                 ],
                 language,
             )
@@ -1539,12 +1759,29 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
                 language,
             )
         return ""
-    if "email" in lowered or "message" in lowered:
+    if "email" in lowered:
+        email_label = "the overdue email" if "overdue email" in lowered else "that email"
         return _numbered_suggestions(
             [
-                f"Translate {anchor} into a real-world communication question: what does the overdue email need the other person to know?",
+                f"Translate {anchor} into a real-world communication question: what does {email_label} need the other person to know?",
                 "Open the draft only long enough to add the subject and first sentence; separate starting from sending.",
                 "Save it without sending, then choose one later review time.",
+            ],
+            language,
+        )
+    if "message" in lowered:
+        if _is_relationship_message_context(answers):
+            return _numbered_suggestions(
+                [
+                    f"Connect {anchor} to the friend-message worry you named, especially the feeling of not being heard.",
+                    "Write one private clarifying sentence about what you hoped they understood, then decide later whether anything needs to be sent.",
+                ],
+                language,
+            )
+        return _numbered_suggestions(
+            [
+                f"Connect {anchor} to the work message pressure you named, without changing it into a different task.",
+                "Write down the one thing the message needs to convey before deciding when to open or send it.",
             ],
             language,
         )
@@ -1607,7 +1844,9 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
         if "邮件" in lowered or "email" in lowered:
             return f"也许「{anchor}」不是在催你立刻完成什么，而是在提醒你：那封邮件可以先从一句话开始。"
         if "消息" in lowered or "message" in lowered:
-            return f"也许「{anchor}」不是在催你立刻回应什么，而是在提醒你：那条消息可以先从一句草稿开始。"
+            if _is_relationship_message_context(answers):
+                return f"也许「{anchor}」更像是在放大被误解、没被听见的委屈，而不是催你立刻回消息。"
+            return f"也许「{anchor}」不是在催你立刻回应什么，而是在提醒你：那条消息可以先只看清要传达的一点。"
         if "作业" in lowered or "草稿" in lowered:
             return f"也许「{anchor}」不是在说你已经来不及，而是在提醒你：草稿可以先从下一小段开始。"
         if "请假" in lowered or "申请" in lowered:
@@ -1616,14 +1855,20 @@ def _answer_based_interpretation(answers: str, anchor: str, language: str = "en"
             return f"也许「{anchor}」不是要给梦一个固定解释，而是在把你刚才说的「{reality_cue}」推到更温和的入口。"
         return ""
     if "email" in lowered:
+        email_label = "the overdue email" if "overdue email" in lowered else "that email"
         return (
-            f"Maybe the {anchor} is not asking you to finish the overdue email at once. "
+            f"Maybe the {anchor} is not asking you to finish {email_label} at once. "
             "It is pointing to the gentler threshold: opening it and writing one first sentence."
         )
     if "message" in lowered:
+        if _is_relationship_message_context(answers):
+            return (
+                f"Maybe the {anchor} is less about answering a thread and more about the hurt of feeling unseen. "
+                "The friend message can wait until you know what felt unheard."
+            )
         return (
-            f"Maybe the {anchor} is not asking you to answer every message at once. "
-            "It is pointing to the gentler threshold: opening one thread and drafting one first sentence."
+            f"Maybe the {anchor} is not asking you to finish every message at once. "
+            "It is pointing to the gentler threshold: naming what the message needs to carry."
         )
     if "assignment" in lowered or "homework" in lowered or "draft" in lowered:
         return (
@@ -2251,8 +2496,140 @@ def _has_unsupported_emotion_or_generic_wellness(text: str, intake: DreamIntake,
         "sort your tasks",
         "prioritize your tasks",
         "warm water",
+        "cold glass of water",
+        "glass of water",
+        "clear your mind",
+        "feel more grounded",
+        "make you feel more grounded",
+        "calming song",
+        "calming music",
     ]
     return any(marker in clean for marker in generic_markers)
+
+
+def _source_allows_draft_language(source: str) -> bool:
+    return _source_has_any(
+        source,
+        [
+            "draft",
+            "草稿",
+            "email",
+            "e-mail",
+            "邮件",
+            "leave request",
+            "time off",
+            "sick leave",
+            "application",
+            "assignment",
+            "homework",
+            "presentation",
+            "speech",
+            "apolog",
+            "请假",
+            "申请",
+            "作业",
+            "演讲",
+            "汇报",
+            "道歉",
+        ],
+    )
+
+
+def _contains_unprovenanced_detail(text: str, intake: DreamIntake, answers: str = "", language: str = "en") -> bool:
+    clean = re.sub(r"\s+", " ", (text or "").lower())
+    if not clean:
+        return False
+    source = _provenance_text(intake, answers)
+    if "dream fragment" in clean and "dream fragment" not in source:
+        return True
+    if "office building" in clean and not _source_has_any(source, ["office building", "office tower", "办公楼"]):
+        return True
+    if ("elevator" in clean or "电梯" in clean) and not _source_has_any(source, ["elevator", "电梯"]):
+        return True
+    if re.search(r"\bfloor\s*14\b|\b14\b|数字\s*14|14\s*层|14层", clean) and not _source_has_any(
+        source,
+        ["floor 14", "number 14", "14", "数字 14", "14 层", "14层"],
+    ):
+        return True
+    email_is_allowed = _source_has_any(source, ["email", "e-mail", "邮件"])
+    if re.search(r"\boverdue email\b", clean) and not _source_has_any(
+        source,
+        ["overdue email", "unanswered email", "late email", "迟迟没发出去的邮件"],
+    ):
+        return True
+    email_patterns = [
+        r"\bemail\b",
+        r"\be-mail\b",
+        r"\bemail draft\b",
+        r"\bfirst sentence of the email\b",
+        "邮件",
+    ]
+    if any(re.search(pattern, clean) if pattern.startswith("\\") else pattern in clean for pattern in email_patterns):
+        if not email_is_allowed:
+            return True
+    if re.search(r"\bfirst sentence\b", clean) and not _source_has_any(
+        source,
+        ["first sentence", "first line", "第一句", "第一句话", "email", "e-mail", "邮件"],
+    ):
+        return True
+    draft_patterns = [
+        r"\bopen the draft\b",
+        r"\bthe draft\b",
+        r"\bdraft\b",
+        r"\bdrafting\b",
+        r"\bdrafted\b",
+        "草稿",
+    ]
+    if any(re.search(pattern, clean) if pattern.startswith("\\") else pattern in clean for pattern in draft_patterns):
+        if not _source_allows_draft_language(source):
+            return True
+    if "unsent reply" in clean and not _source_has_any(source, ["message", "contact", "friend", "前任", "消息", "朋友", "联系"]):
+        return True
+    return False
+
+
+def _requires_distress_surrounding_override(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(
+        term in lowered
+        for term in [
+            "hurt myself",
+            "kill myself",
+            "do not want to wake up",
+            "don't want to wake up",
+            "hopeless",
+            "can't go on",
+            "cannot go on",
+            "self-harm",
+            "hurt someone",
+            "many nights",
+            "barely slept",
+            "can't sleep",
+            "cannot sleep",
+            "cannot function",
+            "panic attack",
+            "想伤害自己",
+            "自杀",
+            "自残",
+            "不想醒来",
+            "不想活",
+            "活不下去",
+            "轻生",
+            "绝望",
+            "伤害别人",
+            "很多天睡不着",
+            "连续3晚",
+            "连续 3 晚",
+            "连续三晚",
+            "连续很多天",
+            "无法正常生活",
+            "无法生活",
+        ]
+    )
+
+
+def _has_numbered_tip(text: str) -> bool:
+    return bool(re.search(r"(?:^|\s)\d+[\.)]\s+", text or ""))
 
 
 def _nonclinical_caring_note(anchors: List[str], language: str = "en") -> str:
@@ -2260,6 +2637,35 @@ def _nonclinical_caring_note(anchors: List[str], language: str = "en") -> str:
     if _is_zh(language):
         return f"这个梦被你记下来已经够了；今天先把「{anchor}」当作一个需要被温柔看见的细节。"
     return f"Writing this dream down is already enough; today, let {anchor} be one detail you meet gently."
+
+
+def _distress_interpretation(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    if _is_zh(language):
+        return (
+            f"也许「{anchor}」不是在说明你出了什么问题，而是在提醒你：反复惊醒、很久睡不好、白天难以运转，"
+            "已经值得被认真接住。先把害怕和疲惫放在第一位，不急着给梦下结论。"
+        )
+    return (
+        f"Maybe {anchor} is not proof that something is wrong with you. "
+        "The repeated frightening dream, lost sleep, and trouble functioning are signals that the fear and exhaustion deserve support before interpretation."
+    )
+
+
+def _distress_today_tip(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    if _is_zh(language):
+        return f"今天先把「{anchor}」当成需要支持的信号：选一个可信任的人或专业支持入口，说清楚你已经连续睡不好、白天难以运转。"
+    return (
+        f"For today, treat {anchor} as a reason to get support, not as a diagnosis: choose one trusted person or professional support option and tell them the frightening dream and lost sleep are affecting your day."
+    )
+
+
+def _distress_tiny_action(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
+    anchor = _story_anchor_phrase(intake, anchors, language, answers)
+    if _is_zh(language):
+        return f"在纸上写下「{anchor}」旁边的三个事实：睡了多久、白天哪里最难、可以联系谁；只写事实，不评判自己。"
+    return f"Write three plain facts beside {anchor}: how long this has affected sleep, what is hardest during the day, and who you can contact; keep it factual, not self-blaming."
 
 
 def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = "", language: str = "en") -> TodayTipCard:
@@ -2272,21 +2678,20 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         intake,
         answers,
     )
+    intake_anchors = _filter_anchors_by_source(intake_anchors, intake, answers, language)
     card_anchors = _remove_placeholder_anchors(
         polished.dream_anchors
         if _is_zh(language)
         else _dedupe_preserve_order([_english_anchor_text(anchor) for anchor in polished.dream_anchors])
     )
     card_anchors = _without_unsupported_melted_anchors(card_anchors, intake, answers)
-    if intake_anchors and not any(_text_uses_anchor(anchor, intake_anchors) for anchor in card_anchors):
-        anchors = intake_anchors
-    else:
-        anchors = card_anchors or intake_anchors
+    card_anchors = _filter_anchors_by_source(card_anchors, intake, answers, language)
+    anchors = _dedupe_preserve_order(card_anchors + [anchor for anchor in intake_anchors if anchor not in card_anchors])
     anchors = _without_unsupported_melted_anchors(anchors, intake, answers)
     if not anchors:
         anchors = _remove_placeholder_anchors([_primary_anchor(intake, language)])
     if not anchors:
-        anchors = ["梦境片段" if _is_zh(language) else "dream fragment"]
+        anchors = ["梦境线索" if _is_zh(language) else "dream clues"]
     polished.dream_anchors = anchors
     for field in (
         "dream_summary",
@@ -2304,7 +2709,12 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         _clean_unsupported_melted_detail(_clean_placeholder_phrase(question), intake, anchors, language, answers)
         for question in polished.followup_questions
     ]
-    if not polished.dream_summary.strip() or _is_placeholder_anchor(polished.dream_summary) or not _text_uses_anchor(polished.dream_summary, anchors):
+    if (
+        not polished.dream_summary.strip()
+        or _is_placeholder_anchor(polished.dream_summary)
+        or not _text_uses_anchor(polished.dream_summary, anchors)
+        or _looks_like_bad_summary(polished.dream_summary, intake, answers, language)
+    ):
         polished.dream_summary = _summary_from_intake(intake, language)
     explicit_question = _extract_explicit_user_question(intake, answers, language)
     if explicit_question:
@@ -2348,7 +2758,11 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
             if not _is_zh(language)
             else f"目前线索很少，先把「{anchor}」当作一个可以继续补充的线索，而不是确定解读。"
         )
-    elif not polished.interpretation.strip() or not _anchor_in_text(polished.interpretation, anchors):
+    elif (
+        not polished.interpretation.strip()
+        or not _anchor_in_text(polished.interpretation, anchors)
+        or _contains_unprovenanced_detail(polished.interpretation, intake, answers, language)
+    ):
         polished.interpretation = _fallback_interpretation(intake, language)
     generic_tip_markers = [
         "drink water",
@@ -2361,6 +2775,15 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         "borrow one action",
         "借一个动作",
         "open the task",
+        "for the tiny action",
+        "cold glass of water",
+        "glass of water",
+        "clear your mind",
+        "feel more grounded",
+        "make you feel more grounded",
+        "calming song",
+        "calming music",
+        "listen to a short",
     ]
     emotion_tip = _emotion_led_today_tip(intake, answers, anchors, language)
     if answer_tip and answer_should_shape_visible_tip:
@@ -2388,8 +2811,10 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         or any(marker in polished.today_tip.lower() for marker in generic_tip_markers)
         or _is_placeholder_anchor(polished.today_tip)
         or not _anchor_in_text(polished.today_tip, anchors)
+        or _contains_unprovenanced_detail(polished.today_tip, intake, answers, language)
     ):
         polished.today_tip = _grounded_today_tip(intake, language)
+    polished.today_tip = _one_tip_text(polished.today_tip, language)
     hard_action_markers = [
         "address it immediately",
         "fix it immediately",
@@ -2416,6 +2841,7 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         or _is_placeholder_anchor(polished.tiny_action)
         or not _anchor_in_text(polished.tiny_action, anchors)
         or any(marker in polished.tiny_action.lower() for marker in hard_action_markers)
+        or _contains_unprovenanced_detail(polished.tiny_action, intake, answers, language)
     ):
         polished.tiny_action = _weird_little_action(intake, answers, anchors, language)
     emotion_caring_note = _emotion_led_caring_note(intake, answers, language)
@@ -2440,8 +2866,17 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         polished.caring_note = "You do not have to solve the whole dream this morning; start by noticing one detail and one small next step."
     elif _is_zh(language) and "所有楼层" in polished.caring_note:
         polished.caring_note = "你不需要一醒来就解释完整个梦；先照顾一个细节和一个很小的下一步就好。"
+    elif _contains_unprovenanced_detail(polished.caring_note, intake, answers, language):
+        polished.caring_note = _nonclinical_caring_note(anchors, language)
     merged = "\n".join([intake.merged_text(), answers or ""])
     has_escalation = needs_escalation(merged)
+    if has_escalation and _requires_distress_surrounding_override(merged):
+        polished.interpretation = _distress_interpretation(intake, answers, anchors, language)
+        polished.today_tip = _distress_today_tip(intake, answers, anchors, language)
+        if _contains_unprovenanced_detail(polished.tiny_action, intake, answers, language):
+            polished.tiny_action = _distress_tiny_action(intake, answers, anchors, language)
+        if _contains_unprovenanced_detail(polished.caring_note, intake, answers, language):
+            polished.caring_note = _nonclinical_caring_note(anchors, language)
     if not has_escalation:
         if _has_unsupported_clinical_frame(polished.interpretation) or _has_unsupported_emotion_or_generic_wellness(
             polished.interpretation, intake, answers
@@ -2460,6 +2895,7 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
         ):
             polished.caring_note = _nonclinical_caring_note(anchors, language)
     polished.safety_note = safety_note(language) if has_escalation else ""
+    polished.today_tip = _one_tip_text(polished.today_tip, language)
     if not _is_zh(language):
         polished = _clean_english_today_tip_language(polished)
     return polished

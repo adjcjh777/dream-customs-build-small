@@ -1,3 +1,4 @@
+import re
 from datetime import date
 
 import pytest
@@ -22,6 +23,21 @@ from dream_customs.pipeline import (
 )
 from dream_customs.prompts import pact_prompt, today_tip_prompt
 from dream_customs.schema import PactCard, TodayTipCard, VisionWitness
+
+
+def _today_tip_public_text(card: TodayTipCard) -> str:
+    return "\n".join(
+        [
+            card.dream_summary,
+            card.main_question,
+            ",".join(card.dream_anchors),
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+            card.safety_note,
+        ]
+    )
 
 
 def test_dated_permit_id_uses_runtime_date_and_preserves_serial():
@@ -421,7 +437,7 @@ def test_chinese_email_tip_becomes_real_world_suggestions_and_weird_action():
 
     assert "办公楼」当成允许慢慢开始的按钮" not in card.today_tip
     assert "现实" in card.today_tip
-    assert "1." in card.today_tip and "2." in card.today_tip
+    assert "1." not in card.today_tip and "2." not in card.today_tip
     assert "邮件" in card.today_tip
     assert "第一句" in card.today_tip or "第一句话" in card.today_tip
     assert "便利贴" in card.tiny_action or "纸" in card.tiny_action
@@ -560,6 +576,217 @@ def test_today_tip_absorbs_non_template_followup_answer_as_real_life_cue():
     assert "leave request" in combined
     assert "guilty" in combined or "guilt" in combined
     assert "one careful step" not in card.today_tip.lower()
+
+
+def test_today_tip_filters_absent_office_email_and_repairs_question_summary_and_numbered_tip():
+    class PollutedOfficeEmailClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I dreamed I was rushing to catch an elevator, but my phone was dead a",
+                main_question="My question: does this mean I have been too anxious lately",
+                dream_anchors=["office building", "elevator", "email"],
+                followup_questions=["Which detail felt closest?"],
+                user_answers=[],
+                interpretation=(
+                    "Maybe the office building is asking you to open one thread and draft one first sentence."
+                ),
+                today_tip=(
+                    "1. Translate office building into a real-world communication question: what does the "
+                    "overdue email need? 2. Open the draft and write the first sentence of the email. "
+                    "3. Save it."
+                ),
+                tiny_action="Draw the office building and write only the first sentence of the email.",
+                caring_note="The office building can wait.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text=(
+            "I dreamed I was rushing to catch an elevator, but my phone was dead and I was late for something "
+            "important. I kept pressing the elevator button and worrying I had already missed my chance. "
+            "My question: does this mean I have been too anxious lately?"
+        ),
+        mood="Anxious",
+    )
+    answer = "The phone with no battery feels closest. I keep avoiding a work message, so I feel behind before I even start."
+
+    card = generate_today_tip(intake, answer, PollutedOfficeEmailClient(), language="en")
+    combined = _today_tip_public_text(card).lower()
+
+    assert "office building" not in combined
+    assert "overdue email" not in combined
+    assert "first sentence of the email" not in combined
+    assert "elevator" in combined or "phone" in combined
+    assert "work message" in combined or "message" in combined
+    assert "my question:" not in card.main_question.lower()
+    assert card.main_question == "Does this mean I have been too anxious lately?"
+    assert not card.dream_summary.rstrip(".").endswith("phone was dead a")
+    assert not re.search(r"\b[123]\.", card.today_tip)
+
+
+def test_today_tip_keeps_friend_misunderstanding_emotional_instead_of_email_draft_template():
+    class PollutedFriendClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I dreamed my close friend misunderstood me in front of everyone. I ke",
+                main_question="My question: why did I wake up feeling so wronged and hurt",
+                dream_anchors=["room"],
+                followup_questions=["What felt closest?"],
+                user_answers=[],
+                interpretation=(
+                    "Maybe the room is not asking you to answer every message at once; it points to opening "
+                    "one thread and drafting one first sentence."
+                ),
+                today_tip=(
+                    "1. Translate room into a real-world communication question: what does the overdue email "
+                    "need? 2. Open the draft and write one sentence."
+                ),
+                tiny_action="Open the message thread and draft the first sentence of the email.",
+                caring_note="One thread at a time.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text=(
+            "I dreamed my close friend misunderstood me in front of everyone. I kept explaining, but nobody "
+            "listened, and the room got louder every time I tried. My question: why did I wake up feeling so "
+            "wronged and hurt?"
+        ),
+        mood="Hurt and confused",
+    )
+    answer = "It felt like I was invisible, not angry. Yesterday I worried that a friend read my message in the worst possible way."
+
+    card = generate_today_tip(intake, answer, PollutedFriendClient(), language="en")
+    combined = _today_tip_public_text(card).lower()
+
+    assert "overdue email" not in combined
+    assert "first sentence of the email" not in combined
+    assert "draft the first sentence" not in combined
+    assert "wronged" in combined or "hurt" in combined or "invisible" in combined or "not listened" in combined
+    assert "friend" in combined or "message" in combined
+    assert "my question:" not in card.main_question.lower()
+    assert card.main_question == "Why did I wake up feeling so wronged and hurt?"
+    assert not re.search(r"\b[123]\.", card.today_tip)
+
+
+def test_today_tip_skip_path_uses_original_anchors_without_default_email_or_broken_caring_note():
+    class PollutedSkipClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I dreamed I was late, my phone battery died, and the elevator never a",
+                main_question="What might the elevator mean?",
+                dream_anchors=["office building", "elevator", "email"],
+                followup_questions=["Which detail felt closest?"],
+                user_answers=[],
+                interpretation="Maybe the office building, elevator, and email point to a draft you need to open.",
+                today_tip=(
+                    "1. Use elevator, my phone, and phone. 2. Choose one waking-life doorway action today: "
+                    "open the draft."
+                ),
+                tiny_action="Draw an elevator button and write only the first sentence of the email.",
+                caring_note="dream fragment , dream fragment floor.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text=(
+            "I dreamed I was late, my phone battery died, and the elevator never arrived. I want a quick tip, "
+            "but I want to skip the follow-up."
+        ),
+        mood="Anxious",
+    )
+
+    card = generate_today_tip(intake, "", PollutedSkipClient(), language="en")
+    combined = _today_tip_public_text(card).lower()
+
+    assert "office building" not in combined
+    assert "email" not in combined
+    assert "open the draft" not in combined
+    assert "first sentence" not in combined
+    assert "dream fragment" not in combined
+    assert "elevator" in combined
+    assert "phone" in combined or "late" in combined
+    assert not re.search(r"\b[123]\.", card.today_tip)
+
+
+def test_today_tip_skip_path_repairs_generic_calming_and_tiny_action_inside_tip():
+    class GenericCalmingClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I dreamed I was late, my phone battery died, and the elevator never arrived.",
+                main_question="What might the elevator be asking me to notice today?",
+                dream_anchors=["elevator", "phone"],
+                followup_questions=[],
+                user_answers=[],
+                interpretation="Maybe the elevator and phone point to the pressure of waiting.",
+                today_tip=(
+                    "Connect your phone's battery to your anxious morning. If the elevator voice persists, "
+                    "listen to a short, calming song. For the tiny action, hold a cold glass of water for one minute "
+                    "so you feel more grounded."
+                ),
+                tiny_action="Name one elevator button you can press today.",
+                caring_note="One small detail is enough.",
+                safety_note="",
+            )
+
+    intake = build_intake(
+        dream_text="I dreamed I was late, my phone battery died, and the elevator never arrived.",
+        mood="Anxious",
+    )
+
+    card = generate_today_tip(intake, "", GenericCalmingClient(), language="en")
+    combined = _today_tip_public_text(card).lower()
+
+    assert "elevator" in card.today_tip.lower() or "phone" in card.today_tip.lower()
+    assert "calming song" not in combined
+    assert "cold glass of water" not in combined
+    assert "for the tiny action" not in card.today_tip.lower()
+    assert not re.search(r"\b[123]\.", card.today_tip)
+
+
+def test_today_tip_distress_repairs_polluted_surrounding_fields_while_keeping_safety_note():
+    class PollutedDistressClient:
+        def generate_today_tip(self, prompt):
+            return TodayTipCard(
+                dream_summary="I keep having the same frightening dream and I have barely slept for",
+                main_question="What is wrong with me?",
+                dream_anchors=["office building", "elevator", "email"],
+                followup_questions=["What help would feel possible?"],
+                user_answers=[],
+                interpretation=(
+                    "Second, the office building, elevator, and email may be the dream's concrete shape."
+                ),
+                today_tip=(
+                    "1. Treat office building, elevator, and email as an unfinished contact. "
+                    "2. Write one private unsent reply."
+                ),
+                tiny_action="Write one word from office building, elevator, and email.",
+                caring_note="Start with the email contact.",
+                safety_note="Seek support.",
+            )
+
+    intake = build_intake(
+        dream_text=(
+            "I keep having the same frightening dream and I have barely slept for many nights. I feel like I "
+            "cannot function during the day and I am scared something is wrong with me."
+        ),
+        mood="Scared and exhausted",
+    )
+    answer = "I do not feel unsafe right now, but I cannot keep going like this without help."
+
+    card = generate_today_tip(intake, answer, PollutedDistressClient(), language="en")
+    combined = _today_tip_public_text(card).lower()
+
+    assert card.safety_note
+    assert "office building" not in combined
+    assert "elevator" not in combined
+    assert "email" not in combined
+    assert "unsent reply" not in combined
+    assert "dream clues" not in combined
+    assert any(anchor in card.dream_anchors for anchor in ["frightening dream", "lost sleep"])
+    assert "frightening" in combined or "sleep" in combined or "scared" in combined or "help" in combined
+    assert "trusted" in card.safety_note.lower() or "professional" in card.safety_note.lower()
+    assert not re.search(r"\b[123]\.", card.today_tip)
 
 
 def test_generate_today_tip_adds_safety_note_for_repeated_insomnia_without_self_harm():
@@ -716,7 +943,7 @@ def test_today_tip_prompt_requires_waking_life_suggestions_and_weird_action():
     prompt = today_tip_prompt(state, language="zh")
 
     assert "waking-life" in prompt
-    assert "1 to 3" in prompt
+    assert "single grounded tip" in prompt
     assert "weird little thing" in prompt
     assert "real-world physics" in prompt
     assert "古怪的小事" in prompt

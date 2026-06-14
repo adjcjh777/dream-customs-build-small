@@ -332,7 +332,7 @@ def test_mobile_reset_restores_calm_mood():
         60,
         0.2,
         0.1,
-        560,
+        480,
         320,
         "demo",
         "",

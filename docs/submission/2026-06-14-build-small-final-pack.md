@@ -7,8 +7,8 @@ Date: 2026-06-14
 - Space: https://huggingface.co/spaces/build-small-hackathon/dream-customs
 - Direct app: https://build-small-hackathon-dream-customs.hf.space
 - GitHub: https://github.com/adjcjh777/dream-customs-build-small
-- Live Space main verified: `60a11f36082f4117a5dbcc9f2b9200f97318e666`
-- GitHub branch verified: `origin/feature/mimo-asr-modal` at `0272c67b1862ac8ac4294f6945e937c5f60d38cf`
+- Performance QA baseline: HF Space main `60a11f36082f4117a5dbcc9f2b9200f97318e666` with app code from GitHub `0272c67b1862ac8ac4294f6945e937c5f60d38cf`.
+- Submission materials branch: `origin/feature/mimo-asr-modal`. Re-check the current HF Space main SHA tomorrow before final submission because README/material-only commits change the Space SHA.
 
 ## Official Submission Checklist
 

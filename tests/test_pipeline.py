@@ -1397,7 +1397,7 @@ def test_train_platform_sketch_does_not_inherit_elevator_or_lost_child_defaults(
     session = ask_questions(session, FakeTextClient())
     card = generate_today_tip(
         session.intake,
-        session.answers_text(),
+        "It feels like my real question is whether I am waiting for permission to choose a direction at work today.",
         FakeTextClient(),
         followup_questions=session.question_history,
     )
@@ -1421,6 +1421,8 @@ def test_train_platform_sketch_does_not_inherit_elevator_or_lost_child_defaults(
     assert "message parachute" not in combined
     assert "the this feeling" not in combined
     assert "the the" not in combined
+    assert "reversible first step" not in card.today_tip.lower()
+    assert "direction check" in card.today_tip.lower() or "one sign" in card.today_tip.lower()
 
 
 def test_elevator_buttons_sketch_preserves_puddle_clock_and_choice_pressure():
@@ -1464,6 +1466,7 @@ def test_elevator_buttons_sketch_preserves_puddle_clock_and_choice_pressure():
     assert "train platform" not in combined
     assert "lost child" not in combined
     assert "feeling this feeling" not in combined
+    assert "reversible first step" not in card.today_tip.lower()
 
 
 def test_broken_visual_sentence_is_not_used_as_anchor_or_tip_copy():
@@ -1490,7 +1493,7 @@ def test_broken_visual_sentence_is_not_used_as_anchor_or_tip_copy():
     session = ask_questions(session, FakeTextClient())
     card = generate_today_tip(
         session.intake,
-        session.answers_text(),
+        "I think the question is which small key to try first before the day gets busy.",
         FakeTextClient(),
         followup_questions=session.question_history,
     )
@@ -1511,6 +1514,8 @@ def test_broken_visual_sentence_is_not_used_as_anchor_or_tip_copy():
     assert "drawing showing" not in combined
     assert "the this feeling" not in combined
     assert "the the" not in combined
+    assert "reversible first step" not in card.today_tip.lower()
+    assert "morning key check" in card.today_tip.lower() or "before the day gets busy" in card.today_tip.lower()
 
 
 def test_floating_table_demo_keeps_star_and_sunrise_image_details():

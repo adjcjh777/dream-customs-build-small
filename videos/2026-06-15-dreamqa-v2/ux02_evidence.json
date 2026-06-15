@@ -1,0 +1,58 @@
+{
+  "id": "ux02",
+  "title": "Elevator buttons",
+  "url": "http://127.0.0.1:7862",
+  "imagePath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux02_elevator_buttons_sketch.png",
+  "audioPath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux02_voice.wav",
+  "startedAt": "2026-06-15T04:29:21.811Z",
+  "steps": [
+    "opened_local_app",
+    "filled_text_dream",
+    "uploaded_image_sketch",
+    "uploaded_voice_wav",
+    "submitted_intake",
+    "received_followup_question",
+    "answered_followup",
+    "received_morning_ticket"
+  ],
+  "status": "passed",
+  "voiceStatusAfterInput": "Voice was not transcribed. Type that fragment or try again.",
+  "questionText": "\n  Step 3 of 4 · Answer or skip\n  One useful question\n  Answer in one or two lines, or skip and let the existing anchors carry the ticket.\n  \n  Text · notedMood · notedImage · extractedVoice · not extracted\n\n  Sticky details already on the deskmelted elevator buttonsfloor 14 in a puddleclock without hands\n  Morning Question DeskWhich detail in melted elevator buttons, elevator, and floor 14 in a puddle feels closest to your current stuck point?\n  Why this questionWhat I hear first is that the strongest trail begins with melted elevator buttons, elevator, and floor 14 in a puddle, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (melted elevator buttons, elevator, and floor 14 in a puddle), and what it may be asking you to care for today. One question that will shape the final tip\n  This step makes the tip more specific. It is not diagnosis.\n",
+  "ticketText": "\n  \n    \n      Morning Ticket\n      Not a diagnosis, not a prophecy. Just one small note for today, grounded in the dream.\n    \n    \n      Take one note today\n      Grounded in the dream\n    \n  \n  melted elevator buttonsfloor 14 in a puddleclock without hands\n  \n    Because your dream kept returning to:melted elevator buttons　floor 14 in a puddle　clock without hands\n    \n      Today Tip\n      Connect melted elevator buttons to the work message pressure you named, without changing it into a different task. Write down the one thing the message needs to convey before deciding when to open or send it.\n    \n    Tiny 5-minute actionDraw a tiny elevator button labeled melted elevator buttons, elevator, and floor 14 in a puddle, press it once with your finger, then name the smallest doorway action you can try today.\n    \n      Supporting reflection\n      Maybe the floor 14 in a puddle is not asking you to finish every message at once. It is pointing to the gentler threshold: naming what the message needs to carry.\n    \n  \n  \n    How this was made small\n    MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket.\n  \n  Question recordWhat I hear first is that the strongest trail begins with melted elevator buttons, elevator, and floor 14 in a puddle, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (melted elevator buttons, elevator, and floor 14 in a puddle), and what it may be asking you to care for today. One question that will shape the final tip: Which detail in melted elevator buttons, elevator, and floor 14 in a puddle feels closest to your current stuck pointThe strongest feeling was that every option would make me late, especially a message I have been avoiding\n  A gentle reflection for today, not a diagnosis or prophecy.\n  Care noteYou do not have to solve the whole dream this morning; start by noticing one detail and one small next step.\n",
+  "evidenceStatus": "\n  Text · notedMood · notedImage · extractedVoice · not extracted\n",
+  "processingRoutes": "\n    Text cluesImage cluesVoice transcript\n  ",
+  "assertions": {
+    "requiredTermsPresent": true,
+    "bannedTermsAbsent": true,
+    "noBrokenVisualPhrase": true,
+    "evidenceStatusVisible": true,
+    "processingRoutesVisible": true,
+    "todayTipUsesAnswerClue": true,
+    "todayTipUsesDemoSpecificCue": true,
+    "voiceFallbackHonest": true,
+    "noTemplateTipPhrase": true,
+    "noSafetyBoundaryLeak": true
+  },
+  "endedAt": "2026-06-15T04:29:44.755Z",
+  "videoWebm": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/ux02_full_ux.webm",
+  "videoPath": "videos/2026-06-15-dreamqa-v2/ux02_full_ux.mp4",
+  "duration": 23.64,
+  "sizeBytes": 1549384,
+  "questionVisibleForSeconds": 3.6,
+  "finalTicketVisibleForSeconds": 4.3,
+  "voiceEvidenceStatus": "fallback: Voice was not transcribed. Type that fragment or try again.",
+  "finalAnchors": [
+    "melted elevator buttons",
+    "floor 14 in a puddle",
+    "clock without hands"
+  ],
+  "todayTipText": "Connect melted elevator buttons to the work message pressure you named, without changing it into a different task. Write down the one thing the message needs to convey before deciding when to open or send it.",
+  "requiredAnswerClues": [
+    "message",
+    "late"
+  ],
+  "requiredTipClues": [
+    "work message pressure",
+    "message needs to convey"
+  ]
+}

@@ -1894,10 +1894,19 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
                 language,
             )
         if reality_cue:
+            zh_anchor_context = f"{anchor} {reality_cue}"
+            if any(term in zh_anchor_context for term in ["小孩", "地铁", "箭头", "路标", "哪里走", "带一下", "带路"]):
+                return _numbered_suggestions(
+                    [
+                        f"把「{anchor}」和你刚才说的「{reality_cue}」接起来：这更像是在承认有一部分你需要被带路。",
+                        "今天先写一个很小的路标：我现在最需要谁或哪件事带我过一站；写完就停，不急着把整条路想完。",
+                    ],
+                    language,
+                )
             return _numbered_suggestions(
                 [
                     f"把「{anchor}」和你刚才说的「{reality_cue}」接起来，而不是只解释梦的象征。",
-                    "今天只选一个可回头的小动作：写一句说明、问一个入口，或把下一步先放到草稿里。",
+                    "今天让这个梦里的细节决定下一步的形状：只写下一个你真的想试探的入口，然后先停在那里。",
                 ],
                 language,
             )
@@ -1970,10 +1979,30 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             language,
         )
     if reality_cue:
+        if any(term in anchor.lower() for term in ["train", "platform", "suitcase", "direction sign"]):
+            next_step = (
+                "Use it as a tiny direction check today: write the work direction you named on one note, "
+                "then choose one sign you can test before the day pulls away."
+            )
+        elif any(term in anchor.lower() for term in ["floating table", "loose key", "sunrise", "star shape"]):
+            next_step = (
+                "Use it as a morning key check: choose the one small key you named, try that before the day gets busy, "
+                "and leave the other keys on the table for later."
+            )
+        elif any(term in anchor.lower() for term in ["puddle", "clock", "elevator", "floor 14", "button"]):
+            next_step = (
+                "Use it as a pressure check today: name what is reflected in the puddle or stalled clock, "
+                "then choose only the next button-sized move."
+            )
+        else:
+            next_step = (
+                "Let that dream detail shape the next step you named: write one line that starts with the real question, "
+                "then stop before turning it into the whole task."
+            )
         return _numbered_suggestions(
             [
                 f"Connect {anchor} to the waking-life clue you named: \"{reality_cue}\".",
-                "Choose one reversible first step today: draft one sentence, ask for one doorway, or park the next step where you can return to it.",
+                next_step,
             ],
             language,
         )
@@ -2889,11 +2918,13 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     answer_interpretation = _answer_based_interpretation(answers, _answer_bridge_anchor(anchors), language)
     answer_tip = _answer_based_today_tip(answers, anchors[0], language)
     answer_action = _answer_based_tiny_action(answers, intake, anchors, language)
+    reality_cue_for_tip = _answer_reality_cue(answers, language)
     answer_should_shape_visible_tip = bool(
         (answer_tip or answer_action)
         and not _needs_comfort(answers, language)
         and (
             _answer_has_concrete_task_keyword(answers)
+            or bool(reality_cue_for_tip and intake.visual_clues)
             or not _should_use_emotion_led_response(intake, answers, language)
         )
     )

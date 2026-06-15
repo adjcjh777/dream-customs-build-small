@@ -1,6 +1,6 @@
 # Build Small Final Pack - Dream QA
 
-Date: 2026-06-14
+Date: 2026-06-14, updated 2026-06-15
 
 ## Current Links
 
@@ -8,7 +8,8 @@ Date: 2026-06-14
 - Direct app: https://build-small-hackathon-dream-customs.hf.space
 - GitHub: https://github.com/adjcjh777/dream-customs-build-small
 - Performance QA baseline: HF Space main `60a11f36082f4117a5dbcc9f2b9200f97318e666` with app code from GitHub `0272c67b1862ac8ac4294f6945e937c5f60d38cf`.
-- Submission materials branch: `origin/feature/mimo-asr-modal`. Re-check the current HF Space main SHA tomorrow before final submission because README/material-only commits change the Space SHA.
+- V2 local full-UX package: `docs/smoke/2026-06-15-dreamqa-v2-full-ux-smoke.md` with three recorded flows under `videos/2026-06-15-dreamqa-v2/`.
+- Submission materials branch: `origin/feature/mimo-asr-modal`. Re-check the current HF Space main SHA before final submission because README/material/video commits change the Space SHA.
 
 ## Official Sources Checked
 
@@ -54,6 +55,17 @@ Verdict from tester: `PASS_WITH_ASR_RISK`.
 - Distress handling: PASS. Severe insomnia case showed `safety_note`.
 
 Recommended demo path: text first, optional image upload second. Voice can be shown as available or mentioned as graceful fallback, but should not be the hero path until live transcription success is stable.
+
+## V2 Local Demo Package
+
+Local V2 recording verdict: PASS for the package evidence produced from the current branch before final HF sync.
+
+- `videos/2026-06-15-dreamqa-v2/ux01_full_ux.mp4`: train platform, suitcase, direction sign, and the user's work-direction answer.
+- `videos/2026-06-15-dreamqa-v2/ux02_full_ux.mp4`: melted elevator buttons, floor 14 in a puddle, clock without hands, and work-message pressure.
+- `videos/2026-06-15-dreamqa-v2/ux03_full_ux.mp4`: floating table, loose keys, sunrise/star image, and the user's small-key answer.
+- Each case includes an evidence JSON, final ticket screenshot, and timeline contact sheet in the same directory.
+- Voice state in these recordings is honest fallback: `Voice was not transcribed. Type that fragment or try again.`
+- Do not describe the V2 videos as successful voice transcription unless a later live ASR smoke proves it.
 
 ## Demo Video Shotlist
 
@@ -103,11 +115,11 @@ Space: https://huggingface.co/spaces/build-small-hackathon/dream-customs
 
 ## Tomorrow's Final Steps
 
-1. Record or select the final demo video.
+1. Choose one or edit together the final demo video from `videos/2026-06-15-dreamqa-v2/`.
 2. Upload the video publicly or keep the repo `videos/` file as the demo asset if accepted.
 3. Publish the X or Instagram post.
 4. Replace the README demo/social placeholders with final public URLs.
-5. Re-run final smoke: full pytest, Today Tip eval, live `/config`, text/image browser path, and a quick semantic safety case.
+5. Sync final commit to HF Space, then re-run final smoke: live `/config`, text/image browser path, and a quick semantic safety case.
 6. Submit the Space URL, demo video URL, and social post URL.
 
 README frontmatter is already aligned to `Dream QA`, the target tracks, and the sponsor/bonus tags. The remaining README blockers are only the final public video URL and the final social post URL.

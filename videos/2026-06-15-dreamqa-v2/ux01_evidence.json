@@ -1,0 +1,58 @@
+{
+  "id": "ux01",
+  "title": "Train platform",
+  "url": "http://127.0.0.1:7862",
+  "imagePath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux01_train_platform_sketch.png",
+  "audioPath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux01_voice.wav",
+  "startedAt": "2026-06-15T04:28:35.771Z",
+  "steps": [
+    "opened_local_app",
+    "filled_text_dream",
+    "uploaded_image_sketch",
+    "uploaded_voice_wav",
+    "submitted_intake",
+    "received_followup_question",
+    "answered_followup",
+    "received_morning_ticket"
+  ],
+  "status": "passed",
+  "voiceStatusAfterInput": "Voice was not transcribed. Type that fragment or try again.",
+  "questionText": "\n  Step 3 of 4 · Answer or skip\n  One useful question\n  Answer in one or two lines, or skip and let the existing anchors carry the ticket.\n  \n  Text · notedMood · notedImage · extractedVoice · not extracted\n\n  Sticky details already on the desktrain platformsuitcasedirection sign\n  Morning Question DeskIn train platform, suitcase, and direction sign, what feeling stayed strongest after waking?\n  Why this questionWhat I hear first is that the strongest trail begins with train platform, suitcase, and direction sign, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (train platform, suitcase, and direction sign), and what it may be asking you to care for today. One question that will shape the final tip\n  This step makes the tip more specific. It is not diagnosis.\n",
+  "ticketText": "\n  \n    \n      Morning Ticket\n      Not a diagnosis, not a prophecy. Just one small note for today, grounded in the dream.\n    \n    \n      Take one note today\n      Grounded in the dream\n    \n  \n  train platformsuitcasedirection sign\n  \n    Because your dream kept returning to:train platform　suitcase　direction sign\n    \n      Today Tip\n      Connect train platform to the waking-life clue you named: \"It feels like my real question is whether I am waiting for permission to choose a direction at work today\". Use it as a tiny direction check today: write the work direction you named on one note, then choose one sign you can test before the day pulls away.\n    \n    Tiny 5-minute actionPlace two pens like two roads, put a note labeled train platform, suitcase, and direction sign between them, spin the note once, and check only the entrance it points to.\n    \n      Supporting reflection\n      Maybe the train platform is not asking for a fixed dream meaning. It is pointing back to the waking-life clue you named: \"It feels like my real question is whether I am waiting for permission to choose a direction at work today\".\n    \n  \n  \n    How this was made small\n    MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket.\n  \n  Question recordWhat I hear first is that the strongest trail begins with train platform, suitcase, and direction sign, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (train platform, suitcase, and direction sign), and what it may be asking you to care for today. One question that will shape the final tip: In train platform, suitcase, and direction sign, what feeling stayed strongest after wakingIt feels like my real question is whether I am waiting for permission to choose a direction at work today\n  A gentle reflection for today, not a diagnosis or prophecy.\n  Care noteYou do not have to solve the whole dream this morning; start by noticing one detail and one small next step.\n",
+  "evidenceStatus": "\n  Text · notedMood · notedImage · extractedVoice · not extracted\n",
+  "processingRoutes": "\n    Text cluesImage cluesVoice transcript\n  ",
+  "assertions": {
+    "requiredTermsPresent": true,
+    "bannedTermsAbsent": true,
+    "noBrokenVisualPhrase": true,
+    "evidenceStatusVisible": true,
+    "processingRoutesVisible": true,
+    "todayTipUsesAnswerClue": true,
+    "todayTipUsesDemoSpecificCue": true,
+    "voiceFallbackHonest": true,
+    "noTemplateTipPhrase": true,
+    "noSafetyBoundaryLeak": true
+  },
+  "endedAt": "2026-06-15T04:28:58.886Z",
+  "videoWebm": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/ux01_full_ux.webm",
+  "videoPath": "videos/2026-06-15-dreamqa-v2/ux01_full_ux.mp4",
+  "duration": 23.88,
+  "sizeBytes": 1475017,
+  "questionVisibleForSeconds": 3.6,
+  "finalTicketVisibleForSeconds": 4.3,
+  "voiceEvidenceStatus": "fallback: Voice was not transcribed. Type that fragment or try again.",
+  "finalAnchors": [
+    "train platform",
+    "suitcase",
+    "direction sign"
+  ],
+  "todayTipText": "Connect train platform to the waking-life clue you named: \"It feels like my real question is whether I am waiting for permission to choose a direction at work today\". Use it as a tiny direction check today: write the work direction you named on one note, then choose one sign you can test before the day pulls away.",
+  "requiredAnswerClues": [
+    "permission",
+    "direction at work"
+  ],
+  "requiredTipClues": [
+    "direction check",
+    "one sign"
+  ]
+}

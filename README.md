@@ -50,7 +50,10 @@ This is not a therapy, diagnosis, or prophecy product.
 - GitHub: <https://github.com/adjcjh777/dream-customs-build-small>
 - Primary track: Thousand Token Wood.
 - Secondary track: Backyard AI.
-- Demo assets in this repo: `videos/dreamqa_01_text_only.mp4`, `videos/dreamqa_02_image_only.mp4`, `videos/dreamqa_03_text_plus_image.mp4`.
+- Final V2 demo assets in this repo:
+  - `videos/2026-06-15-dreamqa-v2/ux01_full_ux.mp4` - train platform + direction sign.
+  - `videos/2026-06-15-dreamqa-v2/ux02_full_ux.mp4` - elevator buttons + floor 14 + work message.
+  - `videos/2026-06-15-dreamqa-v2/ux03_full_ux.mp4` - floating table + loose keys + sunrise line.
 - Final public demo video URL: to be added after the final upload.
 - Final social post URL: to be added after publishing the X/Instagram post.
 - Final submission prep notes: `docs/submission/2026-06-14-build-small-final-pack.md`.
@@ -189,7 +192,11 @@ python scripts/evaluate_today_tip_quality.py
 
 ## Deployment Smoke Status
 
-Latest local Dream QA refactor smoke:
+Latest V2 full UX smoke:
+
+- `docs/smoke/2026-06-15-dreamqa-v2-full-ux-smoke.md`
+
+Earlier local Dream QA refactor smoke:
 
 - `docs/smoke/2026-06-08-dream-qa-refactor-smoke.md`
 - `docs/smoke/2026-06-08-post-refactor-polish-smoke.md`

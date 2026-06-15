@@ -931,6 +931,8 @@ def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
         or (_contains_any(text, lost_terms) and _contains_any(text, home_terms))
     ):
         return "lost_home"
+    if _contains_any(text, ["floating table", "loose key", "loose keys", "sunrise", "star shape", "star shapes", "漂浮的桌子", "钥匙"]):
+        return "floating_keys"
     if _contains_any(text, ["海", "海浪", "月牙", "moon", "sea", "wave", "dark sea", "dark water", "漆黑的海"]):
         return "dark_water"
     if _contains_any(text, ["电梯", "按钮", "14", "elevator", "button", "floor"]):
@@ -1930,6 +1932,14 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
                 ],
                 language,
             )
+        if any(term in anchor.lower() for term in ["elevator", "button", "puddle", "clock", "floor 14"]):
+            return _numbered_suggestions(
+                [
+                    f"Connect {anchor} to the work message pressure you named, without changing it into a different task.",
+                    "Use floor 14 in a puddle and the clock without hands as the boundary: write only what the message needs to convey before deciding when to open or send it.",
+                ],
+                language,
+            )
         return _numbered_suggestions(
             [
                 f"Connect {anchor} to the work message pressure you named, without changing it into a different task.",
@@ -1991,8 +2001,8 @@ def _answer_based_today_tip(answers: str, anchor: str, language: str = "en") -> 
             )
         elif any(term in anchor.lower() for term in ["puddle", "clock", "elevator", "floor 14", "button"]):
             next_step = (
-                "Use it as a pressure check today: name what is reflected in the puddle or stalled clock, "
-                "then choose only the next button-sized move."
+                "Use floor 14 in a puddle and the clock without hands as a pressure check: write what the message "
+                "needs to carry, then choose only the next button-sized move."
             )
         else:
             next_step = (
@@ -2447,6 +2457,11 @@ def _decomposition_question(
                 "After waking, was the strongest feeling fear, loneliness, breathlessness, or something else in your body?",
                 "Which image stays with you most: the waves, the moon, or the small figure?",
                 "Last check before the tip: do you need help calming your body, or understanding why the image felt so intense?",
+            ],
+            "floating_keys": [
+                "In the floating table, loose keys, and sunrise line, which detail feels most like the small key you want to try today?",
+                "Do the loose keys feel like too many choices, or like one possible key waiting to be picked up?",
+                "Last check before the tip: should the Morning Ticket point to one key, the sunrise line, or the floating table?",
             ],
             "stuck_elevator": [
                 f"Which detail in {story_anchor} feels closest to your current stuck point?",

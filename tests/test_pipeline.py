@@ -1441,7 +1441,7 @@ def test_elevator_buttons_sketch_preserves_puddle_clock_and_choice_pressure():
     session = ask_questions(session, FakeTextClient())
     card = generate_today_tip(
         session.intake,
-        "The strongest feeling was that every option would make me late.",
+        "The strongest feeling was that every option would make me late, especially a message I have been avoiding.",
         FakeTextClient(),
         followup_questions=session.question_history,
     )
@@ -1467,6 +1467,7 @@ def test_elevator_buttons_sketch_preserves_puddle_clock_and_choice_pressure():
     assert "lost child" not in combined
     assert "feeling this feeling" not in combined
     assert "reversible first step" not in card.today_tip.lower()
+    assert "floor 14" in card.today_tip.lower() or "clock without hands" in card.today_tip.lower()
 
 
 def test_broken_visual_sentence_is_not_used_as_anchor_or_tip_copy():
@@ -1555,5 +1556,8 @@ def test_floating_table_demo_keeps_star_and_sunrise_image_details():
     assert "key" in combined
     assert "star" in combined
     assert "sunrise" in combined
+    assert "floating table" in session.question_history[0].lower()
+    assert "loose keys" in session.question_history[0].lower()
+    assert "sunrise" in session.question_history[0].lower()
     assert "floor 14" not in combined
     assert "elevator" not in combined

@@ -4,7 +4,7 @@
   "url": "http://127.0.0.1:7862",
   "imagePath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux01_train_platform_sketch.png",
   "audioPath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux01_voice.wav",
-  "startedAt": "2026-06-15T04:28:35.771Z",
+  "startedAt": "2026-06-15T04:39:39.530Z",
   "steps": [
     "opened_local_app",
     "filled_text_dream",
@@ -29,15 +29,16 @@
     "processingRoutesVisible": true,
     "todayTipUsesAnswerClue": true,
     "todayTipUsesDemoSpecificCue": true,
+    "questionUsesDemoSpecificCue": true,
     "voiceFallbackHonest": true,
     "noTemplateTipPhrase": true,
     "noSafetyBoundaryLeak": true
   },
-  "endedAt": "2026-06-15T04:28:58.886Z",
+  "endedAt": "2026-06-15T04:40:03.195Z",
   "videoWebm": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/ux01_full_ux.webm",
   "videoPath": "videos/2026-06-15-dreamqa-v2/ux01_full_ux.mp4",
-  "duration": 23.88,
-  "sizeBytes": 1475017,
+  "duration": 24.32,
+  "sizeBytes": 1642562,
   "questionVisibleForSeconds": 3.6,
   "finalTicketVisibleForSeconds": 4.3,
   "voiceEvidenceStatus": "fallback: Voice was not transcribed. Type that fragment or try again.",
@@ -54,5 +55,9 @@
   "requiredTipClues": [
     "direction check",
     "one sign"
+  ],
+  "requiredQuestionClues": [
+    "train platform",
+    "direction"
   ]
 }

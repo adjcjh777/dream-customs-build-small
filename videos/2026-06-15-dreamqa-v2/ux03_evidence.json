@@ -4,7 +4,7 @@
   "url": "http://127.0.0.1:7862",
   "imagePath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux03_floating_table_keys_sketch.png",
   "audioPath": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/assets/ux03_voice.wav",
-  "startedAt": "2026-06-15T04:30:07.558Z",
+  "startedAt": "2026-06-15T04:41:12.340Z",
   "steps": [
     "opened_local_app",
     "filled_text_dream",
@@ -17,8 +17,8 @@
   ],
   "status": "passed",
   "voiceStatusAfterInput": "Voice was not transcribed. Type that fragment or try again.",
-  "questionText": "\n  Step 3 of 4 · Answer or skip\n  One useful question\n  Answer in one or two lines, or skip and let the existing anchors carry the ticket.\n  \n  Text · notedMood · notedImage · extractedVoice · not extracted\n\n  Sticky details already on the deskfloating tableloose keysstar shapes by a sunrise line\n  Morning Question DeskAfter waking, was the strongest feeling fear, loneliness, breathlessness, or something else in your body?\n  Why this questionWhat I hear first is that the strongest trail begins with floating table, loose keys, and star shapes by a sunrise line, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (floating table, loose keys, and star shapes by a sunrise line), and what it may be asking you to care for today. One question that will shape the final tip\n  This step makes the tip more specific. It is not diagnosis.\n",
-  "ticketText": "\n  \n    \n      Morning Ticket\n      Not a diagnosis, not a prophecy. Just one small note for today, grounded in the dream.\n    \n    \n      Take one note today\n      Grounded in the dream\n    \n  \n  floating tableloose keysstar shapes by a sunrise line\n  \n    Because your dream kept returning to:floating table　loose keys　star shapes by a sunrise line\n    \n      Today Tip\n      Connect floating table to the waking-life clue you named: \"I think the question is which small key to try first before the day gets busy\". Use it as a morning key check: choose the one small key you named, try that before the day gets busy, and leave the other keys on the table for later.\n    \n    Tiny 5-minute actionTrace an invisible shoreline on the table and push one small object from the floating table, loose keys, and star shapes by a sunrise line side back toward you.\n    \n      Supporting reflection\n      Maybe the floating table is not asking for a fixed dream meaning. It is pointing back to the waking-life clue you named: \"I think the question is which small key to try first before the day gets busy\".\n    \n  \n  \n    How this was made small\n    MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket.\n  \n  Question recordWhat I hear first is that the strongest trail begins with floating table, loose keys, and star shapes by a sunrise line, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (floating table, loose keys, and star shapes by a sunrise line), and what it may be asking you to care for today. One question that will shape the final tip: After waking, was the strongest feeling fear, loneliness, breathlessness, or something else in your bodyI think the question is which small key to try first before the day gets busy\n  A gentle reflection for today, not a diagnosis or prophecy.\n  Care noteYou do not have to solve the whole dream this morning; start by noticing one detail and one small next step.\n",
+  "questionText": "\n  Step 3 of 4 · Answer or skip\n  One useful question\n  Answer in one or two lines, or skip and let the existing anchors carry the ticket.\n  \n  Text · notedMood · notedImage · extractedVoice · not extracted\n\n  Sticky details already on the deskfloating tableloose keysstar shapes by a sunrise line\n  Morning Question DeskIn the floating table, loose keys, and sunrise line, which detail feels most like the small key you want to try today?\n  Why this questionWhat I hear first is that the strongest trail begins with floating table, loose keys, and star shapes by a sunrise line, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (floating table, loose keys, and star shapes by a sunrise line), and what it may be asking you to care for today. One question that will shape the final tip\n  This step makes the tip more specific. It is not diagnosis.\n",
+  "ticketText": "\n  \n    \n      Morning Ticket\n      Not a diagnosis, not a prophecy. Just one small note for today, grounded in the dream.\n    \n    \n      Take one note today\n      Grounded in the dream\n    \n  \n  floating tableloose keysstar shapes by a sunrise line\n  \n    Because your dream kept returning to:floating table　loose keys　star shapes by a sunrise line\n    \n      Today Tip\n      Connect floating table to the waking-life clue you named: \"I think the question is which small key to try first before the day gets busy\". Use it as a morning key check: choose the one small key you named, try that before the day gets busy, and leave the other keys on the table for later.\n    \n    Tiny 5-minute actionChoose one desk object as a stand-in for floating table, loose keys, and star shapes by a sunrise line, move it one centimeter, then name the smallest waking-life action it points to.\n    \n      Supporting reflection\n      Maybe the floating table is not asking for a fixed dream meaning. It is pointing back to the waking-life clue you named: \"I think the question is which small key to try first before the day gets busy\".\n    \n  \n  \n    How this was made small\n    MiniCPM-V reads sketches, notes, and image clues; MiniCPM5-1B writes the follow-up question, reflection, and ticket.\n  \n  Question recordWhat I hear first is that the strongest trail begins with floating table, loose keys, and star shapes by a sunrise line, so I will connect it to what you may need today. I will unpack this in three layers: the feeling after waking, the concrete image (floating table, loose keys, and star shapes by a sunrise line), and what it may be asking you to care for today. One question that will shape the final tip: In the floating table, loose keys, and sunrise line, which detail feels most like the small key you want to try todayI think the question is which small key to try first before the day gets busy\n  A gentle reflection for today, not a diagnosis or prophecy.\n  Care noteYou do not have to solve the whole dream this morning; start by noticing one detail and one small next step.\n",
   "evidenceStatus": "\n  Text · notedMood · notedImage · extractedVoice · not extracted\n",
   "processingRoutes": "\n    Text cluesImage cluesVoice transcript\n  ",
   "assertions": {
@@ -29,15 +29,16 @@
     "processingRoutesVisible": true,
     "todayTipUsesAnswerClue": true,
     "todayTipUsesDemoSpecificCue": true,
+    "questionUsesDemoSpecificCue": true,
     "voiceFallbackHonest": true,
     "noTemplateTipPhrase": true,
     "noSafetyBoundaryLeak": true
   },
-  "endedAt": "2026-06-15T04:30:32.971Z",
+  "endedAt": "2026-06-15T04:41:34.960Z",
   "videoWebm": "/Users/junhaocheng/working-dir/ai-competitions/build-small-hackthon/videos/2026-06-15-dreamqa-full-ux/ux03_full_ux.webm",
   "videoPath": "videos/2026-06-15-dreamqa-v2/ux03_full_ux.mp4",
-  "duration": 26.16,
-  "sizeBytes": 1556690,
+  "duration": 23.36,
+  "sizeBytes": 1782024,
   "questionVisibleForSeconds": 3.6,
   "finalTicketVisibleForSeconds": 4.3,
   "voiceEvidenceStatus": "fallback: Voice was not transcribed. Type that fragment or try again.",
@@ -54,5 +55,10 @@
   "requiredTipClues": [
     "morning key check",
     "leave the other keys on the table"
+  ],
+  "requiredQuestionClues": [
+    "floating table",
+    "loose keys",
+    "sunrise"
   ]
 }

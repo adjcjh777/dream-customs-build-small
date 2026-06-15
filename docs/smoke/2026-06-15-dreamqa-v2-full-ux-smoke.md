@@ -15,7 +15,7 @@ This smoke verifies the final Dream QA V2 local demo package for Build Small sub
 
 - Branch: `feature/mimo-asr-modal`
 - Base before this smoke: `c9a54a4 Fix Dream QA multimodal UX grounding`
-- Final commit for this smoke: to be filled after commit.
+- Smoke package commit: `efc02a838bdf6bc476e2c40cdc5ab2d3c33c46e2` (`Finalize Dream QA V2 demo evidence`).
 - Local URL: `http://127.0.0.1:7862`
 - Local recording backend: demo text/vision/ASR routes, with voice fallback shown in UI.
 - ASR status: fallback only in these recordings. The UI displays `Voice was not transcribed. Type that fragment or try again.`

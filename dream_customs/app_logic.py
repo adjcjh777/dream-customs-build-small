@@ -183,6 +183,7 @@ def _clients(text_backend: str, vision_backend: str, **settings):
             token=resolved["hosted_token"],
             timeout=resolved["asr_timeout_seconds"],
             latency_budget_ms=resolved["asr_latency_budget_ms"],
+            fallback_enabled=False,
         )
     else:
         asr_client = FakeASRClient()

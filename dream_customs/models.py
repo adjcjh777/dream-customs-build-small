@@ -12,14 +12,31 @@ from dream_customs.schema import DreamBrief, DreamQAState, PactCard, PactCritiqu
 
 
 class FakeVisionClient:
-    def extract_clues(self, image_path: Optional[str]) -> List[str]:
-        if not image_path:
-            return []
-        return ["blue hallway", "melted elevator buttons", "number 14"]
-
-    def extract_witness(self, image_path: Optional[str]) -> VisionWitness:
-        if not image_path:
-            return VisionWitness()
+    def _witness_for_path(self, image_path: str) -> VisionWitness:
+        name = os.path.basename(image_path or "").lower()
+        if any(term in name for term in ["train", "platform"]):
+            return VisionWitness(
+                scene_summary="A train platform with a suitcase, a direction sign, and a tall clock.",
+                objects=["train platform", "suitcase", "direction sign", "platform clock"],
+                visible_text=["TRACK 3"],
+                mood_cues=["waiting", "uncertain direction"],
+            )
+        if any(term in name for term in ["ux02", "elevator_buttons", "floor14", "floor-14"]):
+            return VisionWitness(
+                scene_summary="An apartment elevator panel with melted buttons, a floor 14 reflection in a puddle, and a clock without hands.",
+                objects=["melted elevator buttons", "floor 14 in a puddle", "clock without hands"],
+                visible_text=["14"],
+                spatial_relations=["floor number reflected under the elevator doors"],
+                mood_cues=["stuck", "late", "choice pressure"],
+                surprising_detail="The clock has no hands, so time feels present but unreadable.",
+            )
+        if any(term in name for term in ["floating", "table", "keys"]):
+            return VisionWitness(
+                scene_summary="A floating table over dark water with loose keys, star shapes, and a sunrise line.",
+                objects=["floating table", "loose keys", "star shapes by a sunrise line", "dark water"],
+                visible_text=["SUNRISE"],
+                mood_cues=["strange", "quiet"],
+            )
         return VisionWitness(
             scene_summary="A blue hallway with a melted elevator button.",
             objects=["elevator button", "blue hallway"],
@@ -30,10 +47,23 @@ class FakeVisionClient:
             surprising_detail="The button looks soft, almost waxy.",
         )
 
+    def extract_clues(self, image_path: Optional[str]) -> List[str]:
+        if not image_path:
+            return []
+        return self._witness_for_path(image_path).to_visual_clues()
+
+    def extract_witness(self, image_path: Optional[str]) -> VisionWitness:
+        if not image_path:
+            return VisionWitness()
+        return self._witness_for_path(image_path)
+
 
 class FakeASRClient:
     def transcribe(self, audio_path: Optional[str]) -> str:
         if not audio_path:
+            return ""
+        name = os.path.basename(audio_path or "").lower()
+        if not any(term in name for term in ["demo", "elevator", "button", "floor14", "floor-14"]):
             return ""
         return "The buttons melted and I could not catch the elevator."
 

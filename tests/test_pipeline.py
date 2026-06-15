@@ -110,6 +110,26 @@ def test_elevator_floor14_demo_anchors_are_clean_for_question_stage():
     assert "for floor" not in state.dream_anchors
 
 
+def test_english_question_cleanup_handles_wanted_and_wondered_forms():
+    wanted = build_qa_state(
+        build_intake("I wanted to know which way to go next after the platform sign kept spinning."),
+        language="en",
+    )
+    leading_and = build_qa_state(
+        build_intake("The direction sign kept spinning, and I wanted to know which way to go next."),
+        language="en",
+    )
+    wondered = build_qa_state(
+        build_intake("I wondered why choosing a floor felt impossible."),
+        language="en",
+    )
+
+    assert wanted.main_question == "Which way to go next after the platform sign kept spinning?"
+    assert leading_and.main_question == "Which way to go next?"
+    assert wondered.main_question == "Why choosing a floor felt impossible?"
+    assert "Ed why" not in wondered.main_question
+
+
 def test_zh_company_nap_splashed_water_keeps_real_anchors():
     session = add_evidence(
         create_session(language="zh"),
@@ -1347,3 +1367,188 @@ def test_witness_failure_keeps_text_path_alive():
 
     assert "Text still works." in intake.merged_text()
     assert "fallback clue" in intake.merged_text()
+
+
+def test_train_platform_sketch_does_not_inherit_elevator_or_lost_child_defaults():
+    class TrainPlatformVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="A train platform with a suitcase, a direction sign, and a tall clock.",
+                objects=["train platform", "suitcase", "direction sign", "platform clock"],
+                visible_text=["TRACK 3", "NORTH EXIT"],
+                mood_cues=["waiting", "uncertain direction"],
+            )
+
+        def extract_clues(self, image_path):
+            return ["flat fallback should not win"]
+
+    session = add_evidence(
+        create_session(),
+        dream_text=(
+            "I was waiting on a train platform with a suitcase. "
+            "The direction sign kept spinning, and I wanted to know which way to go next."
+        ),
+        image_path="ux01_train_platform_sketch.png",
+        audio_path="ux01_voice.wav",
+        mood="uneasy",
+        vision_client=TrainPlatformVision(),
+        asr_client=FakeASRClient(),
+    )
+    session = ask_questions(session, FakeTextClient())
+    card = generate_today_tip(
+        session.intake,
+        session.answers_text(),
+        FakeTextClient(),
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join(
+        [
+            session.question_history[0],
+            ",".join(card.dream_anchors),
+            card.dream_summary,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert any(anchor in card.dream_anchors for anchor in ["train platform", "suitcase", "direction sign"])
+    assert "elevator" not in combined
+    assert "floor 14" not in combined
+    assert "melted" not in combined
+    assert "lost child" not in combined
+    assert "message parachute" not in combined
+    assert "the this feeling" not in combined
+    assert "the the" not in combined
+
+
+def test_elevator_buttons_sketch_preserves_puddle_clock_and_choice_pressure():
+    session = add_evidence(
+        create_session(),
+        dream_text=(
+            "I dreamed I was in an apartment elevator lobby. The doors would not open, "
+            "floor fourteen appeared in a puddle, and the buttons melted before I could press anything."
+        ),
+        image_path="ux02_elevator_buttons_sketch.png",
+        audio_path="ux02_voice.wav",
+        mood="anxious",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+    )
+    session = ask_questions(session, FakeTextClient())
+    card = generate_today_tip(
+        session.intake,
+        "The strongest feeling was that every option would make me late.",
+        FakeTextClient(),
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join(
+        [
+            session.question_history[0],
+            ",".join(card.dream_anchors),
+            card.dream_summary,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert "floor 14" in combined
+    assert "puddle" in combined
+    assert "clock" in combined
+    assert any("puddle" in anchor for anchor in card.dream_anchors)
+    assert any("clock" in anchor for anchor in card.dream_anchors)
+    assert "choice pressure" in session.intake.merged_text().lower()
+    assert "train platform" not in combined
+    assert "lost child" not in combined
+    assert "feeling this feeling" not in combined
+
+
+def test_broken_visual_sentence_is_not_used_as_anchor_or_tip_copy():
+    class BrokenTableVision:
+        def extract_witness(self, image_path):
+            return VisionWitness(
+                scene_summary="A drawing showing a table with various and a",
+                objects=["floating table", "loose keys", "star shapes"],
+                visible_text=["SUNRISE"],
+                spatial_relations=["keys hover over dark water"],
+            )
+
+        def extract_clues(self, image_path):
+            return ["a drawing showing a table with various and a", "floating table", "loose keys"]
+
+    session = add_evidence(
+        create_session(),
+        dream_text="I saw a floating table above dark water, with keys, stars, and a sunrise line.",
+        image_path="ux03_floating_table_keys_sketch.png",
+        mood="curious",
+        vision_client=BrokenTableVision(),
+        asr_client=FakeASRClient(),
+    )
+    session = ask_questions(session, FakeTextClient())
+    card = generate_today_tip(
+        session.intake,
+        session.answers_text(),
+        FakeTextClient(),
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join(
+        [
+            session.question_history[0],
+            ",".join(card.dream_anchors),
+            card.dream_summary,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert any(anchor in card.dream_anchors for anchor in ["floating table", "loose key", "dark water", "sunrise"])
+    assert "various and a" not in combined
+    assert "drawing showing" not in combined
+    assert "the this feeling" not in combined
+    assert "the the" not in combined
+
+
+def test_floating_table_demo_keeps_star_and_sunrise_image_details():
+    session = add_evidence(
+        create_session(),
+        dream_text=(
+            "I dreamed my kitchen table was floating on shallow water. "
+            "Three keys were arranged in a triangle, a cup spilled tiny stars, "
+            "and morning light was coming through a square window."
+        ),
+        image_path="ux03_floating_table_keys_sketch.png",
+        audio_path="ux03_voice.wav",
+        mood="curious",
+        vision_client=FakeVisionClient(),
+        asr_client=FakeASRClient(),
+    )
+    session = ask_questions(session, FakeTextClient())
+    card = generate_today_tip(
+        session.intake,
+        "I think the question is which small key to try first before the day gets busy.",
+        FakeTextClient(),
+        followup_questions=session.question_history,
+    )
+    combined = "\n".join(
+        [
+            session.question_history[0],
+            ",".join(card.dream_anchors),
+            card.dream_summary,
+            card.interpretation,
+            card.today_tip,
+            card.tiny_action,
+            card.caring_note,
+        ]
+    ).lower()
+
+    assert "floating table" in combined
+    assert "key" in combined
+    assert "star" in combined
+    assert "sunrise" in combined
+    assert "floor 14" not in combined
+    assert "elevator" not in combined

@@ -670,6 +670,32 @@ button.secondary {
   font-weight: 850;
 }
 
+.dc-processing-panel {
+  margin-top: 12px;
+}
+
+.dc-processing-panel .dc-processing-note {
+  margin-top: 0;
+}
+
+.dc-processing-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 2px 0;
+}
+
+.dc-processing-steps span {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(96, 85, 68, 0.16);
+  border-radius: 999px;
+  color: var(--dc-muted);
+  font-size: 0.76rem;
+  font-weight: 760;
+  line-height: 1;
+  padding: 6px 9px;
+}
+
 .dc-attachment-drawer {
   background: transparent !important;
   border: 0 !important;
@@ -1625,6 +1651,45 @@ body,
   top: -14px;
   transform: translateX(-50%) rotate(-2deg);
   width: 104px;
+}
+
+.dc-evidence-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.dc-evidence-pill {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.8);
+  border: 1px solid rgba(95, 143, 104, 0.24);
+  border-radius: 999px;
+  color: #35553d;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 780;
+  gap: 6px;
+  line-height: 1.2;
+  min-height: 30px;
+  padding: 6px 10px;
+}
+
+.dc-evidence-pill i {
+  background: #5f8f68;
+  border-radius: 999px;
+  height: 8px;
+  width: 8px;
+}
+
+.dc-evidence-pill.is-failed {
+  background: rgba(255, 247, 237, 0.92);
+  border-color: rgba(181, 103, 47, 0.34);
+  color: #7a4325;
+}
+
+.dc-evidence-pill.is-failed i {
+  background: #b5672f;
 }
 
 .dc-question-anchor-wrap {
@@ -3413,5 +3478,34 @@ CSS += """
   .dc-hero-ribbon {
     border-radius: 14px;
   }
+}
+
+.dc-processing-note.is-active {
+  align-items: center;
+  background: #fff5d8 !important;
+  border: 2px solid rgba(181, 103, 47, 0.42) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 24px rgba(85, 65, 35, 0.12);
+  color: #3f311f !important;
+  display: flex;
+  font-size: 0.9rem !important;
+  font-weight: 720;
+  gap: 10px;
+  line-height: 1.45 !important;
+  margin-top: 14px !important;
+  min-height: 42px;
+  padding: 10px 12px !important;
+}
+
+.dc-processing-note.is-active::before {
+  animation: dc-processing-pulse 1.1s ease-in-out infinite;
+  background: #b5672f !important;
+  border-radius: 999px;
+  content: "" !important;
+  display: inline-block;
+  flex: 0 0 auto;
+  height: 10px;
+  position: static !important;
+  width: 10px;
 }
 """

@@ -42,6 +42,19 @@ def _latest_error(session: CustomsSession) -> str:
     return event.body if event else ""
 
 
+def _evidence_payload(session: CustomsSession) -> List[Dict[str, str]]:
+    return [
+        {
+            "type": item.type,
+            "label": item.label,
+            "status": item.status,
+            "content": item.content,
+            "error": item.error,
+        }
+        for item in session.evidence_items
+    ]
+
+
 def _trim_to_one_visible_question(session: CustomsSession, previous_count: int) -> CustomsSession:
     if len(session.question_history) <= previous_count + 1:
         return session
@@ -170,6 +183,7 @@ def _view_payload(
         "dream_anchors": list(session.qa_state.dream_anchors),
         "followup_questions": list(session.question_history),
         "user_answers": list(session.answer_history),
+        "evidence_items": _evidence_payload(session),
         "interpretation": "",
         "today_tip": "",
         "tiny_action": "",

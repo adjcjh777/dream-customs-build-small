@@ -492,20 +492,61 @@ def _clean_visual_clue_text(clue: str) -> str:
     return clean
 
 
+def _clean_visual_candidate_phrase(phrase: str) -> str:
+    clean = re.sub(r"\s+", " ", (phrase or "").strip(" .,:;!?()[]{}\"'"))
+    clean = re.sub(
+        r"^(?:a|an|the)\s+(?:drawing|sketch|simple sketch)\s+(?:showing|of)\s+",
+        "",
+        clean,
+        flags=re.IGNORECASE,
+    )
+    clean = re.sub(r"^(?:a|an|the|and)\s+", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"\s+", " ", clean).strip(" .,:;!?()[]{}\"'")
+    return clean
+
+
+def _is_bad_visual_candidate_phrase(phrase: str) -> bool:
+    clean = re.sub(r"\s+", " ", (phrase or "").strip().lower())
+    if not clean:
+        return True
+    broken_markers = [
+        "various and a",
+        "various and an",
+        "with various",
+        "showing a table with various",
+        "visual model unavailable",
+        "model unavailable",
+        "details need user text confirmation",
+        "uploaded dream sketch",
+    ]
+    if any(marker in clean for marker in broken_markers):
+        return True
+    if re.search(r"\b(?:and|or|with|of|to|for|a|an|the)\s*$", clean):
+        return True
+    if clean in {"drawing", "sketch", "image", "picture", "dream sketch"}:
+        return True
+    return False
+
+
 def _visual_anchor_candidates(intake: DreamIntake) -> List[str]:
-    candidates: List[str] = []
+    primary_candidates: List[str] = []
+    secondary_candidates: List[str] = []
     for clue in intake.visual_clues:
+        clue_text = clue or ""
+        bucket = secondary_candidates if clue_text.lower().startswith("scene:") else primary_candidates
         clean = _clean_visual_clue_text(clue)
         if not clean:
             continue
         for phrase in re.split(r"\s*(?:,|;|，|；|/|\n)\s*", clean):
-            phrase = phrase.strip(" .,:;!?()[]{}")
+            phrase = _clean_visual_candidate_phrase(phrase)
             if not phrase:
                 continue
             if len(phrase) > 48:
                 phrase = phrase[:48].rsplit(" ", 1)[0].strip() or phrase[:48].strip()
-            candidates.append(phrase)
-    return _dedupe_preserve_order(candidates)
+            if _is_bad_visual_candidate_phrase(phrase):
+                continue
+            bucket.append(phrase)
+    return _dedupe_preserve_order(primary_candidates + secondary_candidates)
 
 
 def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
@@ -562,12 +603,13 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
         r"paper|papers|promise|promises|window|windows|suitcase|suitcases|"
         r"clerk|clerks|sunrise|elevator|elevators|button|buttons|hallway|"
         r"gate|gates|floor|floors|stamp|stamps|number|numbers|exam|exams|"
-        r"pencil|pencils|train|trains|door|doors|subway|station|stations|snow|snowfield|"
-        r"hat|hats|phone|phones|water|shoe|shoes|"
+        r"pencil|pencils|train|trains|platform|platforms|door|doors|subway|station|stations|snow|snowfield|"
+        r"hat|hats|phone|phones|water|puddle|puddles|shoe|shoes|"
         r"stairwell|stairwells|room|rooms|key|keys|note|notes|rain|moon|moons|curtain|curtains|"
         r"email|emails|meeting|meetings|deadline|deadlines|classroom|classrooms|teacher|teachers|"
         r"assignment|assignments|homework|message|messages|airport|airports|glass|bird|birds|child|children|"
-        r"cat|cats|forest|forests|sign|signs|alley|alleys|mailbox|mailboxes|sketch|sketches|ceiling|ceilings"
+        r"cat|cats|forest|forests|sign|signs|alley|alleys|mailbox|mailboxes|sketch|sketches|ceiling|ceilings|"
+        r"table|tables|clock|clocks|star|stars|sunrise"
         r")\b"
     )
     for match in pair_pattern.finditer(text):
@@ -579,9 +621,10 @@ def _extract_dream_anchors(intake: DreamIntake) -> List[str]:
 
     noun_pattern = re.compile(
         r"\b(customs|suitcase|clerk|sunrise|elevator|button|hallway|gate|stamp|number|floor|"
-        r"exam|pencil|train|door|subway|station|snow|snowfield|hat|phone|water|shoe|stairwell|"
-        r"room|key|note|rain|moon|curtain|sleep|dream|email|meeting|deadline|classroom|teacher|"
-        r"assignment|homework|message|airport|glass|bird|child|cat|forest|sign|alley|mailbox|sketch|ceiling)\b"
+        r"exam|pencil|train|platform|door|subway|station|snow|snowfield|hat|phone|water|puddle|shoe|stairwell|"
+        r"room|key|keys|note|rain|moon|curtain|sleep|dream|email|meeting|deadline|classroom|teacher|"
+        r"assignment|homework|message|airport|glass|bird|child|cat|forest|sign|alley|mailbox|sketch|ceiling|"
+        r"table|tables|clock|clocks|star|stars|sunrise)\b"
     )
     candidates.extend(match.group(1) for match in noun_pattern.finditer(text))
     candidates.extend(visual_candidates)
@@ -878,7 +921,15 @@ def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
         ],
     ):
         return "misunderstood_friend"
-    if _contains_any(text, ["小孩", "child", "找不到家", "lost", "home", "回家", "地铁", "subway"]):
+    lost_child_terms = ["小孩", "child", "找不到家"]
+    transit_terms = ["地铁", "subway"]
+    home_terms = ["home", "回家", "找不到家"]
+    lost_terms = ["lost", "迷路", "找不到"]
+    if (
+        _contains_any(text, lost_child_terms)
+        or (_contains_any(text, transit_terms) and _contains_any(text, home_terms + lost_terms))
+        or (_contains_any(text, lost_terms) and _contains_any(text, home_terms))
+    ):
         return "lost_home"
     if _contains_any(text, ["海", "海浪", "月牙", "moon", "sea", "wave", "dark sea", "dark water", "漆黑的海"]):
         return "dark_water"
@@ -886,7 +937,7 @@ def _dream_theme(intake: DreamIntake, answers: str = "") -> str:
         return "stuck_elevator"
     if _contains_any(text, ["图书馆", "楼梯", "便签", "call home", "library", "staircase", "sticky note"]):
         return "library_signal"
-    if _contains_any(text, ["前任", "消息", "消失", "former partner", "ex", "message", "disappear"]):
+    if _contains_any(text, ["前任", "消息", "消失", "former partner", "message", "disappear"]) or re.search(r"\bex\b", text):
         return "message_loss"
     if _contains_any(text, ["追", "被追", "chase", "chased", "running away"]):
         return "chased"
@@ -1021,7 +1072,7 @@ def _answer_reality_cue(answers: str, language: str = "en") -> str:
     for lead in lead_ins:
         if lead in lowered:
             return snippet[lowered.find(lead) :].strip(" ,.;:")
-    return snippet
+    return snippet.strip(" ,.;:")
 
 
 def _anchor_with_article(anchor: str) -> str:
@@ -1135,14 +1186,19 @@ def _clean_user_question(text: str, language: str = "en") -> str:
         clean,
         flags=re.IGNORECASE,
     ).strip()
+    clean = re.sub(r"^(?:and|but|so)\s+", "", clean, flags=re.IGNORECASE).strip()
     clean = re.sub(
-        r"^(i\s+)?(woke\s+up\s+)?(want\s+to\s+know|wonder|am\s+wondering|need\s+to\s+know|worry|fear)\s*(if|whether|why|what|how)?\s*",
+        r"^(i\s+)?(woke\s+up\s+)?"
+        r"(want(?:ed)?\s+to\s+know|wonder(?:ed)?|am\s+wondering|need(?:ed)?\s+to\s+know|worr(?:y|ied)|fear(?:ed)?)"
+        r"\s*(if|whether|why|what|how|which)?\s*",
         lambda match: (match.group(4) or "").strip() + " ",
         clean,
         flags=re.IGNORECASE,
     ).strip()
     clean = clean[0].upper() + clean[1:] if clean else ""
-    if clean and not clean.endswith("?") and re.match(r"^(why|what|how|does|do|did|is|am|are|can|could|should|would)\b", clean, re.IGNORECASE):
+    if clean and re.match(r"^(why|what|how|which|does|do|did|is|am|are|can|could|should|would)\b", clean, re.IGNORECASE):
+        clean = clean.rstrip(".")
+    if clean and not clean.endswith("?") and re.match(r"^(why|what|how|which|does|do|did|is|am|are|can|could|should|would)\b", clean, re.IGNORECASE):
         clean += "?"
     return clean
 
@@ -1182,7 +1238,9 @@ def _extract_explicit_user_question(intake: DreamIntake, answers: str = "", lang
             "can this",
             "should i",
             "i wonder",
+            "i wondered",
             "want to know",
+            "wanted to know",
             "not coping",
             "cope",
             "a sign",
@@ -1272,7 +1330,8 @@ def _direct_question_reassurance(question: str, labels: List[str], language: str
     if "why" in lowered:
         return "The ache makes sense; the dream may be enlarging a feeling that has not had enough room yet."
     emotion = _emotion_phrase(labels, language)
-    return f"The {emotion} you named deserves to be met first, not explained away too quickly."
+    emotion_subject = emotion.capitalize() if emotion.startswith("this ") else f"The {emotion}"
+    return f"{emotion_subject} you named deserves to be met first, not explained away too quickly."
 
 
 def _emotion_led_interpretation(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
@@ -1291,11 +1350,12 @@ def _emotion_led_interpretation(intake: DreamIntake, answers: str, anchors: List
             "第三层，今天不急着找唯一答案，先给自己一个能站稳的小支点。"
         )
     opener = f"You asked, \"{question}\" " if question else ""
+    emotion_subject = emotion if emotion.startswith("this ") else f"the {emotion}"
     return (
         f"{opener}{direct} First, let the {emotion} be real without blaming yourself. "
-        f"Second, the {_anchor_with_article(anchor)} may be the dream's concrete shape for that feeling. "
+        f"Second, {_anchor_with_article(anchor)} may be the dream's concrete shape for that feeling. "
         "Third, for today the goal is not to solve the whole dream, but to give yourself one steadier place to stand."
-    )
+    ).replace(f"let the {emotion}", f"let {emotion_subject}")
 
 
 def _emotion_led_today_tip(intake: DreamIntake, answers: str, anchors: List[str], language: str = "en") -> str:
@@ -1435,6 +1495,8 @@ def _emotion_led_caring_note(intake: DreamIntake, answers: str, language: str = 
     if _is_zh(language):
         emotion = "感受" if emotion == "这个感受" else emotion
         return f"你不是太脆弱，也不是需要被催着立刻想通；这份{emotion}可以先被轻轻接住。"
+    if emotion == "this feeling":
+        return "You are not weak for needing a clearer next step; the dream can be met one grounded detail at a time."
     return f"You are not weak for feeling {emotion}; you do not have to turn it into a lesson before you are comforted."
 
 
@@ -2781,7 +2843,10 @@ def _polish_today_tip(card: TodayTipCard, intake: DreamIntake, answers: str = ""
     )
     card_anchors = _without_unsupported_melted_anchors(card_anchors, intake, answers)
     card_anchors = _filter_anchors_by_source(card_anchors, intake, answers, language)
-    anchors = _dedupe_preserve_order(card_anchors + [anchor for anchor in intake_anchors if anchor not in card_anchors])
+    if intake.visual_clues:
+        anchors = _dedupe_preserve_order(intake_anchors + [anchor for anchor in card_anchors if anchor not in intake_anchors])
+    else:
+        anchors = _dedupe_preserve_order(card_anchors + [anchor for anchor in intake_anchors if anchor not in card_anchors])
     anchors = _without_unsupported_melted_anchors(anchors, intake, answers)
     if not anchors:
         anchors = _remove_placeholder_anchors([_primary_anchor(intake, language)])
@@ -3243,6 +3308,8 @@ def add_evidence(
             transcript = asr_client.transcribe(audio_path) if asr_client else ""
         except Exception:
             error = "Voice transcription failed. Text-only path remains available."
+        if not transcript.strip() and not error and getattr(asr_client, "last_error", ""):
+            error = "Voice transcription did not return a transcript. Text-only path remains available."
         if transcript.strip():
             clean_transcript = transcript.strip()
             next_session.intake.voice_transcript = _append_text(next_session.intake.voice_transcript, clean_transcript)

@@ -275,6 +275,33 @@ def test_question_stage_shows_anchor_chips_before_the_question():
     assert html.index("When floor 14") < html.index("Why this question")
 
 
+def test_question_stage_surfaces_evidence_status_and_failed_asr():
+    _state, view_json = submit_dream_action(
+        dream_text="I was waiting on a train platform with a suitcase and a spinning direction sign.",
+        image_value="ux01_train_platform_sketch.png",
+        audio_value="ux01_voice.wav",
+        mood="Uneasy",
+        text_backend="demo",
+        vision_backend="demo",
+        language="en",
+        asr_backend="modal",
+        asr_endpoint="",
+    )
+    view = json.loads(view_json)
+    statuses = {(item["type"], item["status"]) for item in view["evidence_items"]}
+    html = ui_app._question_markdown(view, "en")
+
+    assert ("text", "selected") in statuses
+    assert ("image", "extracted") in statuses
+    assert ("audio", "failed") in statuses
+    assert "dc-evidence-status" in html
+    assert "Text · noted" in html
+    assert "Image · extracted" in html
+    assert "Voice · not extracted" in html
+    assert "Voice transcription did not return a transcript" in html
+    assert ".dc-evidence-pill.is-failed" in CSS
+
+
 def test_long_running_buttons_show_processing_feedback():
     source = inspect.getsource(ui_app.build_demo)
     app_source = inspect.getsource(ui_app)
@@ -292,6 +319,11 @@ def test_long_running_buttons_show_processing_feedback():
     assert "dc-is-loading" in ui_app.VOICE_JS
     assert "Asking from another angle" in ui_app.VOICE_JS
     assert "one more grounded question" in ui_app.VOICE_JS
+    processing = ui_app._processing_html("en")
+    assert "dc-processing-steps" in processing
+    assert "Text clues" in processing
+    assert "Image clues" in processing
+    assert "Voice transcript" in processing
     assert "js=SUBMIT_PROCESSING_JS" not in source
     assert "js=TIP_PROCESSING_JS" not in source
     assert source.count("scroll_to_output=True") >= 5
@@ -299,6 +331,7 @@ def test_long_running_buttons_show_processing_feedback():
     assert "Folding the follow-up answer" in app_source
     assert ".dc-notice.is-processing" in CSS
     assert ".dc-processing-note.is-active" in CSS
+    assert "#fff5d8" in CSS
     assert ".dc-stage button.dc-is-loading" in CSS
     assert "endpoint" not in ui_app.VOICE_JS.lower()
     assert "debug" not in ui_app.VOICE_JS.lower()

@@ -609,11 +609,13 @@ def _question_markdown(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
         if question
         else ""
     )
+    evidence_status = _evidence_status_html(view, language)
     return f"""
 <div class="dc-question-card">
   <span class="dc-question-kicker">{copy['question_kicker']}</span>
   <h2>{copy['question_title']}</h2>
   <p>{copy['question_body']}</p>
+  {evidence_status}
   {anchor_strip}
   {optional_question}
   {context_html}
@@ -965,8 +967,63 @@ def _field_tip_html(language: str = DEFAULT_LANGUAGE, view=None) -> str:
 """.strip()
 
 
+def _evidence_status_html(view: dict, language: str = DEFAULT_LANGUAGE) -> str:
+    items = view.get("evidence_items") or []
+    if not items:
+        return ""
+    is_zh = normalize_language(language) == "zh"
+    type_labels = {
+        "text": "文字" if is_zh else "Text",
+        "image": "图片" if is_zh else "Image",
+        "audio": "语音" if is_zh else "Voice",
+        "mood": "心情" if is_zh else "Mood",
+    }
+    status_labels = {
+        "selected": "已记录" if is_zh else "noted",
+        "extracted": "已提取" if is_zh else "extracted",
+        "failed": "未提取" if is_zh else "not extracted",
+        "queued": "等待中" if is_zh else "queued",
+    }
+    pills = []
+    for item in items[-6:]:
+        item_type = str(item.get("type") or "")
+        status = str(item.get("status") or "queued")
+        label = type_labels.get(item_type, str(item.get("label") or item_type or "Evidence"))
+        status_text = status_labels.get(status, status)
+        detail = str(item.get("error") or item.get("content") or "").strip()
+        if len(detail) > 96:
+            detail = detail[:93].rstrip() + "..."
+        title = f" title=\"{escape(detail)}\"" if detail else ""
+        pills.append(
+            f"<span class='dc-evidence-pill is-{escape(status)}'{title}>"
+            f"<i aria-hidden='true'></i>{escape(label)} · {escape(status_text)}</span>"
+        )
+    if not pills:
+        return ""
+    caption = "输入证据" if is_zh else "Input evidence"
+    return f"""
+<div class="dc-evidence-status" aria-label="{escape(caption)}">
+  {''.join(pills)}
+</div>
+""".strip()
+
+
 def _processing_html(language: str = DEFAULT_LANGUAGE) -> str:
-    return f"<p class='dc-processing-note'>{escape(copy_for(language)['processing_note'])}</p>"
+    if language == "zh":
+        steps = ["文字线索", "图片线索", "语音转写"]
+        aria = "处理通道"
+    else:
+        steps = ["Text clues", "Image clues", "Voice transcript"]
+        aria = "Processing routes"
+    step_html = "".join(f"<span>{escape(step)}</span>" for step in steps)
+    return f"""
+<div class="dc-processing-panel" aria-live="polite">
+  <p class='dc-processing-note'>{escape(copy_for(language)['processing_note'])}</p>
+  <div class="dc-processing-steps" aria-label="{escape(aria)}">
+    {step_html}
+  </div>
+</div>
+""".strip()
 
 
 def _side_stamp_html(language: str = DEFAULT_LANGUAGE) -> str:

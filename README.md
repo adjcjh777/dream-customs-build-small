@@ -58,6 +58,12 @@ This is not a therapy, diagnosis, or prophecy product.
 - Final social post URL: <https://x.com/sjsllww/status/2066476098179981445>
 - Final submission prep notes: `docs/submission/2026-06-14-build-small-final-pack.md`.
 
+## Built with Codex
+
+OpenAI Codex was used as the primary coding and release agent for this submission. Codex helped implement and harden the Gradio flow, refine the Dream QA UI and copy, generate and review demo evidence, coordinate GitHub and Hugging Face Space updates, and prepare the final README/social/video submission package.
+
+The linked GitHub repository records the development trail and includes Codex-attributed final packaging commits. The Space README also declares the `openai-codex` tag so the project is visible for the OpenAI Codex prize review.
+
 ## Models
 
 - `openbmb/MiniCPM-V-4.6` for image/sketch/note understanding.

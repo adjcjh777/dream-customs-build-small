@@ -54,8 +54,8 @@ This is not a therapy, diagnosis, or prophecy product.
   - `videos/2026-06-15-dreamqa-v2/ux01_full_ux.mp4` - train platform + direction sign.
   - `videos/2026-06-15-dreamqa-v2/ux02_full_ux.mp4` - elevator buttons + floor 14 + work message.
   - `videos/2026-06-15-dreamqa-v2/ux03_full_ux.mp4` - floating table + loose keys + sunrise line.
-- Final public demo video URL: to be added after the final upload.
-- Final social post URL: to be added after publishing the X/Instagram post.
+- Final public demo video URL: <https://www.instagram.com/adjcjh777/reel/DZmqdP8gtvi/>
+- Final social post URL: <https://x.com/sjsllww/status/2066476098179981445>
 - Final submission prep notes: `docs/submission/2026-06-14-build-small-final-pack.md`.
 
 ## Models
